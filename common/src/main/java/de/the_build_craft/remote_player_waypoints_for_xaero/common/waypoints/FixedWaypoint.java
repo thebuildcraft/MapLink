@@ -1,6 +1,7 @@
 /*
  *    This file is part of the Remote player waypoints for Xaero's Map mod
  *    licensed under the GNU GPL v3 License.
+ *    (some parts of this file are originally from "RemotePlayers" by ewpratten)
  *
  *    Copyright (C) 2024  Leander Knüttel
  *
@@ -18,16 +19,20 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package de.the_build_craft.remote_player_waypoints_for_xaero.common.connections;
+package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
+
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig;
 
 /**
+ * A wrapper to improve creating temp waypoints for markers
+ *
+ * @author ewpratten
+ * @author eatmyvenom
  * @author Leander Knüttel
- * @version 18.02.2025
+ * @version 23.07.2025
  */
-public class SquareMapConfiguration {
-    public static class World {
-        public String name;
+public class FixedWaypoint extends TempWaypoint {
+    public FixedWaypoint(WaypointPosition wp) {
+        super(wp.x, wp.y, wp.z, wp.name, CommonModConfig.Instance.markerWaypointColor());
     }
-
-    public World[] worlds;
 }

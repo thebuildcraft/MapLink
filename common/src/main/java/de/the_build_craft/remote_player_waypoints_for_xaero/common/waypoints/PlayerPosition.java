@@ -1,8 +1,9 @@
 /*
  *    This file is part of the Remote player waypoints for Xaero's Map mod
  *    licensed under the GNU GPL v3 License.
+ *    (some parts of this file are originally from "RemotePlayers" by ewpratten)
  *
- *    Copyright (C) 2025  Leander Knüttel
+ *    Copyright (C) 2024  Leander Knüttel
  *
  *    This program is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -18,15 +19,28 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package de.the_build_craft.remote_player_waypoints_for_xaero.common.connections;
+package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
+
+import com.mojang.authlib.GameProfile;
 
 /**
+ * A player's auth profile and position
+ *
+ * @author ewpratten
  * @author Leander Knüttel
- * @version 28.06.2025
+ * @version 23.07.2025
  */
-public class Pl3xMapConfiguration {
-    public World[] worlds = new World[0];
-    public static class World {
-        public String name;
+public class PlayerPosition extends Position {
+    public GameProfile gameProfile;
+    public final String world;
+
+    public PlayerPosition(String name, int x, int y, int z, String world) {
+        super(name, x, y, z);
+        this.world = world;
+    }
+
+    public PlayerPosition(String name, float x, float y, float z, String world) {
+        super(name, x, y, z);
+        this.world = world;
     }
 }

@@ -20,21 +20,18 @@
 
 package de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates;
 
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Float3;
+
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 24.06.2025
+ * @version 23.07.2025
  */
 public class BlueMapPlayerUpdate {
     public Player[] players = new Player[0];
     public static class Player{
         public String name;
         public boolean foreign;
-        public Position position;
-        public static class Position{
-            public float x;
-            public float y;
-            public float z;
-        }
+        public Float3 position;
     }
 }

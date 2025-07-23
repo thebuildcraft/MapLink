@@ -2,7 +2,7 @@
  *    This file is part of the Remote player waypoints for Xaero's Map mod
  *    licensed under the GNU GPL v3 License.
  *
- *    Copyright (C) 2024  Leander Knüttel
+ *    Copyright (C) 2025  Leander Knüttel
  *
  *    This program is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -18,12 +18,33 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package de.the_build_craft.remote_player_waypoints_for_xaero.common.connections;
+package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
 /**
  * @author Leander Knüttel
- * @version 14.06.2024
+ * @version 23.07.2025
  */
-public class BlueMapConfiguration {
-    public String[] maps;
+public class Float3 {
+    public float x;
+    public float y;
+    public float z;
+
+    public Float3(float x, float y, float z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
+    @Override
+    public String toString() {
+        return x + " " + y + " " + z;
+    }
+
+    public Int3 toInt3() {
+        return new Int3((int) x, (int) y, (int) z);
+    }
+
+    public Float3 add(Float3 float3) {
+        return new Float3(x + float3.x, y + float3.y, z + float3.z);
+    }
 }

@@ -22,8 +22,13 @@
 package de.the_build_craft.remote_player_waypoints_for_xaero.common.connections;
 
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.*;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.ClientMapHandler;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.configurations.DynmapConfiguration;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.DynmapMarkerUpdate;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.DynmapPlayerUpdate;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.AreaMarker;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.PlayerPosition;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.WaypointPosition;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Utils;
 
 import java.io.IOException;
@@ -38,7 +43,7 @@ import java.util.regex.Pattern;
  * @author ewpratten
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 28.06.2025
+ * @version 23.07.2025
  */
 public class DynmapConnection extends MapConnection {
     private String markerStringTemplate = "";
@@ -244,14 +249,16 @@ public class DynmapConnection extends MapConnection {
     }
 
     String lastMarkerDimension = "";
-    HashMap<String, WaypointPosition> lastResult = new HashMap<>();
+    List<WaypointPosition> positions = new ArrayList<>();
 
     @Override
-    public HashMap<String, WaypointPosition> getWaypointPositions() throws IOException {
+    public void getWaypointPositions() throws IOException {
         CommonModConfig.ServerEntry serverEntry = CommonModConfig.Instance.getCurrentServerEntry();
         if (serverEntry.markerVisibilityMode == CommonModConfig.ServerEntry.MarkerVisibilityMode.Auto) {
             CommonModConfig.Instance.setMarkerLayers(serverEntry.ip, new ArrayList<>(getMarkerLayers()));
         }
+
+        if (ClientMapHandler.getInstance() == null) return;
 
         String dimension;
         if (CommonModConfig.Instance.debugMode()){
@@ -264,25 +271,31 @@ public class DynmapConnection extends MapConnection {
             dimension = currentDimension;
         }
         if (markerStringTemplate.isEmpty() || dimension.isEmpty()) {
-            return new HashMap<>();
+            ClientMapHandler.getInstance().removeAllMarkerWaypoints();
         }
         if (lastMarkerDimension.equals(dimension)) {
-            return lastResult;
+            ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
+            return;
         }
         lastMarkerDimension = dimension;
 
         DynmapMarkerUpdate update = HTTP.makeJSONHTTPRequest(URI.create(markerStringTemplate.replace("{world}", dimension).replace(" ", "%20")).toURL(), DynmapMarkerUpdate.class);
-        HashMap<String, WaypointPosition> positions = new HashMap<>();
+        positions.clear();
 
+        List<AreaMarker> areaMarkers = new ArrayList<>();
         for (DynmapMarkerUpdate.Set set : update.sets.values()){
             if (!serverEntry.includeMarkerLayer(set.label)) continue;
 
             for (DynmapMarkerUpdate.Set.Marker m : set.markers.values()){
-                WaypointPosition newWaypointPosition = new WaypointPosition(m.label, Math.round(m.x), Math.round(m.y), Math.round(m.z));
-                positions.put(newWaypointPosition.name, newWaypointPosition);
+                positions.add(new WaypointPosition(m.label, m.x, m.y, m.z));
             }
+            for (DynmapMarkerUpdate.Set.Area a : set.areas.values()) {
+                //TODO: make points from both arrays
+                //areaMarkers.add(new AreaMarker(a.label, 0, 0, 0, ))
+            }
+            //TODO: circle area markers
         }
-        lastResult = positions;
-        return positions;
+        ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
+        ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers);
     }
 }

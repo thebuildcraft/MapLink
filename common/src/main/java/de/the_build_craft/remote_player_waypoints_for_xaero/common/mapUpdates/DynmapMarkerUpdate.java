@@ -28,7 +28,7 @@ import java.util.Map;
  *
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 26.06.2025
+ * @version 23.07.2025
  */
 public class DynmapMarkerUpdate {
     public static class Set {
@@ -38,9 +38,19 @@ public class DynmapMarkerUpdate {
             public float z;
             public String label;
         }
+        public static class Area {
+            public String fillcolor;
+            public float fillopacity;
+            public String color;
+            public float opacity;
+            public String label;
+            public float[] x = new float[0];
+            public float[] y = new float[0];
+        }
 
         public String label;
         public Map<String, Marker> markers = new HashMap<>();
+        public Map<String, Area> areas = new HashMap<>();
     }
 
     public Map<String, Set> sets = new HashMap<>();

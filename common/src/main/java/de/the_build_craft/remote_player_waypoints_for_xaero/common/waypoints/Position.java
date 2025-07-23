@@ -19,34 +19,44 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package de.the_build_craft.remote_player_waypoints_for_xaero.common;
+package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
 /**
  * A marker's name and position
  *
- * @author ewpratten
- * @author eatmyvenom
  * @author Leander Knüttel
- * @version 29.06.2025
+ * @version 23.07.2025
  */
-public class WaypointPosition {
+public abstract class Position {
     public final String name;
     public final int x;
     public final int y;
     public final int z;
 
-    public WaypointPosition(String name, int x, int y, int z) {
+    public Position(String name, int x, int y, int z) {
         this.name = getDisplayName(name);
         this.x = x;
         this.y = y;
         this.z = z;
     }
 
-    public boolean CompareCords(WaypointPosition otherPosition){
+    public Position(String name, float x, float y, float z) {
+        this.name = getDisplayName(name);
+        this.x = Math.round(x);
+        this.y = Math.round(y);
+        this.z = Math.round(z);
+    }
+
+    public boolean CompareCords(Position otherPosition){
         return (this.x == otherPosition.x) && (this.y == otherPosition.y) && (this.z == otherPosition.z);
     }
 
-    public static String getDisplayName(String name){
-        return PlayerPosition.getDisplayName(name);
+    static String getDisplayName(String name){
+        return org.apache.commons.lang3.StringEscapeUtils
+                .unescapeHtml4(name.replaceAll("<.+?>|\\R|\\n", "").trim());
+    }
+
+    public String getKey() {
+        return name + " " + x + " " + y + " " + z;
     }
 }

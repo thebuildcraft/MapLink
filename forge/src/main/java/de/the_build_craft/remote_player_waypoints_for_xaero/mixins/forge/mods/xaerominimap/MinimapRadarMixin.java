@@ -66,7 +66,7 @@ public class MinimapRadarMixin {
         // Don't render if feature not enabled
         if(!CommonModConfig.Instance.enableEntityRadar()) return worldEntities;
         // Don't render if there is no remote players available
-        if(UpdateTask.playerPositions == null || UpdateTask.playerPositions.isEmpty()) return worldEntities;
+        if(ClientMapHandler.playerPositions == null || ClientMapHandler.playerPositions.isEmpty()) return worldEntities;
         // Don't render if can't get access to world to check for players in range
         if(Minecraft.getInstance().level == null)  return worldEntities;
         // Don't render if can't get access to cameraEntity to check for player distance
@@ -86,8 +86,8 @@ public class MinimapRadarMixin {
         }
 
         // For each remote player
-        ArrayList<Entity> playerEntities = new ArrayList<>(UpdateTask.playerPositions.size());
-        for (PlayerPosition playerPosition : UpdateTask.playerPositions.values()) {
+        ArrayList<Entity> playerEntities = new ArrayList<>(ClientMapHandler.playerPositions.size());
+        for (PlayerPosition playerPosition : ClientMapHandler.playerPositions.values()) {
             // Skip if player has invalid data
             if(playerPosition == null || playerPosition.gameProfile == null) continue;
             // Don't render same player when they are actually in range

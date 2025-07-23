@@ -18,21 +18,17 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates;
-
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Int3;
+package de.the_build_craft.remote_player_waypoints_for_xaero.common.configurations;
 
 /**
+ * JSON object from dynmap API. Used to read the first world name.
+ *
  * @author Leander Knüttel
- * @version 23.07.2025
+ * @version 14.06.2024
  */
-public class SquareMapMarkerUpdate {
-    public static class Marker{
-        public Int3 point;
-        public String tooltip;
-        public String type;
+public class DynmapConfiguration {
+    public World[] worlds;
+    public static class World{
+        public String name;
     }
-
-    public String name;
-    public Marker[] markers = new Marker[0];
 }

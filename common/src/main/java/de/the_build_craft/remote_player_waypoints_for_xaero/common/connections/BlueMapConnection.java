@@ -21,6 +21,8 @@
 package de.the_build_craft.remote_player_waypoints_for_xaero.common.connections;
 
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.*;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.ClientMapHandler;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.configurations.BlueMapConfiguration;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.BlueMapMarkerSet;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.BlueMapPlayerUpdate;
 
@@ -30,6 +32,7 @@ import java.net.URL;
 import java.util.*;
 
 import com.google.common.reflect.TypeToken;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.*;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Utils;
 
 import java.lang.reflect.Type;
@@ -37,7 +40,7 @@ import java.lang.reflect.Type;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 29.06.2025
+ * @version 23.07.2025
  */
 public class BlueMapConnection extends MapConnection {
     public int lastWorldIndex;
@@ -115,16 +118,18 @@ public class BlueMapConnection extends MapConnection {
     }
 
     URL lastURL = null;
-    HashMap<String, WaypointPosition> lastResult = new HashMap<>();
+    List<WaypointPosition> positions = new ArrayList<>();
 
     @Override
-    public HashMap<String, WaypointPosition> getWaypointPositions() throws IOException {
+    public void getWaypointPositions() throws IOException {
         Type apiResponseType = new TypeToken<Map<String, BlueMapMarkerSet>>() {}.getType();
 
         CommonModConfig.ServerEntry serverEntry = CommonModConfig.Instance.getCurrentServerEntry();
         if (serverEntry.markerVisibilityMode == CommonModConfig.ServerEntry.MarkerVisibilityMode.Auto) {
             CommonModConfig.Instance.setMarkerLayers(serverEntry.ip, new ArrayList<>(getMarkerLayers()));
         }
+
+        if (ClientMapHandler.getInstance() == null) return;
 
         URL reqUrl;
         if (AbstractModInitializer.overwriteCurrentDimension && !Objects.equals(currentDimension, "")){
@@ -134,12 +139,14 @@ public class BlueMapConnection extends MapConnection {
             reqUrl = markerUrls.get(lastWorldIndex);
         }
         if (reqUrl == lastURL) {
-            return lastResult;
+            ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
+            return;
         }
         lastURL = reqUrl;
 
         Map<String, BlueMapMarkerSet> markerSets = HTTP.makeJSONHTTPRequest(reqUrl, apiResponseType);
-        HashMap<String, WaypointPosition> positions = new HashMap<>();
+        positions.clear();
+        List<AreaMarker> areaMarkers = new ArrayList<>();
 
         for (Map.Entry<String, BlueMapMarkerSet> m : markerSets.entrySet()){
             if (CommonModConfig.Instance.debugMode() && CommonModConfig.Instance.chatLogInDebugMode()){
@@ -150,15 +157,16 @@ public class BlueMapConnection extends MapConnection {
             if (!serverEntry.includeMarkerLayer(m.getKey())) continue;
 
             for(BlueMapMarkerSet.Marker marker : m.getValue().markers.values()){
+                Float3 pos = marker.position;
                 if (Objects.equals(marker.type, "poi") || Objects.equals(marker.type, "html")){
-                    BlueMapMarkerSet.Position pos = marker.position;
-                    WaypointPosition newWaypointPosition = new WaypointPosition(marker.label, Math.round(pos.x), Math.round(pos.y), Math.round(pos.z));
-                    positions.put(newWaypointPosition.name, newWaypointPosition);
+                    positions.add(new WaypointPosition(marker.label, pos.x, pos.y, pos.z));
+                } else if (Objects.equals(marker.type, "shape")) {
+                    areaMarkers.add(new AreaMarker(marker.label, pos.x, pos.y, pos.z, marker.shape, marker.lineColor, marker.fillColor, m.getKey()));
                 }
             }
         }
-        lastResult = positions;
-        return positions;
+        ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
+        ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers);
     }
 
     private boolean correctWorld = false;
@@ -194,13 +202,13 @@ public class BlueMapConnection extends MapConnection {
         if (correctWorld){
             for (int i = 0; i < update.players.length; i++) {
                 BlueMapPlayerUpdate.Player player = update.players[i];
-                positions[i] = new PlayerPosition(player.name, Math.round(player.position.x), Math.round(player.position.y), Math.round(player.position.z), player.foreign ? "foreign" : "thisWorld");
+                positions[i] = new PlayerPosition(player.name, player.position.x, player.position.y, player.position.z, player.foreign ? "foreign" : "thisWorld");
             }
         }
         else {
             for (int i = 0; i < update.players.length; i++) {
                 BlueMapPlayerUpdate.Player player = update.players[i];
-                positions[i] = new PlayerPosition(player.name, Math.round(player.position.x), Math.round(player.position.y), Math.round(player.position.z), "unknown");
+                positions[i] = new PlayerPosition(player.name, player.position.x, player.position.y, player.position.z, "unknown");
             }
         }
         return HandlePlayerPositions(positions);

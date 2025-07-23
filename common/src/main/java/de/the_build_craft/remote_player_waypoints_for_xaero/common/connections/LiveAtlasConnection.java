@@ -21,6 +21,9 @@
 package de.the_build_craft.remote_player_waypoints_for_xaero.common.connections;
 
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.*;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.ClientMapHandler;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.PlayerPosition;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.WaypointPosition;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Utils;
 
 import java.io.IOException;
@@ -34,7 +37,7 @@ import java.util.regex.Pattern;
 
 /**
  * @author Leander Knüttel
- * @version 26.06.2025
+ * @version 23.07.2025
  */
 public class LiveAtlasConnection extends MapConnection {
     public static final Pattern dynmapRegexPattern = Pattern.compile("\\n +dynmap: \\{\\n(.*\\n)*?.*}\\n");
@@ -123,14 +126,17 @@ public class LiveAtlasConnection extends MapConnection {
     }
 
     @Override
-    public HashMap<String, WaypointPosition> getWaypointPositions() throws IOException {
-        if (mapConnections.isEmpty()) return new HashMap<>();
+    public void getWaypointPositions() throws IOException {
+        if (mapConnections.isEmpty()) {
+            if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().removeAllMarkerWaypoints();
+            return;
+        }
         CommonModConfig.ServerEntry serverEntry = CommonModConfig.Instance.getCurrentServerEntry();
         if (serverEntry.markerVisibilityMode == CommonModConfig.ServerEntry.MarkerVisibilityMode.Auto) {
             CommonModConfig.Instance.setMarkerLayers(serverEntry.ip, new ArrayList<>(getMarkerLayers()));
         }
 
-        return mapConnections.get(mapIndex).getWaypointPositions();
+        mapConnections.get(mapIndex).getWaypointPositions();
     }
 
     @Override

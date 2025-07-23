@@ -19,7 +19,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package de.the_build_craft.remote_player_waypoints_for_xaero.common;
+package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
 import xaero.common.minimap.waypoints.Waypoint;
 #if MC_VER != MC_1_17_1
@@ -28,28 +28,35 @@ import xaero.hud.minimap.waypoint.WaypointPurpose;
 #endif
 
 /**
- * A wrapper to improve creating temp waypoints for markers
+ * A wrapper to improve creating temp waypoints
  *
- * @author ewpratten
- * @author eatmyvenom
  * @author Leander Knüttel
- * @version 29.06.2025
+ * @version 23.07.2025
  */
-public class FixedWaypoint extends Waypoint {
-    public FixedWaypoint(WaypointPosition wp) {
-        this(wp.x, wp.y, wp.z, wp.name);
-    }
-
-    public FixedWaypoint(int x, int y, int z, String name) {
+public abstract class TempWaypoint extends Waypoint {
+    public TempWaypoint(int x, int y, int z, String name, int color) {
         super(x, y, z, name, getAbbreviation(name),
                 #if MC_VER == MC_1_17_1
-                CommonModConfig.Instance.markerWaypointColor(), 0, true);
+                color, 0, true);
                 #else
-                WaypointColor.fromIndex(CommonModConfig.Instance.markerWaypointColor()), WaypointPurpose.NORMAL, true);
+                WaypointColor.fromIndex(color), WaypointPurpose.NORMAL, true);
                 #endif
     }
 
-    public static String getAbbreviation(String name){
-        return PlayerWaypoint.getAbbreviation(name);
+    static String getAbbreviation(String name){
+        StringBuilder abbreviation = new StringBuilder();
+        String[] words = name.split("[ _\\-,:;.()\\[\\]{}/\\\\|]");
+        int count = 0;
+        for (String word : words) {
+            if (word.isEmpty()) continue;
+            abbreviation.append(word.substring(0, 1).toUpperCase());
+            count++;
+            if (count >= 3) break;
+        }
+        return abbreviation.toString();
+    }
+
+    public static String getWaypointKey(Waypoint waypoint) {
+        return waypoint.getName() + " " + waypoint.getX() + " " + waypoint.getY() + " " + waypoint.getZ();
     }
 }

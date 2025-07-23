@@ -23,7 +23,8 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.mixins.neoforge.mod
 
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.AbstractModInitializer;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.PlayerPosition;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.ClientMapHandler;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.PlayerPosition;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.UpdateTask;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -46,7 +47,7 @@ import java.util.List;
 /**
  * @author TheMrEngMan
  * @author Leander Knüttel
- * @version 21.04.2025
+ * @version 23.07.2025
  */
 
 @Pseudo
@@ -66,7 +67,7 @@ public class MinimapRadarMixin {
         // Don't render if feature not enabled
         if(!CommonModConfig.Instance.enableEntityRadar()) return worldEntities;
         // Don't render if there is no remote players available
-        if(UpdateTask.playerPositions == null || UpdateTask.playerPositions.isEmpty()) return worldEntities;
+        if(ClientMapHandler.playerPositions == null || ClientMapHandler.playerPositions.isEmpty()) return worldEntities;
         // Don't render if can't get access to world to check for players in range
         if(Minecraft.getInstance().level == null)  return worldEntities;
         // Don't render if can't get access to cameraEntity to check for player distance
@@ -86,14 +87,14 @@ public class MinimapRadarMixin {
         }
 
         // For each remote player
-        ArrayList<Entity> playerEntities = new ArrayList<>(UpdateTask.playerPositions.size());
-        for (PlayerPosition playerPosition : UpdateTask.playerPositions.values()) {
+        ArrayList<Entity> playerEntities = new ArrayList<>(ClientMapHandler.playerPositions.size());
+        for (PlayerPosition playerPosition : ClientMapHandler.playerPositions.values()) {
             // Skip if player has invalid data
             if(playerPosition == null || playerPosition.gameProfile == null) continue;
             // Don't render same player when they are actually in range
-            if(renderedPlayerNames.contains(playerPosition.player)) continue;
+            if(renderedPlayerNames.contains(playerPosition.name)) continue;
 
-            boolean isFriend = CommonModConfig.Instance.friendList().contains(playerPosition.player);
+            boolean isFriend = CommonModConfig.Instance.friendList().contains(playerPosition.name);
 
             if (CommonModConfig.Instance.onlyShowFriendsIcons() && !isFriend) continue;
 
@@ -112,8 +113,8 @@ public class MinimapRadarMixin {
 
             // Add remote player to list as an entity
             RemotePlayer playerEntity;
-            if(AbstractModInitializer.fakePlayerEntities.get(Minecraft.getInstance().level).containsKey(playerPosition.player)){
-                playerEntity = AbstractModInitializer.fakePlayerEntities.get(Minecraft.getInstance().level).get(playerPosition.player);
+            if(AbstractModInitializer.fakePlayerEntities.get(Minecraft.getInstance().level).containsKey(playerPosition.name)){
+                playerEntity = AbstractModInitializer.fakePlayerEntities.get(Minecraft.getInstance().level).get(playerPosition.name);
             }
             else {
                 #if MC_VER == MC_1_19_2
@@ -121,7 +122,7 @@ public class MinimapRadarMixin {
                 #else
                 playerEntity = new RemotePlayer(Minecraft.getInstance().level, playerPosition.gameProfile);
                 #endif
-                AbstractModInitializer.fakePlayerEntities.get(Minecraft.getInstance().level).put(playerPosition.player, playerEntity);
+                AbstractModInitializer.fakePlayerEntities.get(Minecraft.getInstance().level).put(playerPosition.name, playerEntity);
             }
             #if MC_VER < MC_1_21_5
             playerEntity.moveTo(playerPosition.x, playerPosition.y, playerPosition.z, 0, 0);

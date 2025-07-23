@@ -2,7 +2,7 @@
  *    This file is part of the Remote player waypoints for Xaero's Map mod
  *    licensed under the GNU GPL v3 License.
  *
- *    Copyright (C) 2024  Leander Knüttel
+ *    Copyright (C) 2025  Leander Knüttel
  *
  *    This program is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -18,21 +18,15 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates;
-
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Int3;
+package de.the_build_craft.remote_player_waypoints_for_xaero.common.configurations;
 
 /**
  * @author Leander Knüttel
- * @version 23.07.2025
+ * @version 28.06.2025
  */
-public class SquareMapMarkerUpdate {
-    public static class Marker{
-        public Int3 point;
-        public String tooltip;
-        public String type;
+public class Pl3xMapConfiguration {
+    public World[] worlds = new World[0];
+    public static class World {
+        public String name;
     }
-
-    public String name;
-    public Marker[] markers = new Marker[0];
 }

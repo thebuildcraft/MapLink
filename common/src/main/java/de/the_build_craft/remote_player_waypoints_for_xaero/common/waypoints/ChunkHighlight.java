@@ -18,20 +18,34 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates;
-
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Int3;
+package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
 /**
  * @author Leander Knüttel
  * @version 23.07.2025
  */
-public class Pl3xMapAltMarkerUpdate {
-    public String id;
-    public Marker[] markers = new Marker[0];
-    public static class Marker {
-        public String tooltip;
-        public String type;
-        public Int3 point;
+public class ChunkHighlight {
+    public String name;
+    public String setName;
+    public Color fillColor;
+    public Color lineColor;
+
+    public ChunkHighlight(String name, Color fillColor, Color lineColor, String setName) {
+        this.name = name;
+        this.fillColor = fillColor;
+        this.lineColor = lineColor;
+        this.setName = setName;
+    }
+
+    public ChunkHighlight(AreaMarker areaMarker) {
+        this(areaMarker.name, areaMarker.fillColor, areaMarker.lineColor, areaMarker.SetName);
+    }
+
+    public void combine(ChunkHighlight chunkHighlight) {
+        if (name.contains(chunkHighlight.name)) return;
+        name += " | " + chunkHighlight.name;
+        setName += " | " + chunkHighlight.setName;
+        fillColor.combine(chunkHighlight.fillColor);
+        lineColor.combine(chunkHighlight.lineColor);
     }
 }

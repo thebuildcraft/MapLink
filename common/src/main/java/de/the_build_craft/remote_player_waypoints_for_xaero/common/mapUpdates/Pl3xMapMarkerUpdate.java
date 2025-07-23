@@ -20,19 +20,17 @@
 
 package de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates;
 
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Int3;
+
 /**
  * @author Leander Knüttel
- * @version 14.06.2024
+ * @version 23.07.2025
  */
 public class Pl3xMapMarkerUpdate {
     public static class Data{
-        public static class Point{
-            public int x;
-            public int z;
-        }
-
-        public Point point;
+        public Int3 point;
     }
+
     public static class Options{
         public static class ToolTip{
             public String content;

@@ -27,7 +27,9 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.XaeroClientMapHandler;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.connections.MapConnection;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.PlayerPosition;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -48,13 +50,13 @@ import java.util.Timer;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 28.06.2025
+ * @version 23.07.2025
  */
 public abstract class AbstractModInitializer
 {
 	public static final String MOD_ID = "remote_player_waypoints_for_xaero";
 	public static final String MOD_NAME = "Remote Player Waypoints For Xaero's Map";
-	public static final String VERSION = "3.5.0";
+	public static final String VERSION = "4.0.0";
 	public static final Logger LOGGER = LogManager.getLogger("RemotePlayerWaypointsForXaero");
 	public static AbstractModInitializer INSTANCE;
 
@@ -78,7 +80,7 @@ public abstract class AbstractModInitializer
 	public static boolean hideAfkMinutes = false;
 
 	public static boolean enabled = true;
-	public static boolean mapModInstalled = false;
+	public static boolean xaeroMapInstalled = false;
 	public static boolean overwriteCurrentDimension = false;
 
 	public static HashMap<ClientLevel, HashMap<String, RemotePlayer>> fakePlayerEntities = new HashMap<>();
@@ -108,8 +110,11 @@ public abstract class AbstractModInitializer
 
 		this.startup();//<-- common mod init in here
 
-		mapModInstalled = ModChecker.INSTANCE.classExists("xaero.minimap.XaeroMinimap") || ModChecker.INSTANCE.classExists("xaero.pvp.BetterPVP");
-		LOGGER.info("mapModInstalled: " + mapModInstalled);
+		xaeroMapInstalled = ModChecker.INSTANCE.classExists("xaero.minimap.XaeroMinimap") || ModChecker.INSTANCE.classExists("xaero.pvp.BetterPVP");
+		LOGGER.info("mapModInstalled: " + xaeroMapInstalled);
+		if (xaeroMapInstalled) {
+			new XaeroClientMapHandler();
+		}
 
 		unknownAfkStateColor = CommonModConfig.Instance.unknownAfkStateColor();
 		AfkColor = CommonModConfig.Instance.AfkColor();

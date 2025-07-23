@@ -22,10 +22,14 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.common.connections;
 
 import com.google.common.reflect.TypeToken;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.*;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.ClientMapHandler;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.configurations.Pl3xMapConfiguration;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.Pl3xMapAltMarkerUpdate;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.Pl3xMapMarkerLayerConfig;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.Pl3xMapMarkerUpdate;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.Pl3xMapPlayerUpdate;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.PlayerPosition;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.WaypointPosition;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Utils;
 
 import java.io.IOException;
@@ -39,7 +43,7 @@ import java.util.regex.Pattern;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 28.06.2025
+ * @version 23.07.2025
  */
 public class Pl3xMapConnection extends MapConnection{
     private String markerLayerStringTemplate = "";
@@ -121,26 +125,32 @@ public class Pl3xMapConnection extends MapConnection{
     }
 
     private String lastMarkerDimension = "";
-    private HashMap<String, WaypointPosition> lastResult = new HashMap<>();
+    List<WaypointPosition> positions = new ArrayList<>();
 
     @Override
-    public HashMap<String, WaypointPosition> getWaypointPositions() throws IOException {
+    public void getWaypointPositions() throws IOException {
         if (markerLayerStringTemplate.isEmpty() || currentDimension.isEmpty()) {
-            return new HashMap<>();
+            if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().removeAllMarkerWaypoints();
+            return;
         }
         CommonModConfig.ServerEntry serverEntry = CommonModConfig.Instance.getCurrentServerEntry();
         if (serverEntry.markerVisibilityMode == CommonModConfig.ServerEntry.MarkerVisibilityMode.Auto) {
             CommonModConfig.Instance.setMarkerLayers(serverEntry.ip, new ArrayList<>(getMarkerLayers()));
         }
+
+        if (ClientMapHandler.getInstance() == null) return;
+
         if (markerStringTemplate.isEmpty() && version == 0) {
-            return new HashMap<>();
+            ClientMapHandler.getInstance().removeAllMarkerWaypoints();
+            return;
         }
         if (lastMarkerDimension.equals(currentDimension)) {
-            return lastResult;
+            ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
+            return;
         }
         lastMarkerDimension = currentDimension;
 
-        HashMap<String, WaypointPosition> positions = new HashMap<>();
+        positions.clear();
 
         if (version == 0) {
             for (String layer : getMarkerLayers(false)){
@@ -151,8 +161,7 @@ public class Pl3xMapConnection extends MapConnection{
 
                 for (Pl3xMapMarkerUpdate marker : markers){
                     if (!Objects.equals(marker.type, "icon")) continue;
-                    WaypointPosition newWaypointPosition = new WaypointPosition(marker.options.tooltip.content, marker.data.point.x, CommonModConfig.Instance.defaultY(), marker.data.point.z);
-                    positions.put(newWaypointPosition.name, newWaypointPosition);
+                    positions.add(new WaypointPosition(marker.options.tooltip.content, marker.data.point.x, CommonModConfig.Instance.defaultY(), marker.data.point.z));
                 }
             }
         } else if (version == 1) {
@@ -164,14 +173,13 @@ public class Pl3xMapConnection extends MapConnection{
                 if (!Objects.equals(layer.id, "pl3xmap_players") && serverEntry.includeMarkerLayer(layer.id)) {
                     for (Pl3xMapAltMarkerUpdate.Marker marker : layer.markers) {
                         if (!Objects.equals(marker.type, "icon")) continue;
-                        WaypointPosition newWaypointPosition = new WaypointPosition(marker.tooltip, marker.point.x, CommonModConfig.Instance.defaultY(), marker.point.z);
-                        positions.put(newWaypointPosition.name, newWaypointPosition);
+                        positions.add(new WaypointPosition(marker.tooltip, marker.point.x, CommonModConfig.Instance.defaultY(), marker.point.z));
                     }
                 }
             }
         }
-        lastResult = positions;
-        return positions;
+        ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
+        //ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers);
     }
 
     @Override

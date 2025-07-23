@@ -19,39 +19,20 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package de.the_build_craft.remote_player_waypoints_for_xaero.common;
+package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
-import com.mojang.authlib.GameProfile;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig;
 
 /**
- * A player's auth profile and position
+ * A wrapper to improve creating temp waypoints for players
  *
  * @author ewpratten
+ * @author eatmyvenom
  * @author Leander Knüttel
- * @version 29.06.2025
+ * @version 23.07.2025
  */
-public class PlayerPosition {
-    public GameProfile gameProfile;
-    public final String player;
-    public final int x;
-    public final int y;
-    public final int z;
-    public final String world;
-
-    public PlayerPosition(String username, int x, int y, int z, String world) {
-        this.player = getDisplayName(username);
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.world = world;
-    }
-
-    public boolean CompareCords(PlayerPosition otherPosition){
-        return (x == otherPosition.x) && (y == otherPosition.y) && (z == otherPosition.z);
-    }
-
-    public static String getDisplayName(String name){
-        return org.apache.commons.lang3.StringEscapeUtils
-                .unescapeHtml4(name.replaceAll("<.+?>|\\R|\\n", "").trim());
+public class PlayerWaypoint extends TempWaypoint {
+    public PlayerWaypoint(PlayerPosition player) {
+        super(player.x, player.y, player.z, player.name, CommonModConfig.Instance.getPlayerWaypointColor(player.name));
     }
 }

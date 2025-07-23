@@ -1,6 +1,7 @@
 /*
  *    This file is part of the Remote player waypoints for Xaero's Map mod
  *    licensed under the GNU GPL v3 License.
+ *    (some parts of this file are originally from "RemotePlayers" by ewpratten)
  *
  *    Copyright (C) 2024  Leander Knüttel
  *
@@ -18,17 +19,22 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package de.the_build_craft.remote_player_waypoints_for_xaero.common.connections;
+package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
 /**
- * JSON object from dynmap API. Used to read the first world name.
+ * A marker's name and position
  *
+ * @author ewpratten
+ * @author eatmyvenom
  * @author Leander Knüttel
- * @version 14.06.2024
+ * @version 23.07.2025
  */
-public class DynmapConfiguration {
-    public World[] worlds;
-    public static class World{
-        public String name;
+public class WaypointPosition extends Position {
+    public WaypointPosition(String name, int x, int y, int z) {
+        super(name, x, y, z);
+    }
+
+    public WaypointPosition(String name, float x, float y, float z) {
+        super(name, x, y, z);
     }
 }

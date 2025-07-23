@@ -20,9 +20,11 @@
 
 package de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates;
 
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Int3;
+
 /**
  * @author Leander Knüttel
- * @version 28.06.2025
+ * @version 23.07.2025
  */
 public class Pl3xMapPlayerUpdate {
     public static class Player {
@@ -30,11 +32,7 @@ public class Pl3xMapPlayerUpdate {
         public String world;
         public int x;
         public int z;
-        public Position position;
-        public static class Position{
-            public int x;
-            public int z;
-        }
+        public Int3 position;
     }
 
     public static class WorldSetting {

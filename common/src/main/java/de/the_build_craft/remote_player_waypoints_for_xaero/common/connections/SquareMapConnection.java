@@ -22,8 +22,12 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.common.connections;
 
 import com.google.common.reflect.TypeToken;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.*;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.ClientMapHandler;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.configurations.SquareMapConfiguration;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.SquareMapMarkerUpdate;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.SquareMapPlayerUpdate;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.PlayerPosition;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.WaypointPosition;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Utils;
 
 import java.io.IOException;
@@ -35,7 +39,7 @@ import java.util.*;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 21.04.2025
+ * @version 23.07.2025
  */
 public class SquareMapConnection extends MapConnection {
     private String markerStringTemplate = "";
@@ -111,41 +115,44 @@ public class SquareMapConnection extends MapConnection {
     }
 
     String lastMarkerDimension = "";
-    HashMap<String, WaypointPosition> lastResult = new HashMap<>();
+    List<WaypointPosition> positions = new ArrayList<>();
 
     @Override
-    public HashMap<String, WaypointPosition> getWaypointPositions() throws IOException {
+    public void getWaypointPositions() throws IOException {
         if (markerStringTemplate.isEmpty() || currentDimension.isEmpty()) {
-            return new HashMap<>();
+            if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().removeAllMarkerWaypoints();
+            return;
         }
-        if (lastMarkerDimension.equals(currentDimension)) {
-            return lastResult;
-        }
-        lastMarkerDimension = currentDimension;
-
-        Type apiResponseType = new TypeToken<SquareMapMarkerUpdate[]>() {}.getType();
-
         CommonModConfig.ServerEntry serverEntry = CommonModConfig.Instance.getCurrentServerEntry();
         if (serverEntry.markerVisibilityMode == CommonModConfig.ServerEntry.MarkerVisibilityMode.Auto) {
             CommonModConfig.Instance.setMarkerLayers(serverEntry.ip, new ArrayList<>(getMarkerLayers()));
         }
 
+        if (ClientMapHandler.getInstance() == null) return;
+
+        if (lastMarkerDimension.equals(currentDimension)) {
+            ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
+            return;
+        }
+        lastMarkerDimension = currentDimension;
+
+        Type apiResponseType = new TypeToken<SquareMapMarkerUpdate[]>() {}.getType();
+
         URL reqUrl = URI.create(markerStringTemplate.replace("{world}", currentDimension)).toURL();
         SquareMapMarkerUpdate[] markersLayers = HTTP.makeJSONHTTPRequest(reqUrl, apiResponseType);
 
-        HashMap<String, WaypointPosition> positions = new HashMap<>();
+        positions.clear();
 
         for (SquareMapMarkerUpdate markerLayer : markersLayers){
             if (!serverEntry.includeMarkerLayer(markerLayer.name)) continue;
 
             for (SquareMapMarkerUpdate.Marker marker : markerLayer.markers){
                 if (Objects.equals(marker.type, "icon")) {
-                    WaypointPosition newWaypointPosition = new WaypointPosition(marker.tooltip, marker.point.x, CommonModConfig.Instance.defaultY(), marker.point.z);
-                    positions.put(newWaypointPosition.name, newWaypointPosition);
+                    positions.add(new WaypointPosition(marker.tooltip, marker.point.x, CommonModConfig.Instance.defaultY(), marker.point.z));
                 }
             }
         }
-        lastResult = positions;
-        return positions;
+        ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
+        //ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers);
     }
 }
