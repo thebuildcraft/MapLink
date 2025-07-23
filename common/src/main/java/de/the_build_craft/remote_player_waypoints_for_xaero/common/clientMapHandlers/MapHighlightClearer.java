@@ -2,7 +2,7 @@
  *    This file is part of the Remote player waypoints for Xaero's Map mod
  *    licensed under the GNU GPL v3 License.
  *
- *    Copyright (C) 2025  Leander Knüttel
+ *    Copyright (C) 2025  Leander Knüttel and contributors
  *
  *    This program is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by

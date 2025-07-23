@@ -3,7 +3,7 @@
  *    licensed under the GNU GPL v3 License.
  *    (some parts of this file are originally from "RemotePlayers" by ewpratten)
  *
- *    Copyright (C) 2024  Leander Knüttel
+ *    Copyright (C) 2024 - 2025  Leander Knüttel and contributors
  *
  *    This program is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
