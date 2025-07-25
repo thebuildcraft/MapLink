@@ -36,7 +36,7 @@ import java.net.URL;
  * @author ewpratten
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 21.04.2025
+ * @version 25.07.2025
  */
 public class HTTP {
 
@@ -80,6 +80,8 @@ public class HTTP {
         request.setRequestMethod("GET");
         request.setRequestProperty("Content-Type", "application/json");
         request.setInstanceFollowRedirects(true);
+        request.setConnectTimeout(10_000);
+        request.setReadTimeout(10_000);
 
         // Get the content
         BufferedReader responseReader = new BufferedReader(new InputStreamReader(request.getInputStream()));
