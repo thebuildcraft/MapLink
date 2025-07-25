@@ -40,21 +40,19 @@ import java.lang.reflect.Type;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 23.07.2025
+ * @version 25.07.2025
  */
 public class BlueMapConnection extends MapConnection {
     public int lastWorldIndex;
-    public List<URL> playerUrls;
-    public List<URL> markerUrls;
+    public List<URL> playerUrls = new ArrayList<>();
+    public List<URL> markerUrls = new ArrayList<>();
     public List<String> worlds = new ArrayList<>();
 
     public BlueMapConnection(CommonModConfig.ServerEntry serverEntry, UpdateTask updateTask) throws IOException {
-        playerUrls = new ArrayList<>();
-        markerUrls = new ArrayList<>();
         try {
             generateLinks(serverEntry, true);
         }
-        catch (Exception ignored){
+        catch (Exception suppressed){
             try {
                 generateLinks(serverEntry, false);
             }
@@ -63,12 +61,16 @@ public class BlueMapConnection extends MapConnection {
                     updateTask.linkBrokenErrorWasShown = true;
                     Utils.sendErrorToClientChat("[" + AbstractModInitializer.MOD_NAME + "]: Error: Your Bluemap link is broken!");
                 }
+                e.addSuppressed(suppressed);
                 throw e;
             }
         }
     }
 
     private void generateLinks(CommonModConfig.ServerEntry serverEntry, boolean useHttps) throws IOException {
+        playerUrls.clear();
+        markerUrls.clear();
+        worlds.clear();
         String baseURL = getBaseURL(serverEntry, useHttps);
         AbstractModInitializer.LOGGER.info("baseURL " + baseURL);
         // Get config and build the urls
