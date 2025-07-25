@@ -38,7 +38,7 @@ plugins {
     id "dev.architectury.loom" version "1.10-SNAPSHOT" apply false
 
     // Modpublisher: publish to Github, Modrinth and Curseforge in one go
-    id "com.hypherionmc.modutils.modpublisher" version "2.1.6"
+    id "com.hypherionmc.modutils.modpublisher" version "2.1.7"
 }
 
 
