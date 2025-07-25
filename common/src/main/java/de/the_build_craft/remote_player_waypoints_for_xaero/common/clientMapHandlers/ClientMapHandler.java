@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 
 /**
  * @author Leander Knüttel
- * @version 23.07.2025
+ * @version 25.07.2025
  */
 public abstract class ClientMapHandler {
     private static ClientMapHandler instance;
@@ -217,5 +217,5 @@ public abstract class ClientMapHandler {
 
     public abstract void handleAreaMarkers(List<AreaMarker> markerPositions);
 
-    public abstract void removeAllAreaMarkers();
+    public abstract void removeAllAreaMarkers(boolean clearXaeroHash);
 }

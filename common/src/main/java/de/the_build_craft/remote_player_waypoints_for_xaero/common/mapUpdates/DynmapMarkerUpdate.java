@@ -28,7 +28,7 @@ import java.util.Map;
  *
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 23.07.2025
+ * @version 25.07.2025
  */
 public class DynmapMarkerUpdate {
     public static class Set {
@@ -45,12 +45,21 @@ public class DynmapMarkerUpdate {
             public float opacity;
             public String label;
             public float[] x = new float[0];
-            public float[] y = new float[0];
+            public float[] z = new float[0];
+        }
+        public static class Circle extends Marker {
+            public String fillcolor;
+            public float fillopacity;
+            public String color;
+            public float opacity;
+            public float xr;
+            public float zr;
         }
 
         public String label;
         public Map<String, Marker> markers = new HashMap<>();
         public Map<String, Area> areas = new HashMap<>();
+        public Map<String, Circle> circles = new HashMap<>();
     }
 
     public Map<String, Set> sets = new HashMap<>();

@@ -23,6 +23,7 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.fabric;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.MapHighlightClearer;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.XaeroClientMapHandler;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.ChunkHighlight;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.MathUtils;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Text;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.Registries;
@@ -37,7 +38,7 @@ import java.util.List;
 
 /**
  * @author Leander Knüttel
- * @version 23.07.2025
+ * @version 25.07.2025
  */
 public class AreaMarkerHighlighter extends ChunkHighlighter implements MapHighlightClearer {
     public AreaMarkerHighlighter() {
@@ -54,25 +55,36 @@ public class AreaMarkerHighlighter extends ChunkHighlighter implements MapHighli
 
     @Override
     protected int[] getColors(ResourceKey<Level> dimension, int chunkX, int chunkZ) {
-        long key = ((long) chunkX << 32) | chunkZ;
+        long key = MathUtils.combineIntsToLong(chunkX, chunkZ);
         if (!XaeroClientMapHandler.chunkHighlightMap.containsKey(key)) return null;
         ChunkHighlight chunkHighlight = XaeroClientMapHandler.chunkHighlightMap.get(key);
-        return new int[]{//TODO check sides
-                chunkHighlight.fillColor.getAsBGRA(.5f, 0f, .7f),
-                chunkHighlight.lineColor.getAsBGRA(.5f, 0f, .7f),
-                chunkHighlight.lineColor.getAsBGRA(.5f, 0f, .7f),
-                chunkHighlight.lineColor.getAsBGRA(.5f, 0f, .7f),
-                chunkHighlight.lineColor.getAsBGRA(.5f, 0f, .7f)};
+        ChunkHighlight top = XaeroClientMapHandler.chunkHighlightMap
+                .getOrDefault(MathUtils.combineIntsToLong(chunkX, chunkZ - 1), ChunkHighlight.NullHighlight);
+        ChunkHighlight bottom = XaeroClientMapHandler.chunkHighlightMap
+                .getOrDefault(MathUtils.combineIntsToLong(chunkX, chunkZ + 1), ChunkHighlight.NullHighlight);
+        ChunkHighlight left = XaeroClientMapHandler.chunkHighlightMap
+                .getOrDefault(MathUtils.combineIntsToLong(chunkX - 1, chunkZ), ChunkHighlight.NullHighlight);
+        ChunkHighlight right = XaeroClientMapHandler.chunkHighlightMap
+                .getOrDefault(MathUtils.combineIntsToLong(chunkX + 1, chunkZ), ChunkHighlight.NullHighlight);
+        int fillColor = chunkHighlight.fillColor.changeAlphaToNew(.5f, 0f, .7f).getAsBGRA();
+        int lineColor = chunkHighlight.lineColor.changeAlphaToNew(1f, 0f, 1f).getAsBGRA();
+        return new int[]{
+                fillColor,
+                top.name.equals(chunkHighlight.name) ? fillColor : lineColor,
+                right.name.equals(chunkHighlight.name) ? fillColor : lineColor,
+                bottom.name.equals(chunkHighlight.name) ? fillColor : lineColor,
+                left.name.equals(chunkHighlight.name) ? fillColor : lineColor
+        };
     }
 
     @Override
     public Component getChunkHighlightSubtleTooltip(ResourceKey<Level> dimension, int chunkX, int chunkZ) {
-        return Text.literal(XaeroClientMapHandler.chunkHighlightMap.get(((long) chunkX << 32) | chunkZ  & 0xFFFFFFFFL).setName);
+        return Text.literal(XaeroClientMapHandler.chunkHighlightMap.get(MathUtils.combineIntsToLong(chunkX, chunkZ)).setName);
     }
 
     @Override
     public Component getChunkHighlightBluntTooltip(ResourceKey<Level> dimension, int chunkX, int chunkZ) {
-        return Text.literal(XaeroClientMapHandler.chunkHighlightMap.get(((long) chunkX << 32) | chunkZ  & 0xFFFFFFFFL).name);
+        return Text.literal(XaeroClientMapHandler.chunkHighlightMap.get(MathUtils.combineIntsToLong(chunkX, chunkZ)).name);
     }
 
     @Override
@@ -82,12 +94,12 @@ public class AreaMarkerHighlighter extends ChunkHighlighter implements MapHighli
 
     @Override
     public boolean regionHasHighlights(ResourceKey<Level> dimension, int regionX, int regionZ) {
-        return XaeroClientMapHandler.regionsWithChunkHighlights.contains(((long) regionX << 32) | regionZ & 0xFFFFFFFFL);
+        return XaeroClientMapHandler.regionsWithChunkHighlights.contains(MathUtils.combineIntsToLong(regionX, regionZ));
     }
 
     @Override
     public boolean chunkIsHighlit(ResourceKey<Level> dimension, int chunkX, int chunkZ) {
-        return XaeroClientMapHandler.chunkHighlightMap.containsKey(((long) chunkX << 32) | chunkZ & 0xFFFFFFFFL);
+        return XaeroClientMapHandler.chunkHighlightMap.containsKey(MathUtils.combineIntsToLong(chunkX, chunkZ));
     }
 
     @Override

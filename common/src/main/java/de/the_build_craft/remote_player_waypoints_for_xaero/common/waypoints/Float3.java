@@ -22,7 +22,7 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
 /**
  * @author Leander Knüttel
- * @version 23.07.2025
+ * @version 25.07.2025
  */
 public class Float3 {
     public float x;
@@ -33,6 +33,12 @@ public class Float3 {
         this.x = x;
         this.y = y;
         this.z = z;
+    }
+
+    public Float3(double x, double y, double z) {
+        this.x = (float) x;
+        this.y = (float) y;
+        this.z = (float) z;
     }
 
     @Override

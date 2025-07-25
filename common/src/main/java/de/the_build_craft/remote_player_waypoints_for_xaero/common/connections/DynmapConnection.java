@@ -26,9 +26,7 @@ import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHand
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.configurations.DynmapConfiguration;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.DynmapMarkerUpdate;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.DynmapPlayerUpdate;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.AreaMarker;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.PlayerPosition;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.WaypointPosition;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.*;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Utils;
 
 import java.io.IOException;
@@ -43,7 +41,7 @@ import java.util.regex.Pattern;
  * @author ewpratten
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 23.07.2025
+ * @version 25.07.2025
  */
 public class DynmapConnection extends MapConnection {
     private String markerStringTemplate = "";
@@ -290,12 +288,40 @@ public class DynmapConnection extends MapConnection {
                 positions.add(new WaypointPosition(m.label, m.x, m.y, m.z));
             }
             for (DynmapMarkerUpdate.Set.Area a : set.areas.values()) {
-                //TODO: make points from both arrays
-                //areaMarkers.add(new AreaMarker(a.label, 0, 0, 0, ))
+                if (a.x.length < 2 || a.z.length < 2 || a.x.length != a.z.length) continue;
+                Float3[] points;
+                if (a.x.length > 2) {
+                    points = new Float3[a.x.length];
+                    for (int i = 0; i < a.x.length; i++) {
+                        points[i] = new Float3(a.x[i], 0, a.z[i]);
+                    }
+                } else {
+                    points = new Float3[]{
+                            new Float3(a.x[0], 0, a.z[0]),
+                            new Float3(a.x[0], 0, a.z[1]),
+                            new Float3(a.x[1], 0, a.z[1]),
+                            new Float3(a.x[1], 0, a.z[0]),
+                    };
+                }
+                areaMarkers.add(new AreaMarker(a.label, 0f, 0f, 0f, points,
+                        new Color(a.color, a.opacity), new Color(a.fillcolor, a.fillopacity), set.label));
             }
-            //TODO: circle area markers
+            for (DynmapMarkerUpdate.Set.Circle c : set.circles.values()) {
+                areaMarkers.add(new AreaMarker(c.label, c.x, c.y, c.z, convertEllipseToPolygon(c),
+                        new Color(c.color, c.opacity), new Color(c.fillcolor, c.fillopacity), set.label));
+            }
         }
         ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
         ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers);
+    }
+
+    Float3[] convertEllipseToPolygon(DynmapMarkerUpdate.Set.Circle circle) {
+        int N = 40;
+        Float3[] points = new Float3[N];
+        for (int i = 0; i < N; i++) {
+            double a = (Math.PI * 2 / N) * i;
+            points[i] = new Float3(circle.x + circle.xr * Math.sin(a), circle.y, circle.z + circle.zr * Math.cos(a));
+        }
+        return points;
     }
 }

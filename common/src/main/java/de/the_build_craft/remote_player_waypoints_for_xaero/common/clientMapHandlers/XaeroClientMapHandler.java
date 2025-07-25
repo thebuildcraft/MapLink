@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 
 /**
  * @author Leander Knüttel
- * @version 23.07.2025
+ * @version 25.07.2025
  */
 public class XaeroClientMapHandler extends ClientMapHandler {
     #if MC_VER == MC_1_17_1
@@ -58,8 +58,8 @@ public class XaeroClientMapHandler extends ClientMapHandler {
     Map<String, Integer> playerWaypointNamesIndexes;
     Map<String, Integer> markerWaypointKeysIndexes;
 
-    public static Map<Long, ChunkHighlight> chunkHighlightMap = new HashMap<>();
-    public static Set<Long> regionsWithChunkHighlights = new HashSet<>();
+    public static final Map<Long, ChunkHighlight> chunkHighlightMap = new HashMap<>();
+    public static final Set<Long> regionsWithChunkHighlights = new HashSet<>();
     public static int chunkHighlightHash;
     public static MapHighlightClearer mapHighlightClearer;
 
@@ -235,7 +235,7 @@ public class XaeroClientMapHandler extends ClientMapHandler {
 
     @Override
     public void handleAreaMarkers(List<AreaMarker> markerPositions) {
-        removeAllAreaMarkers();
+        removeAllAreaMarkers(false);
         for (Map.Entry<AreaMarker, List<Long>> cords : markerPositions.parallelStream()
                 .collect(Collectors.toMap(a -> a, this::rasterizeAreaMarker)).entrySet()) {
             for (long cord : cords.getValue()) {
@@ -245,25 +245,30 @@ public class XaeroClientMapHandler extends ClientMapHandler {
         if (mapHighlightClearer != null) mapHighlightClearer.clearHashCache();
     }
 
-    static long getChunkKey(int chunkX, int chunkZ) {
-        return ((long) chunkX << 32) | chunkZ & 0xFFFFFFFFL;
-    }
-
     private void createChunkHighlightAt(AreaMarker areaMarker, long chunkKey) {
-        ChunkHighlight chunkHighlight = chunkHighlightMap.get(chunkKey);
-        if (chunkHighlight != null) {
-            if (!chunkHighlight.name.equals(areaMarker.name)) chunkHighlight.combine(new ChunkHighlight(areaMarker));
-        } else {
-            chunkHighlightMap.put(chunkKey, new ChunkHighlight(areaMarker));
+        synchronized (chunkHighlightMap){
+            synchronized (regionsWithChunkHighlights) {
+                ChunkHighlight chunkHighlight = chunkHighlightMap.get(chunkKey);
+                if (chunkHighlight != null) {
+                    chunkHighlight.combine(areaMarker);
+                } else {
+                    chunkHighlightMap.put(chunkKey, new ChunkHighlight(areaMarker));
+                }
+                regionsWithChunkHighlights.add(MathUtils.shiftRightIntsInLong(chunkKey, 5));
+            }
         }
-        regionsWithChunkHighlights.add(((chunkKey >> 5) & 0xFFFFFFFF00000000L) | ((chunkKey & 0xFFFFFFFFL) >> 5));
     }
 
     @Override
-    public void removeAllAreaMarkers() {
-        chunkHighlightHash = (chunkHighlightHash + 1) % 10000;
-        chunkHighlightMap.clear();
-        regionsWithChunkHighlights.clear();
+    public void removeAllAreaMarkers(boolean clearXaeroHash) {
+        synchronized (chunkHighlightMap){
+            synchronized (regionsWithChunkHighlights) {
+                chunkHighlightHash = (chunkHighlightHash + 1) % 10000;
+                chunkHighlightMap.clear();
+                regionsWithChunkHighlights.clear();
+            }
+        }
+        if (clearXaeroHash && mapHighlightClearer != null) mapHighlightClearer.clearHashCache();
     }
 
     //Thanks to https://www.mathematik.uni-marburg.de/~thormae/lectures/graphics1/code_v2/RasterPoly/index.html
@@ -294,17 +299,29 @@ public class XaeroClientMapHandler extends ClientMapHandler {
                     edges.add(new Edge(point, otherPoint));
                 }
             }
-            int area = (globalXMax - globalXMin) * (globalZMax - globalZMin);
-            if (area > 50_000) {
+            int area = (1 + globalXMax - globalXMin) * (1 + globalZMax - globalZMin);
+            if (area > 500_000) {
                 AbstractModInitializer.LOGGER.warn("polygon to large: " + areaMarker.name);
                 return new ArrayList<>();
             }
             List<Long> result = new ArrayList<>(area);
+            if (globalXMin == globalXMax) {
+                for (int z = globalZMin; z <= globalZMax; z++) {
+                    result.add(MathUtils.combineIntsToLong(globalXMin, z));
+                }
+                return result;
+            } else if (globalZMin == globalZMax) {
+                for (int x = globalXMin; x <= globalXMax; x++) {
+                    result.add(MathUtils.combineIntsToLong(x, globalZMin));
+                }
+                return result;
+            }
+
             Collections.sort(edges);
 
             for (Edge edge : horizontalEdges) {
                 for (int x = edge.xMin; x <= edge.xMax; x++) {
-                    result.add(getChunkKey(x, edge.zMin));
+                    result.add(MathUtils.combineIntsToLong(x, edge.zMin));
                 }
             }
 
@@ -333,7 +350,7 @@ public class XaeroClientMapHandler extends ClientMapHandler {
                         if (i != intersections.size() - 2) xMax--;
 
                         for (int x = xMin; x <= xMax; x++) {
-                            result.add(getChunkKey(x, z));
+                            result.add(MathUtils.combineIntsToLong(x, z));
                         }
                     }
                 } else {

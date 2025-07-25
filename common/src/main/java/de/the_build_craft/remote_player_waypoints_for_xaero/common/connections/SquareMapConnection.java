@@ -26,6 +26,8 @@ import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHand
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.configurations.SquareMapConfiguration;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.SquareMapMarkerUpdate;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.SquareMapPlayerUpdate;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.AreaMarker;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Color;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.PlayerPosition;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.WaypointPosition;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Utils;
@@ -39,7 +41,7 @@ import java.util.*;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 23.07.2025
+ * @version 25.07.2025
  */
 public class SquareMapConnection extends MapConnection {
     private String markerStringTemplate = "";
@@ -142,6 +144,7 @@ public class SquareMapConnection extends MapConnection {
         SquareMapMarkerUpdate[] markersLayers = HTTP.makeJSONHTTPRequest(reqUrl, apiResponseType);
 
         positions.clear();
+        List<AreaMarker> areaMarkers = new ArrayList<>();
 
         for (SquareMapMarkerUpdate markerLayer : markersLayers){
             if (!serverEntry.includeMarkerLayer(markerLayer.name)) continue;
@@ -150,9 +153,13 @@ public class SquareMapConnection extends MapConnection {
                 if (Objects.equals(marker.type, "icon")) {
                     positions.add(new WaypointPosition(marker.tooltip, marker.point.x, CommonModConfig.Instance.defaultY(), marker.point.z));
                 }
+                else if (Objects.equals(marker.type, "polygon")) {
+                    areaMarkers.add(new AreaMarker(marker.tooltip, 0, 0, 0, marker.points[0][0],//TODO: implement polygon holes
+                            new Color(marker.color, 1f), new Color(marker.fillColor, marker.opacity), markerLayer.name));
+                }
             }
         }
         ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
-        //ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers);
+        ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers);
     }
 }

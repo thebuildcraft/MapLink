@@ -20,17 +20,23 @@
 
 package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * @author Leander Knüttel
- * @version 23.07.2025
+ * @version 25.07.2025
  */
 public class ChunkHighlight {
     public String name;
     public String setName;
     public Color fillColor;
     public Color lineColor;
+    Set<AreaMarker> areas = new HashSet<>();
 
-    public ChunkHighlight(String name, Color fillColor, Color lineColor, String setName) {
+    public static final ChunkHighlight NullHighlight = new ChunkHighlight("", new Color(), new Color(), "");
+
+    private ChunkHighlight(String name, Color fillColor, Color lineColor, String setName) {
         this.name = name;
         this.fillColor = fillColor;
         this.lineColor = lineColor;
@@ -39,13 +45,16 @@ public class ChunkHighlight {
 
     public ChunkHighlight(AreaMarker areaMarker) {
         this(areaMarker.name, areaMarker.fillColor, areaMarker.lineColor, areaMarker.SetName);
+        areas.add(areaMarker);
     }
 
-    public void combine(ChunkHighlight chunkHighlight) {
-        if (name.contains(chunkHighlight.name)) return;
+    public void combine(AreaMarker areaMarker) {
+        if (areas.contains(areaMarker)) return;
+        areas.add(areaMarker);
+        ChunkHighlight chunkHighlight = new ChunkHighlight(areaMarker);
         name += " | " + chunkHighlight.name;
         setName += " | " + chunkHighlight.setName;
-        fillColor.combine(chunkHighlight.fillColor);
-        lineColor.combine(chunkHighlight.lineColor);
+        fillColor = fillColor.combineToNew(chunkHighlight.fillColor);
+        lineColor = lineColor.combineToNew(chunkHighlight.lineColor);
     }
 }

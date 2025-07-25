@@ -24,7 +24,6 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.common;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.ClientMapHandler;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.connections.*;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.PlayerPosition;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.WaypointPosition;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Text;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Utils;
 import net.minecraft.ChatFormatting;
@@ -43,7 +42,7 @@ import java.util.*;
  * @author eatmyvenom
  * @author TheMrEngMan
  * @author Leander Knüttel
- * @version 23.07.2025
+ * @version 25.07.2025
  */
 public class UpdateTask extends TimerTask {
     private final Minecraft mc;
@@ -90,7 +89,7 @@ public class UpdateTask extends TimerTask {
             Reset();
             if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().removeAllPlayerWaypoints();
             if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().removeAllMarkerWaypoints();
-            if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().removeAllAreaMarkers();
+            if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().removeAllAreaMarkers(true);
             return;
         }
 
@@ -98,6 +97,7 @@ public class UpdateTask extends TimerTask {
         String serverIP = mc.getCurrentServer().ip.toLowerCase(Locale.ROOT);
 
         if (!Objects.equals(currentServerIP, serverIP)){
+            if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().removeAllAreaMarkers(true);
             currentServerIP = serverIP;
             Reset();
             AbstractModInitializer.LOGGER.info("Server ip has changed!");

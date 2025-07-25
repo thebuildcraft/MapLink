@@ -20,36 +20,30 @@
 
 package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
-import java.util.Arrays;
-
 /**
  * @author Leander Knüttel
  * @version 25.07.2025
  */
-public class AreaMarker extends Position {
-    public final Float3[] points;
-    public final Color lineColor;
-    public final Color fillColor;
-    public String SetName;
+public class MathUtils {
+    private MathUtils(){}
 
-    public AreaMarker(String name, int x, int y, int z, Int3[] points, Color lineColor, Color fillColor, String setName) {
-        super(name, x, y, z);
-        this.points = Arrays.stream(points).map(Int3::toFloat3).toArray(Float3[]::new);
-        this.lineColor = lineColor;
-        this.fillColor = fillColor;
-        this.SetName = setName;
+    public static long combineIntsToLong(int a, int b) {
+        return (((long) a) << 32) | (b & 0xFFFFFFFFL);
     }
 
-    public AreaMarker(String name, float x, float y, float z, Float3[] points, Color lineColor, Color fillColor, String setName) {
-        super(name, x, y, z);
-        this.points = points;
-        this.lineColor = lineColor;
-        this.fillColor = fillColor;
-        this.SetName = setName;
+    public static int getFirstIntFromLong(long l) {
+        return (int) (l >> 32);
     }
 
-    @Override
-    public String getKey() {
-        return super.getKey() + " " + Arrays.toString(points);
+    public static int getSecondIntFromLong(long l) {
+        return (int) l;
+    }
+
+    public static long shiftRightIntsInLong(long l, int shift) {
+        return combineIntsToLong(getFirstIntFromLong(l) >> shift, getSecondIntFromLong(l) >> shift);
+    }
+
+    public static long shiftLeftIntsInLong(long l, int shift) {
+        return combineIntsToLong(getFirstIntFromLong(l) << shift, getSecondIntFromLong(l) << shift);
     }
 }

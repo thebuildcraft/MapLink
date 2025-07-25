@@ -20,9 +20,11 @@
 
 package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
+import java.util.Objects;
+
 /**
  * @author Leander Knüttel
- * @version 23.07.2025
+ * @version 25.07.2025
  */
 public class Color {
     public int r;
@@ -40,10 +42,11 @@ public class Color {
     }
 
     public Color(String hex, float a) {
+        if (hex == null) hex = "000000";
         hex = hex.replace("#", "");
-        r = Integer.parseInt(hex.substring(0, 2));
-        g = Integer.parseInt(hex.substring(2, 4));
-        b = Integer.parseInt(hex.substring(4, 6));
+        r = Integer.parseInt(hex.substring(0, 2), 16);
+        g = Integer.parseInt(hex.substring(2, 4), 16);
+        b = Integer.parseInt(hex.substring(4, 6), 16);
         this.a = a;
     }
 
@@ -55,18 +58,55 @@ public class Color {
         return (r & 255) << 16 | (g & 255) << 8 | (b & 255) | ((int)(a * 255) & 255) << 24;
     }
 
-    public int getAsBGRA(float alphaMul, float alphaMin, float alphaMax) {
-        return (r & 255) << 8 | (g & 255) << 16 | (b & 255) << 24 | ((int)(Math.clamp(a * alphaMul, alphaMin, alphaMax) * 255) & 255);
-    }
-
     public int getAsBGRA() {
-        return getAsBGRA(1, 0, 1);
+        return (r & 255) << 8 | (g & 255) << 16 | (b & 255) << 24 | ((int)(a * 255) & 255);
     }
 
-    public void combine(Color color) {
-        r = (r + color.r) & 255;
-        g = (g + color.g) & 255;
-        b = (b + color.b) & 255;
+    public Color combineToThis(Color color) {
+        r = ((r + color.r) / 2) & 255;
+        g = ((g + color.g) / 2) & 255;
+        b = ((b + color.b) / 2) & 255;
         a = Math.max(a, color.a);
+        return this;
+    }
+
+    public Color combineToNew(Color color) {
+        return clone().combineToThis(color);
+    }
+
+    public Color changeAlphaInThis(float alphaMul, float alphaMin, float alphaMax) {
+        a = Math.clamp(a * alphaMul, alphaMin, alphaMax);
+        return this;
+    }
+
+    public Color changeAlphaToNew(float alphaMul, float alphaMin, float alphaMax) {
+        return clone().changeAlphaInThis(alphaMul, alphaMin, alphaMax);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Color color = (Color) o;
+        return r == color.r && g == color.g && b == color.b && Float.compare(a, color.a) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(r, g, b, a);
+    }
+
+    @Override
+    public Color clone() {
+        return new Color(r, g, b, a);
+    }
+
+    @Override
+    public String toString() {
+        return "Color{" +
+                "r=" + r +
+                ", g=" + g +
+                ", b=" + b +
+                ", a=" + a +
+                '}';
     }
 }
