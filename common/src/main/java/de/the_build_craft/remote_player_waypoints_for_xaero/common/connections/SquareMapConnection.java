@@ -41,7 +41,7 @@ import java.util.*;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 25.07.2025
+ * @version 26.07.2025
  */
 public class SquareMapConnection extends MapConnection {
     private String markerStringTemplate = "";
@@ -118,11 +118,15 @@ public class SquareMapConnection extends MapConnection {
 
     String lastMarkerDimension = "";
     List<WaypointPosition> positions = new ArrayList<>();
+    List<AreaMarker> areaMarkers = new ArrayList<>();
 
     @Override
     public void getWaypointPositions() throws IOException {
         if (markerStringTemplate.isEmpty() || currentDimension.isEmpty()) {
-            if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().removeAllMarkerWaypoints();
+            if (ClientMapHandler.getInstance() != null) {
+                ClientMapHandler.getInstance().removeAllMarkerWaypoints();
+                ClientMapHandler.getInstance().removeAllAreaMarkers(true);
+            }
             return;
         }
         CommonModConfig.ServerEntry serverEntry = CommonModConfig.Instance.getCurrentServerEntry();
@@ -134,6 +138,7 @@ public class SquareMapConnection extends MapConnection {
 
         if (lastMarkerDimension.equals(currentDimension)) {
             ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
+            ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers, false);
             return;
         }
         lastMarkerDimension = currentDimension;
@@ -144,7 +149,7 @@ public class SquareMapConnection extends MapConnection {
         SquareMapMarkerUpdate[] markersLayers = HTTP.makeJSONHTTPRequest(reqUrl, apiResponseType);
 
         positions.clear();
-        List<AreaMarker> areaMarkers = new ArrayList<>();
+        areaMarkers.clear();
 
         for (SquareMapMarkerUpdate markerLayer : markersLayers){
             if (!serverEntry.includeMarkerLayer(markerLayer.name)) continue;
@@ -160,6 +165,6 @@ public class SquareMapConnection extends MapConnection {
             }
         }
         ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
-        ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers);
+        ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers, true);
     }
 }

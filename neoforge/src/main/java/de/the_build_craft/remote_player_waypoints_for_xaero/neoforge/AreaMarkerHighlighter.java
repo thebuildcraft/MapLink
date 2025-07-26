@@ -18,7 +18,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package de.the_build_craft.remote_player_waypoints_for_xaero.fabric;
+package de.the_build_craft.remote_player_waypoints_for_xaero.neoforge;
 
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.MapHighlightClearer;

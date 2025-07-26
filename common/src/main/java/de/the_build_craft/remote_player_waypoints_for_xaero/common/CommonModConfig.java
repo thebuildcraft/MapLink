@@ -30,7 +30,7 @@ import java.util.Objects;
 
 /**
  * @author Leander Knüttel
- * @version 21.04.2025
+ * @version 26.07.2025
  */
 public abstract class CommonModConfig {
     public CommonModConfig() {
@@ -42,7 +42,9 @@ public abstract class CommonModConfig {
     public abstract boolean enabled();
     public abstract boolean enablePlayerWaypoints();
     public abstract boolean enableMarkerWaypoints();
+    public abstract boolean enableAreaMarkers();
     public abstract boolean enableEntityRadar();
+
     public abstract WaypointRenderBelowMode minimapWaypointsRenderBelow();
     public abstract int updateDelay();
     public abstract int minDistance();
@@ -66,6 +68,14 @@ public abstract class CommonModConfig {
     public abstract void setMarkerLayers(String ip, List<String> layers);
     public abstract void setIgnoreMarkerMessage(boolean on);
     public abstract boolean ignoreMarkerMessage();
+
+    public abstract float areaFillAlphaMul();
+    public abstract float areaFillAlphaMin();
+    public abstract float areaFillAlphaMax();
+    public abstract float areaLineAlphaMul();
+    public abstract float areaLineAlphaMin();
+    public abstract float areaLineAlphaMax();
+    public abstract int blocksPerChunkThreshold();
 
     public abstract List<String> friendList();
     public abstract boolean onlyShowFriendsWaypoints();

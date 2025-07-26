@@ -42,7 +42,7 @@ import java.util.*;
  * @author eatmyvenom
  * @author TheMrEngMan
  * @author Leander Knüttel
- * @version 25.07.2025
+ * @version 26.07.2025
  */
 public class UpdateTask extends TimerTask {
     private final Minecraft mc;
@@ -87,9 +87,11 @@ public class UpdateTask extends TimerTask {
         // Skip if disabled
         if (!AbstractModInitializer.enabled) {
             Reset();
-            if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().removeAllPlayerWaypoints();
-            if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().removeAllMarkerWaypoints();
-            if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().removeAllAreaMarkers(true);
+            if (ClientMapHandler.getInstance() != null) {
+                ClientMapHandler.getInstance().removeAllPlayerWaypoints();
+                ClientMapHandler.getInstance().removeAllMarkerWaypoints();
+                ClientMapHandler.getInstance().removeAllAreaMarkers(true);
+            }
             return;
         }
 
@@ -181,7 +183,7 @@ public class UpdateTask extends TimerTask {
         }
         if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().handlePlayerWaypoints(playerPositions);
 
-        if (CommonModConfig.Instance.enableMarkerWaypoints()){
+        if (CommonModConfig.Instance.enableMarkerWaypoints() || CommonModConfig.Instance.enableAreaMarkers()){
             try {
                 AbstractModInitializer.getConnection().getWaypointPositions();
             } catch (IOException e) {
@@ -192,6 +194,9 @@ public class UpdateTask extends TimerTask {
                 }
                 e.printStackTrace();
             }
+        } else if (ClientMapHandler.getInstance() != null) {
+            ClientMapHandler.getInstance().removeAllMarkerWaypoints();
+            ClientMapHandler.getInstance().removeAllAreaMarkers(true);
         }
 
         AbstractModInitializer.connected = true;

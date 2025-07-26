@@ -35,6 +35,7 @@ import xaero.hud.minimap.waypoint.WaypointColor;
 import xaero.hud.minimap.waypoint.set.WaypointSet;
 import xaero.hud.minimap.world.MinimapWorld;
 #endif
+import it.unimi.dsi.fastutil.longs.*;
 import xaero.common.minimap.waypoints.Waypoint;
 
 import java.util.*;
@@ -42,7 +43,7 @@ import java.util.stream.Collectors;
 
 /**
  * @author Leander Knüttel
- * @version 25.07.2025
+ * @version 26.07.2025
  */
 public class XaeroClientMapHandler extends ClientMapHandler {
     #if MC_VER == MC_1_17_1
@@ -58,8 +59,8 @@ public class XaeroClientMapHandler extends ClientMapHandler {
     Map<String, Integer> playerWaypointNamesIndexes;
     Map<String, Integer> markerWaypointKeysIndexes;
 
-    public static final Map<Long, ChunkHighlight> chunkHighlightMap = new HashMap<>();
-    public static final Set<Long> regionsWithChunkHighlights = new HashSet<>();
+    public static final Long2ObjectMap<ChunkHighlight> chunkHighlightMap = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
+    public static final LongSet regionsWithChunkHighlights = LongSets.synchronize(new LongOpenHashSet());
     public static int chunkHighlightHash;
     public static MapHighlightClearer mapHighlightClearer;
 
@@ -233,41 +234,56 @@ public class XaeroClientMapHandler extends ClientMapHandler {
         }
     }
 
+    boolean enableAreaMarkers = false;
+
     @Override
-    public void handleAreaMarkers(List<AreaMarker> markerPositions) {
+    public void handleAreaMarkers(List<AreaMarker> markerPositions, boolean refresh) {
+        if (AbstractModInitializer.blocksPerChunkThreshold != CommonModConfig.Instance.blocksPerChunkThreshold()
+                || enableAreaMarkers != CommonModConfig.Instance.enableAreaMarkers()
+                || AbstractModInitializer.areaFillAlphaMul != CommonModConfig.Instance.areaFillAlphaMul()
+                || AbstractModInitializer.areaFillAlphaMin != CommonModConfig.Instance.areaFillAlphaMin()
+                || AbstractModInitializer.areaFillAlphaMax != CommonModConfig.Instance.areaFillAlphaMax()
+                || AbstractModInitializer.areaLineAlphaMul != CommonModConfig.Instance.areaLineAlphaMul()
+                || AbstractModInitializer.areaLineAlphaMin != CommonModConfig.Instance.areaLineAlphaMin()
+                || AbstractModInitializer.areaLineAlphaMax != CommonModConfig.Instance.areaLineAlphaMax()) {
+            refresh = true;
+            AbstractModInitializer.blocksPerChunkThreshold = CommonModConfig.Instance.blocksPerChunkThreshold();
+            enableAreaMarkers = CommonModConfig.Instance.enableAreaMarkers();
+            AbstractModInitializer.areaFillAlphaMul = CommonModConfig.Instance.areaFillAlphaMul();
+            AbstractModInitializer.areaFillAlphaMin = CommonModConfig.Instance.areaFillAlphaMin();
+            AbstractModInitializer.areaFillAlphaMax = CommonModConfig.Instance.areaFillAlphaMax();
+            AbstractModInitializer.areaLineAlphaMul = CommonModConfig.Instance.areaLineAlphaMul();
+            AbstractModInitializer.areaLineAlphaMin = CommonModConfig.Instance.areaLineAlphaMin();
+            AbstractModInitializer.areaLineAlphaMax = CommonModConfig.Instance.areaLineAlphaMax();
+        }
+        if (!refresh) return;
         removeAllAreaMarkers(false);
-        for (Map.Entry<AreaMarker, List<Long>> cords : markerPositions.parallelStream()
-                .collect(Collectors.toMap(a -> a, this::rasterizeAreaMarker)).entrySet()) {
-            for (long cord : cords.getValue()) {
-                createChunkHighlightAt(cords.getKey(), cord);
+        if (enableAreaMarkers) {
+            for (Map.Entry<AreaMarker, List<Long>> cords : markerPositions.parallelStream()
+                    .collect(Collectors.toMap(a -> a, this::rasterizeAreaMarker)).entrySet()) {
+                for (long cord : cords.getValue()) {
+                    createChunkHighlightAt(cords.getKey(), cord);
+                }
             }
         }
         if (mapHighlightClearer != null) mapHighlightClearer.clearHashCache();
     }
 
     private void createChunkHighlightAt(AreaMarker areaMarker, long chunkKey) {
-        synchronized (chunkHighlightMap){
-            synchronized (regionsWithChunkHighlights) {
-                ChunkHighlight chunkHighlight = chunkHighlightMap.get(chunkKey);
-                if (chunkHighlight != null) {
-                    chunkHighlight.combine(areaMarker);
-                } else {
-                    chunkHighlightMap.put(chunkKey, new ChunkHighlight(areaMarker));
-                }
-                regionsWithChunkHighlights.add(MathUtils.shiftRightIntsInLong(chunkKey, 5));
-            }
+        ChunkHighlight chunkHighlight = chunkHighlightMap.get(chunkKey);
+        if (chunkHighlight != null) {
+            chunkHighlight.combine(areaMarker);
+        } else {
+            chunkHighlightMap.put(chunkKey, new ChunkHighlight(areaMarker));
         }
+        regionsWithChunkHighlights.add(MathUtils.shiftRightIntsInLong(chunkKey, 5));
     }
 
     @Override
     public void removeAllAreaMarkers(boolean clearXaeroHash) {
-        synchronized (chunkHighlightMap){
-            synchronized (regionsWithChunkHighlights) {
-                chunkHighlightHash = (chunkHighlightHash + 1) % 10000;
-                chunkHighlightMap.clear();
-                regionsWithChunkHighlights.clear();
-            }
-        }
+        chunkHighlightHash = (chunkHighlightHash + 1) % 10000;
+        chunkHighlightMap.clear();
+        regionsWithChunkHighlights.clear();
         if (clearXaeroHash && mapHighlightClearer != null) mapHighlightClearer.clearHashCache();
     }
 
@@ -278,10 +294,9 @@ public class XaeroClientMapHandler extends ClientMapHandler {
             if (areaMarker.points.length == 0) return new ArrayList<>();
 
             Int3[] points = Arrays.stream(areaMarker.points)
-                    .map(f -> f.toInt3().toChunkCords()).toArray(Int3[]::new);
+                    .map(Float3::toInt3).toArray(Int3[]::new);
 
             List<Edge> edges = new ArrayList<>();
-            List<Edge> horizontalEdges = new ArrayList<>();
             int globalXMin = Integer.MAX_VALUE;
             int globalXMax = Integer.MIN_VALUE;
             int globalZMin = Integer.MAX_VALUE;
@@ -293,41 +308,40 @@ public class XaeroClientMapHandler extends ClientMapHandler {
                 globalXMax = Math.max(globalXMax, point.x);
                 globalZMin = Math.min(globalZMin, point.z);
                 globalZMax = Math.max(globalZMax, point.z);
-                if (point.z == otherPoint.z) {
-                    horizontalEdges.add(new Edge(point, otherPoint));
-                } else {
+                if (point.z != otherPoint.z) {
                     edges.add(new Edge(point, otherPoint));
                 }
             }
+            globalXMin >>= 4;
+            globalXMax >>= 4;
+            globalZMin >>= 4;
+            globalZMax >>= 4;
             int area = (1 + globalXMax - globalXMin) * (1 + globalZMax - globalZMin);
             if (area > 500_000) {
                 AbstractModInitializer.LOGGER.warn("polygon to large: " + areaMarker.name);
                 return new ArrayList<>();
             }
-            List<Long> result = new ArrayList<>(area);
+
             if (globalXMin == globalXMax) {
+                List<Long> list = new ArrayList<>(1 + globalZMax - globalZMin);
                 for (int z = globalZMin; z <= globalZMax; z++) {
-                    result.add(MathUtils.combineIntsToLong(globalXMin, z));
+                    list.add(MathUtils.combineIntsToLong(globalXMin, z));
                 }
-                return result;
+                return list;
             } else if (globalZMin == globalZMax) {
+                List<Long> list = new ArrayList<>(1 + globalXMax - globalXMin);
                 for (int x = globalXMin; x <= globalXMax; x++) {
-                    result.add(MathUtils.combineIntsToLong(x, globalZMin));
+                    list.add(MathUtils.combineIntsToLong(x, globalZMin));
                 }
-                return result;
+                return list;
             }
 
+            Long2IntMap result = new Long2IntOpenHashMap(area);
             Collections.sort(edges);
-
-            for (Edge edge : horizontalEdges) {
-                for (int x = edge.xMin; x <= edge.xMax; x++) {
-                    result.add(MathUtils.combineIntsToLong(x, edge.zMin));
-                }
-            }
 
             int z = edges.getFirst().zMin;
             List<Edge> activeEdges = new ArrayList<>();
-            List<Float> intersections = new ArrayList<>();
+            List<Integer> intersections = new ArrayList<>();
 
             while (!edges.isEmpty() || !activeEdges.isEmpty()) {
                 Iterator<Edge> edgeIterator = edges.iterator();
@@ -340,17 +354,17 @@ public class XaeroClientMapHandler extends ClientMapHandler {
 
                 intersections.clear();
                 for (Edge e : activeEdges) {
-                    if (e.zMax != z) intersections.add(e.xHit);
+                    if (e.zMax != z) intersections.add(Math.round(e.xHit));
                 }
 
                 if (intersections.size() % 2 == 0) {
                     for (int i = 0; i < intersections.size() - 1; i += 2) {
-                        int xMin = (int)Math.floor(intersections.get(i));
-                        int xMax = (int)Math.ceil(intersections.get(i+1));
-                        if (i != intersections.size() - 2) xMax--;
+                        int xMin = intersections.get(i);
+                        int xMax = intersections.get(i+1);
 
                         for (int x = xMin; x <= xMax; x++) {
-                            result.add(MathUtils.combineIntsToLong(x, z));
+                            long key = MathUtils.combineIntsToLong(x >> 4, z >> 4);
+                            result.put(key, result.get(key) + 1);
                         }
                     }
                 } else {
@@ -370,7 +384,10 @@ public class XaeroClientMapHandler extends ClientMapHandler {
 
                 z++;
             }
-            return result;
+            return result.long2IntEntrySet().stream()
+                    .filter(entry -> entry.getIntValue() >= AbstractModInitializer.blocksPerChunkThreshold)
+                    .map(Long2IntMap.Entry::getLongKey)
+                    .collect(Collectors.toList());
         } catch (Throwable t) {
             t.printStackTrace();
             return new ArrayList<>();

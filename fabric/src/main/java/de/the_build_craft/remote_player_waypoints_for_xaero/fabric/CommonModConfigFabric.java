@@ -31,7 +31,7 @@ import java.util.Locale;
 
 /**
  * @author Leander Knüttel
- * @version 17.02.2025
+ * @version 26.07.2025
  */
 public class CommonModConfigFabric extends CommonModConfig {
     public CommonModConfigFabric(){
@@ -240,5 +240,45 @@ public class CommonModConfigFabric extends CommonModConfig {
     @Override
     public int friendWaypointColor() {
         return AutoConfig.getConfigHolder(ModConfig.class).getConfig().friends.friendWaypointColor.ordinal();
+    }
+
+    @Override
+    public boolean enableAreaMarkers() {
+        return AutoConfig.getConfigHolder(ModConfig.class).getConfig().general.enableAreaMarkerOverlay;
+    }
+
+    @Override
+    public float areaFillAlphaMul() {
+        return AutoConfig.getConfigHolder(ModConfig.class).getConfig().general.areaFillAlphaMul / 100f;
+    }
+
+    @Override
+    public float areaFillAlphaMin() {
+        return AutoConfig.getConfigHolder(ModConfig.class).getConfig().general.areaFillAlphaMin / 100f;
+    }
+
+    @Override
+    public float areaFillAlphaMax() {
+        return AutoConfig.getConfigHolder(ModConfig.class).getConfig().general.areaFillAlphaMax / 100f;
+    }
+
+    @Override
+    public float areaLineAlphaMul() {
+        return AutoConfig.getConfigHolder(ModConfig.class).getConfig().general.areaLineAlphaMul / 100f;
+    }
+
+    @Override
+    public float areaLineAlphaMin() {
+        return AutoConfig.getConfigHolder(ModConfig.class).getConfig().general.areaLineAlphaMin / 100f;
+    }
+
+    @Override
+    public float areaLineAlphaMax() {
+        return AutoConfig.getConfigHolder(ModConfig.class).getConfig().general.areaLineAlphaMax / 100f;
+    }
+
+    @Override
+    public int blocksPerChunkThreshold() {
+        return AutoConfig.getConfigHolder(ModConfig.class).getConfig().general.blocksPerChunkThreshold;
     }
 }

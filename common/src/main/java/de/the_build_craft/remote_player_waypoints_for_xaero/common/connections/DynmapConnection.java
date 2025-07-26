@@ -41,7 +41,7 @@ import java.util.regex.Pattern;
  * @author ewpratten
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 25.07.2025
+ * @version 26.07.2025
  */
 public class DynmapConnection extends MapConnection {
     private String markerStringTemplate = "";
@@ -248,6 +248,7 @@ public class DynmapConnection extends MapConnection {
 
     String lastMarkerDimension = "";
     List<WaypointPosition> positions = new ArrayList<>();
+    List<AreaMarker> areaMarkers = new ArrayList<>();
 
     @Override
     public void getWaypointPositions() throws IOException {
@@ -270,17 +271,19 @@ public class DynmapConnection extends MapConnection {
         }
         if (markerStringTemplate.isEmpty() || dimension.isEmpty()) {
             ClientMapHandler.getInstance().removeAllMarkerWaypoints();
+            ClientMapHandler.getInstance().removeAllAreaMarkers(true);
         }
         if (lastMarkerDimension.equals(dimension)) {
             ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
+            ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers, false);
             return;
         }
         lastMarkerDimension = dimension;
 
         DynmapMarkerUpdate update = HTTP.makeJSONHTTPRequest(URI.create(markerStringTemplate.replace("{world}", dimension).replace(" ", "%20")).toURL(), DynmapMarkerUpdate.class);
         positions.clear();
+        areaMarkers.clear();
 
-        List<AreaMarker> areaMarkers = new ArrayList<>();
         for (DynmapMarkerUpdate.Set set : update.sets.values()){
             if (!serverEntry.includeMarkerLayer(set.label)) continue;
 
@@ -312,7 +315,7 @@ public class DynmapConnection extends MapConnection {
             }
         }
         ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
-        ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers);
+        ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers, true);
     }
 
     Float3[] convertEllipseToPolygon(DynmapMarkerUpdate.Set.Circle circle) {

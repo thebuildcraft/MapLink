@@ -86,5 +86,22 @@
   "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.maxFriendIconDistance": "max friend icon distance",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.maxFriendIconDistance.@Tooltip": "in m",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.overwriteFriendWaypointColor": "overwrite waypoint color of friends",
-  "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.friendWaypointColor": "friend waypoint color"
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.friendWaypointColor": "friend waypoint color",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.enableAreaMarkerOverlay": "enable area marker overlay",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.enableAreaMarkerOverlay.@Tooltip": "show polygons as an overlay",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.enableAreaMarkerOverlay.@PrefixText": "area marker overlay options",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.areaFillAlphaMul": "area marker fill-color alpha multiplier",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.areaFillAlphaMul.@Tooltip": "in %",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.areaFillAlphaMin": "area marker fill-color alpha min",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.areaFillAlphaMin.@Tooltip": "in %",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.areaFillAlphaMax": "area marker fill-color alpha max",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.areaFillAlphaMax.@Tooltip": "in %",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.areaLineAlphaMul": "area marker line-color alpha multiplier",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.areaLineAlphaMul.@Tooltip": "in %",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.areaLineAlphaMin": "area marker line-color alpha min",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.areaLineAlphaMin.@Tooltip": "in %",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.areaLineAlphaMax": "area marker line-color alpha max",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.areaLineAlphaMax.@Tooltip": "in %",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.blocksPerChunkThreshold": "blocks per chunk threshold (xaero only)",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.blocksPerChunkThreshold.@Tooltip": "chunks with less will not be highlighted"
 }

@@ -50,7 +50,7 @@ import java.util.Timer;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 23.07.2025
+ * @version 26.07.2025
  */
 public abstract class AbstractModInitializer
 {
@@ -78,6 +78,15 @@ public abstract class AbstractModInitializer
 	public static boolean showAfkInTabList = true;
 	public static boolean showAfkTimeInTabList = true;
 	public static boolean hideAfkMinutes = false;
+
+	// Area Marker Overlay
+	public static float areaFillAlphaMul = .5f;
+	public static float areaFillAlphaMin = 0;
+	public static float areaFillAlphaMax = .7f;
+	public static float areaLineAlphaMul = 1;
+	public static float areaLineAlphaMin = 0;
+	public static float areaLineAlphaMax = 1;
+	public static int blocksPerChunkThreshold = 128;
 
 	public static boolean enabled = true;
 	public static boolean xaeroMapInstalled = false;

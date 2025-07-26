@@ -31,7 +31,7 @@ import java.util.List;
 
 /**
  * @author Leander Knüttel
- * @version 17.02.2025
+ * @version 26.07.2025
  */
 @Config(name = "remote_player_waypoints_for_xaero")
 #if MC_VER < MC_1_20_6
@@ -129,6 +129,39 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
         public CommonModConfig.WaypointColor markerWaypointColor = CommonModConfig.WaypointColor.Gray;
 
+        //Area Marker options
+        @ConfigEntry.Gui.PrefixText
+        @ConfigEntry.Gui.Tooltip
+        public boolean enableAreaMarkerOverlay = true;
+
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 200)
+        public int areaFillAlphaMul = 50;
+
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+        public int areaFillAlphaMin = 0;
+
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+        public int areaFillAlphaMax = 70;
+
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 200)
+        public int areaLineAlphaMul = 100;
+
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+        public int areaLineAlphaMin = 0;
+
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+        public int areaLineAlphaMax = 100;
+
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 1, max = 256)
+        public int blocksPerChunkThreshold = 128;
+
         //auto handled options
         @ConfigEntry.Gui.PrefixText
         public List<String> ignoredServers = new ArrayList<>();
@@ -185,9 +218,11 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         public String link;
 
+        @ConfigEntry.Gui.Tooltip()
         @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
         public MarkerVisibilityMode markerVisibilityMode;
 
+        @ConfigEntry.Gui.Tooltip()
         public List<String> markerLayers;
 
         public ServerEntry() {

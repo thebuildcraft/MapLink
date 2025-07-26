@@ -40,7 +40,7 @@ import java.lang.reflect.Type;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 25.07.2025
+ * @version 26.07.2025
  */
 public class BlueMapConnection extends MapConnection {
     public int lastWorldIndex;
@@ -121,6 +121,7 @@ public class BlueMapConnection extends MapConnection {
 
     URL lastURL = null;
     List<WaypointPosition> positions = new ArrayList<>();
+    List<AreaMarker> areaMarkers = new ArrayList<>();
 
     @Override
     public void getWaypointPositions() throws IOException {
@@ -142,13 +143,14 @@ public class BlueMapConnection extends MapConnection {
         }
         if (reqUrl == lastURL) {
             ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
+            ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers, false);
             return;
         }
         lastURL = reqUrl;
 
         Map<String, BlueMapMarkerSet> markerSets = HTTP.makeJSONHTTPRequest(reqUrl, apiResponseType);
         positions.clear();
-        List<AreaMarker> areaMarkers = new ArrayList<>();
+        areaMarkers.clear();
 
         for (Map.Entry<String, BlueMapMarkerSet> m : markerSets.entrySet()){
             if (CommonModConfig.Instance.debugMode() && CommonModConfig.Instance.chatLogInDebugMode()){
@@ -168,7 +170,7 @@ public class BlueMapConnection extends MapConnection {
             }
         }
         ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
-        ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers);
+        ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers, true);
     }
 
     private boolean correctWorld = false;
