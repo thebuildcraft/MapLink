@@ -34,6 +34,7 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -120,11 +121,11 @@ public abstract class ClientMapHandler {
 
                 // Check if this player is within the server's player entity tracking range
                 if (playerClientEntityMap.containsKey(playerName)) {
-                    ClipContext clipContext = new ClipContext(mc.cameraEntity.position(), playerClientEntityMap.get(playerName).position(), ClipContext.Block.VISUAL, ClipContext.Fluid.ANY, mc.cameraEntity);
+                    ClipContext clipContext = new ClipContext(mc.cameraEntity.getEyePosition(),
+                            playerClientEntityMap.get(playerName).position().add(0, 1, 0),
+                            ClipContext.Block.VISUAL, ClipContext.Fluid.ANY, CollisionContext.empty());
                     // If this player is visible, don't show waypoint
-                    if (mc.level.clip(clipContext).getType() != HitResult.Type.BLOCK) {
-                        continue;
-                    }
+                    if (mc.level.clip(clipContext).getType() != HitResult.Type.BLOCK) continue;
                 }
                 currentPlayerWaypointNames.add(playerName);
                 addOrUpdatePlayerWaypoint(playerPosition);

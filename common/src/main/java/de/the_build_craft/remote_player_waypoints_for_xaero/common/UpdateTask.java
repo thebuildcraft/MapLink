@@ -23,7 +23,6 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.common;
 
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.ClientMapHandler;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.connections.*;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.PlayerPosition;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Text;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Utils;
 import net.minecraft.ChatFormatting;
@@ -44,7 +43,7 @@ import java.util.*;
  * @author Leander Knüttel
  * @version 26.07.2025
  */
-public class UpdateTask extends TimerTask {
+public class UpdateTask {
     private final Minecraft mc;
 
     public UpdateTask() {
@@ -59,7 +58,6 @@ public class UpdateTask extends TimerTask {
 
     private String currentServerIP = "";
 
-    @Override
     public void run() {
         try{
             runUpdate();
@@ -69,7 +67,7 @@ public class UpdateTask extends TimerTask {
         }
     }
 
-    public void runUpdate() {
+    private void runUpdate() {
         // Skip if not in game
         if (mc.level == null
                 || mc.player == null
@@ -167,10 +165,9 @@ public class UpdateTask extends TimerTask {
         }
 
         // Get a list of all player's positions
-        Map<String, PlayerPosition> playerPositions;
         try {
             // this must be run no matter if it's activated in the config, to get the "currentDimension" and AFK info
-            playerPositions = AbstractModInitializer.getConnection().getPlayerPositions();
+            FastUpdateTask.getInstance().updateFromOnlineMap(AbstractModInitializer.getConnection().getPlayerPositions());
         } catch (IOException e) {
             if (!cantGetPlayerPositionsErrorWasShown){
                 cantGetPlayerPositionsErrorWasShown = true;
@@ -181,7 +178,6 @@ public class UpdateTask extends TimerTask {
             AbstractModInitializer.setConnection(null);
             return;
         }
-        if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().handlePlayerWaypoints(playerPositions);
 
         if (CommonModConfig.Instance.enableMarkerWaypoints() || CommonModConfig.Instance.enableAreaMarkers()){
             try {

@@ -42,7 +42,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.Timer;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Base for all mod loader initializers 
@@ -60,10 +63,12 @@ public abstract class AbstractModInitializer
 	public static final Logger LOGGER = LogManager.getLogger("RemotePlayerWaypointsForXaero");
 	public static AbstractModInitializer INSTANCE;
 
-	// Update task
-	private static UpdateTask updateTask;
-	private static Timer RemoteUpdateThread = null;
+	// Update tasks
 	public static int TimerDelay;
+	private static final UpdateTask slowUpdateTask = new UpdateTask();
+	private static final FastUpdateTask fastUpdateTask = new FastUpdateTask();
+	private static ScheduledFuture<?> scheduledSlowUpdateTask;
+	private static ScheduledFuture<?> scheduledFastUpdateTask;
 
 	// Connections
 	private static MapConnection connection = null;
@@ -93,6 +98,8 @@ public abstract class AbstractModInitializer
 	public static boolean overwriteCurrentDimension = false;
 
 	public static HashMap<ClientLevel, HashMap<String, RemotePlayer>> fakePlayerEntities = new HashMap<>();
+
+	private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 	
 	//==================//
 	// abstract methods //
@@ -128,10 +135,9 @@ public abstract class AbstractModInitializer
 		unknownAfkStateColor = CommonModConfig.Instance.unknownAfkStateColor();
 		AfkColor = CommonModConfig.Instance.AfkColor();
 
-		RemoteUpdateThread = new Timer(true);
-		updateTask = new UpdateTask();
-		RemoteUpdateThread.scheduleAtFixedRate(updateTask, 0, CommonModConfig.Instance.updateDelay());
 		TimerDelay = CommonModConfig.Instance.updateDelay();
+		scheduledFastUpdateTask = scheduler.scheduleAtFixedRate(fastUpdateTask::run, 0, 100, TimeUnit.MILLISECONDS);
+		scheduledSlowUpdateTask = scheduler.scheduleAtFixedRate(slowUpdateTask::run, 0, TimerDelay, TimeUnit.MILLISECONDS);
 
 		this.printModInfo();
 
@@ -295,11 +301,10 @@ public abstract class AbstractModInitializer
 	 * @param ms Time in seconds
 	 */
 	public static void setUpdateDelay(int ms) {
-		if (RemoteUpdateThread == null ) return;
-		updateTask.cancel();
-		updateTask = new UpdateTask();
-		RemoteUpdateThread.scheduleAtFixedRate(updateTask, 0, ms);
 		TimerDelay = ms;
+		if (scheduledSlowUpdateTask == null) return;
+		scheduledSlowUpdateTask.cancel(false);
+		scheduledSlowUpdateTask = scheduler.scheduleAtFixedRate(slowUpdateTask::run, 0, TimerDelay, TimeUnit.MILLISECONDS);
 		LOGGER.info("Remote update delay has been set to " + ms + " ms");
 	}
 

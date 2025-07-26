@@ -81,8 +81,8 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         public boolean enablePlayerIcons = true;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 20)
-        int minDistance = 0;
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 50)
+        int minDistance = 10;
 
         @ConfigEntry.Gui.Tooltip()
         @ConfigEntry.BoundedDiscrete(min = 100, max = 100000)

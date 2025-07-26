@@ -22,13 +22,14 @@
 package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
 import com.mojang.authlib.GameProfile;
+import net.minecraft.client.player.AbstractClientPlayer;
 
 /**
  * A player's auth profile and position
  *
  * @author ewpratten
  * @author Leander Knüttel
- * @version 23.07.2025
+ * @version 26.07.2025
  */
 public class PlayerPosition extends Position {
     public GameProfile gameProfile;
@@ -42,5 +43,11 @@ public class PlayerPosition extends Position {
     public PlayerPosition(String name, float x, float y, float z, String world) {
         super(name, x, y, z);
         this.world = world;
+    }
+
+    public PlayerPosition(AbstractClientPlayer player) {
+        super(player.getGameProfile().getName(), player.getBlockX(), player.getBlockY(), player.getBlockZ());
+        this.world = "";
+        this.gameProfile = player.getGameProfile();
     }
 }
