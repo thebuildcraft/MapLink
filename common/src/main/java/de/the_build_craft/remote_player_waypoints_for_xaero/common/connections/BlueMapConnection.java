@@ -40,10 +40,10 @@ import java.lang.reflect.Type;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 26.07.2025
+ * @version 27.07.2025
  */
 public class BlueMapConnection extends MapConnection {
-    public int lastWorldIndex;
+    public List<Integer> lastWorldIndices = new ArrayList<>(List.of(0));
     public List<URL> playerUrls = new ArrayList<>();
     public List<URL> markerUrls = new ArrayList<>();
     public List<String> worlds = new ArrayList<>();
@@ -119,7 +119,7 @@ public class BlueMapConnection extends MapConnection {
         return layers;
     }
 
-    URL lastURL = null;
+    int lastWorldIndicesHash;
     List<WaypointPosition> positions = new ArrayList<>();
     List<AreaMarker> areaMarkers = new ArrayList<>();
 
@@ -134,38 +134,33 @@ public class BlueMapConnection extends MapConnection {
 
         if (ClientMapHandler.getInstance() == null) return;
 
-        URL reqUrl;
-        if (AbstractModInitializer.overwriteCurrentDimension && !Objects.equals(currentDimension, "")){
-            reqUrl = markerUrls.get(worlds.indexOf(currentDimension));
-        }
-        else{
-            reqUrl = markerUrls.get(lastWorldIndex);
-        }
-        if (reqUrl == lastURL) {
+        int newWorldIndicesHash = lastWorldIndices.hashCode();
+        if (newWorldIndicesHash == lastWorldIndicesHash) {
             ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
             ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers, false);
             return;
         }
-        lastURL = reqUrl;
-
-        Map<String, BlueMapMarkerSet> markerSets = HTTP.makeJSONHTTPRequest(reqUrl, apiResponseType);
+        lastWorldIndicesHash = newWorldIndicesHash;
         positions.clear();
         areaMarkers.clear();
 
-        for (Map.Entry<String, BlueMapMarkerSet> m : markerSets.entrySet()){
-            if (CommonModConfig.Instance.debugMode() && CommonModConfig.Instance.chatLogInDebugMode()){
-                Utils.sendToClientChat("====================================");
-                Utils.sendToClientChat("markerSet: " + m.getKey());
-            }
+        for (int i : lastWorldIndices) {
+            Map<String, BlueMapMarkerSet> markerSets = HTTP.makeJSONHTTPRequest(markerUrls.get(i), apiResponseType);
+            for (Map.Entry<String, BlueMapMarkerSet> m : markerSets.entrySet()) {
+                if (CommonModConfig.Instance.debugMode() && CommonModConfig.Instance.chatLogInDebugMode()) {
+                    Utils.sendToClientChat("====================================");
+                    Utils.sendToClientChat("markerSet: " + m.getKey());
+                }
 
-            if (!serverEntry.includeMarkerLayer(m.getKey())) continue;
+                if (!serverEntry.includeMarkerLayer(m.getKey())) continue;
 
-            for(BlueMapMarkerSet.Marker marker : m.getValue().markers.values()){
-                Float3 pos = marker.position;
-                if (Objects.equals(marker.type, "poi") || Objects.equals(marker.type, "html")){
-                    positions.add(new WaypointPosition(marker.label, pos.x, pos.y, pos.z));
-                } else if (Objects.equals(marker.type, "shape")) {
-                    areaMarkers.add(new AreaMarker(marker.label, pos.x, pos.y, pos.z, marker.shape, marker.lineColor, marker.fillColor, m.getKey()));
+                for (BlueMapMarkerSet.Marker marker : m.getValue().markers.values()) {
+                    Float3 pos = marker.position;
+                    if (Objects.equals(marker.type, "poi") || Objects.equals(marker.type, "html")) {
+                        positions.add(new WaypointPosition(marker.label, pos.x, pos.y, pos.z));
+                    } else if (Objects.equals(marker.type, "shape")) {
+                        areaMarkers.add(new AreaMarker(marker.label, pos.x, pos.y, pos.z, marker.shape, marker.lineColor, marker.fillColor, m.getKey()));
+                    }
                 }
             }
         }
@@ -182,21 +177,22 @@ public class BlueMapConnection extends MapConnection {
         BlueMapPlayerUpdate update = null;
 
         if (AbstractModInitializer.overwriteCurrentDimension && !Objects.equals(currentDimension, "")){
-            update = HTTP.makeJSONHTTPRequest(playerUrls.get(worlds.indexOf(currentDimension)), BlueMapPlayerUpdate.class);
+            lastWorldIndices.clear();
+            lastWorldIndices.add(worlds.indexOf(currentDimension));
+            update = HTTP.makeJSONHTTPRequest(playerUrls.get(lastWorldIndices.getFirst()), BlueMapPlayerUpdate.class);
         }
         else{
-            update = getBlueMapPlayerUpdate(clientName, update, lastWorldIndex);
+            if (!lastWorldIndices.isEmpty()) update = getBlueMapPlayerUpdate(clientName, update, lastWorldIndices.getFirst());
             if (!correctWorld){
+                lastWorldIndices.clear();
                 for (int i = 0; i < playerUrls.size(); i++) {
+                    correctWorld = false;
                     update = getBlueMapPlayerUpdate(clientName, update, i);
-
-                    if (correctWorld) {
-                        lastWorldIndex = i;
-                        break;
-                    }
+                    if (correctWorld) lastWorldIndices.add(i);
                 }
             }
         }
+        correctWorld = !lastWorldIndices.isEmpty();
 
         if ((update == null) || playerUrls.isEmpty()){
             throw new IllegalStateException("Can't get player positions. All Bluemap links are broken!");
