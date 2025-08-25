@@ -80,6 +80,7 @@ public class HTTP {
         HttpURLConnection request = (HttpURLConnection) url.openConnection();
         request.setRequestMethod("GET");
         request.setRequestProperty("Content-Type", "application/json");
+        request.setRequestProperty("User-Agent", AbstractModInitializer.MOD_NAME);
         request.setInstanceFollowRedirects(true);
         request.setConnectTimeout(10_000);
         request.setReadTimeout(10_000);
