@@ -24,8 +24,8 @@ import de.the_build_craft.remote_player_waypoints_for_xaero.common.AbstractModIn
 import net.minecraft.client.gui.components.PlayerTabOverlay;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextColor;
-import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.network.chat.Style;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Text;
 import org.spongepowered.asm.mixin.Mixin;
@@ -34,16 +34,18 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.*;
+
 /**
  * @author Leander Knüttel
  * @author MeerBiene
- * @version 22.08.2024
+ * @version 25.08.2025
  */
 @Mixin(PlayerTabOverlay.class)
 public class PlayerListHudMixin {
 
     @Unique
-    private static String formatDuration(long durationInMs) {
+    private static String remote_player_waypoints_for_xaero$formatDuration(long durationInMs) {
         int durationInMin = (int)(durationInMs / 60_000);
         int hours = (int) Math.floor(durationInMin / 60.0);
         int minutes = durationInMin % 60;
@@ -51,7 +53,7 @@ public class PlayerListHudMixin {
         if (hours == 0) {
             return minutes + " min";
         }
-        if (AbstractModInitializer.hideAfkMinutes) {
+        if (config.general.hideAfkMinutes) {
             return hours + " h";
         }
         return hours + " h  " + minutes + " min";
@@ -59,33 +61,26 @@ public class PlayerListHudMixin {
 
     @Inject(method = "getNameForDisplay", at = @At("RETURN"), cancellable = true)
     private void injected(PlayerInfo entry, CallbackInfoReturnable<Component> cir){
-        Component newText;
-        String playerNameString = entry.getProfile().getName();
-        if (entry.getTabListDisplayName() == null) {
-            newText = ((PlayerTabOverlay)(Object)this).decorateName(entry, PlayerTeam.formatNameForTeam(entry.getTeam(), Text.literal(playerNameString)));
-        } else {
-            newText = ((PlayerTabOverlay)(Object)this).decorateName(entry, entry.getTabListDisplayName().copy());
-        }
-
-        if (!(AbstractModInitializer.enabled && AbstractModInitializer.connected && AbstractModInitializer.showAfkInTabList)) {
-            cir.setReturnValue(newText);
+        if (!(config.general.enabled
+                && AbstractModInitializer.connected
+                && config.general.showAfkInTabList)) {
             return;
         }
+
+        String playerNameString = entry.getProfile().getName();
+        MutableComponent newText = cir.getReturnValue().copy();
 
         if (AbstractModInitializer.AfkDic.containsKey(playerNameString)) {
             if (AbstractModInitializer.AfkDic.get(playerNameString)) {
-                if (AbstractModInitializer.showAfkTimeInTabList){
-                    cir.setReturnValue(newText.copy().append(Text.literal("  [AFK: " + formatDuration(AbstractModInitializer.AfkTimeDic.get(playerNameString)) + "]").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(AbstractModInitializer.AfkColor)))));
+                if (config.general.showAfkTimeInTabList){
+                    cir.setReturnValue(newText.append(Text.literal("  [AFK: " + remote_player_waypoints_for_xaero$formatDuration(AbstractModInitializer.AfkTimeDic.get(playerNameString)) + "]").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(config.general.AfkColor)))));
                 }
                 else{
-                    cir.setReturnValue(newText.copy().append(Text.literal("  [AFK]").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(AbstractModInitializer.AfkColor)))));
+                    cir.setReturnValue(newText.append(Text.literal("  [AFK]").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(config.general.AfkColor)))));
                 }
-                return;
             }
         } else {
-            cir.setReturnValue(newText.copy().append(Text.literal("  [???]").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(AbstractModInitializer.unknownAfkStateColor)))));
-            return;
+            cir.setReturnValue(newText.append(Text.literal("  [???]").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(config.general.unknownAfkStateColor)))));
         }
-        cir.setReturnValue(newText);
     }
 }

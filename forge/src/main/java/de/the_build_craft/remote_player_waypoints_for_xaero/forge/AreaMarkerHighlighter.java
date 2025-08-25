@@ -20,14 +20,17 @@
 
 package de.the_build_craft.remote_player_waypoints_for_xaero.forge;
 
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.MapHighlightClearer;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.XaeroClientMapHandler;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.ChunkHighlight;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.MathUtils;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Text;
 import net.minecraft.client.Minecraft;
+#if MC_VER >= MC_1_19_4
 import net.minecraft.core.registries.Registries;
+#else
+import net.minecraft.core.Registry;
+#endif
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
@@ -37,9 +40,11 @@ import xaero.map.world.MapDimension;
 
 import java.util.List;
 
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.*;
+
 /**
  * @author Leander Knüttel
- * @version 26.07.2025
+ * @version 25.08.2025
  */
 public class AreaMarkerHighlighter extends ChunkHighlighter implements MapHighlightClearer {
     public AreaMarkerHighlighter() {
@@ -49,8 +54,13 @@ public class AreaMarkerHighlighter extends ChunkHighlighter implements MapHighli
 
     @Override
     public void clearHashCache() {
+        if (Minecraft.getInstance().level == null) return;
         MapDimension mapDim = WorldMapSession.getCurrentSession().getMapProcessor().getMapWorld()
+                #if MC_VER >= MC_1_19_4
                 .getDimension(ResourceKey.create(Registries.DIMENSION, Minecraft.getInstance().level.dimension().location()));
+                #else
+                .getDimension(ResourceKey.create(Registry.DIMENSION_REGISTRY, Minecraft.getInstance().level.dimension().location()));
+                #endif
         if (mapDim != null) mapDim.getHighlightHandler().clearCachedHashes();
     }
 
@@ -67,10 +77,10 @@ public class AreaMarkerHighlighter extends ChunkHighlighter implements MapHighli
                 .getOrDefault(MathUtils.combineIntsToLong(chunkX - 1, chunkZ), ChunkHighlight.NullHighlight);
         ChunkHighlight right = XaeroClientMapHandler.chunkHighlightMap
                 .getOrDefault(MathUtils.combineIntsToLong(chunkX + 1, chunkZ), ChunkHighlight.NullHighlight);
-        int fillColor = chunkHighlight.fillColor.changeAlphaToNew(CommonModConfig.Instance.areaFillAlphaMul(),
-                CommonModConfig.Instance.areaFillAlphaMin(), CommonModConfig.Instance.areaFillAlphaMax()).getAsBGRA();
-        int lineColor = chunkHighlight.lineColor.changeAlphaToNew(CommonModConfig.Instance.areaLineAlphaMul(),
-                CommonModConfig.Instance.areaLineAlphaMin(), CommonModConfig.Instance.areaLineAlphaMax()).getAsBGRA();
+        int fillColor = chunkHighlight.fillColor.changeAlphaToNew(config.general.areaFillAlphaMul / 100f,
+                config.general.areaFillAlphaMin / 100f, config.general.areaFillAlphaMax / 100f).getAsBGRA();
+        int lineColor = chunkHighlight.lineColor.changeAlphaToNew(config.general.areaLineAlphaMul / 100f,
+                config.general.areaLineAlphaMin / 100f, config.general.areaLineAlphaMax / 100f).getAsBGRA();
         return new int[]{
                 fillColor,
                 top.name.equals(chunkHighlight.name) ? fillColor : lineColor,

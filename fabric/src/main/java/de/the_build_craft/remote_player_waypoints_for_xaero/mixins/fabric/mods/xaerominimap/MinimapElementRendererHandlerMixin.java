@@ -21,17 +21,12 @@
 package de.the_build_craft.remote_player_waypoints_for_xaero.mixins.fabric.mods.xaerominimap;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig;
 #if MC_VER > MC_1_19_4
 import net.minecraft.client.gui.GuiGraphics;
 #else
 import com.mojang.blaze3d.vertex.PoseStack;
 #endif
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.*;
@@ -52,9 +47,11 @@ import xaero.hud.minimap.element.render.MinimapElementRendererHandler;
 import java.util.Collections;
 import java.util.List;
 
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.*;
+
 /**
  * @author Leander Knüttel
- * @version 21.06.2025
+ * @version 25.08.2025
  */
 @Pseudo
 @Mixin(MinimapElementRendererHandler.class)
@@ -64,7 +61,7 @@ public class MinimapElementRendererHandlerMixin {
     private List<MinimapElementRenderer<?, ?>> renderers;
 
     @Unique
-    int lastOrder;
+    int remote_player_waypoints_for_xaero$lastOrder;
 
     @Inject(method = "render", at = @At("HEAD"))
     #if MC_VER >= MC_1_21_6
@@ -76,9 +73,9 @@ public class MinimapElementRendererHandlerMixin {
     #else
     void injected(PoseStack matrixStack, Vec3 renderPos, float partialTicks, RenderTarget framebuffer, double backgroundCoordinateScale, ResourceKey<Level> mapDimension, CallbackInfo ci) {
     #endif
-        int order = CommonModConfig.Instance.getWaypointLayerOrder();
-        if (lastOrder == order) return;
-        lastOrder = order;
+        int order = getWaypointLayerOrder();
+        if (remote_player_waypoints_for_xaero$lastOrder == order) return;
+        remote_player_waypoints_for_xaero$lastOrder = order;
         Collections.sort(renderers);
     }
 }

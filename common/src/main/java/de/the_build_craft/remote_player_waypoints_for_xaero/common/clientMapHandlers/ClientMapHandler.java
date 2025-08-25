@@ -20,32 +20,47 @@
 
 package de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers;
 
+import com.google.common.hash.Hashing;
+import com.mojang.blaze3d.platform.NativeImage;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.AbstractModInitializer;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.HTTP;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.ModConfig;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.*;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Text;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Utils;
 import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.CollisionContext;
 
+import java.net.URI;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.*;
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.FastUpdateTask.playerPositions;
 
 /**
  * @author Leander Knüttel
- * @version 26.07.2025
+ * @version 25.08.2025
  */
 public abstract class ClientMapHandler {
-    private static ClientMapHandler instance;
+    public static final String waypointPrefix = "onlinemapsync_";
+    private static final Map<String, NativeImage> iconLinkToNativeImage = new HashMap<>();
+    private static final Map<String, DynamicTexture> iconLinkToTexture = new HashMap<>();
 
+    private static final Map<String, WaypointState> idToWaypointState = new ConcurrentHashMap<>();
+
+    private static ClientMapHandler instance;
     private final Minecraft mc;
 
     private static final int maxMarkerCountBeforeWarning = 25;
@@ -57,9 +72,9 @@ public abstract class ClientMapHandler {
     private boolean previousFriendColorOverride = false;
     private int previousFriendListHashCode = 0;
 
-    public static Map<String, PlayerPosition> playerPositions = new HashMap<>();
-    Set<String> currentPlayerWaypointNames = new HashSet<>();
-    Set<String> currentMarkerWaypointKeys = new HashSet<>();
+    private final List<PlayerPosition> tempPlayerWaypointPositions = new ArrayList<>();
+    protected final Set<String> currentPlayerIds = new HashSet<>();
+    protected final Set<String> currentMarkerIds = new HashSet<>();
 
     public ClientMapHandler() {
         instance = this;
@@ -70,72 +85,260 @@ public abstract class ClientMapHandler {
         return instance;
     }
 
-    public void handlePlayerWaypoints(Map<String, PlayerPosition> playerPositions) {
-        ClientMapHandler.playerPositions = playerPositions;
-        // Update the player positions obtained from Dynmap with GameProfile data from the actual logged-in players
+    public static WaypointState getWaypointState(String id) {
+        return ClientMapHandler.idToWaypointState.get(id);
+    }
+
+    public static void registerPlayerPosition(PlayerPosition playerPosition, String iconLink) {
+        if (config.general.useMcHeadsPlayerNameIcons) {
+            iconLink = "https://mc-heads.net/avatar/" + playerPosition.name + "/32";
+        }
+        registerPosition(playerPosition, iconLink, true, false);
+    }
+
+    public static void registerTempPlayerPosition(PlayerPosition playerPosition) {
+        registerPosition(playerPosition, "https://mc-heads.net/avatar/" + playerPosition.name + "/32", true, true);
+    }
+
+    public static void registerPosition(Position position, String iconLink) {
+        registerPosition(position, iconLink, false, false);
+    }
+
+    public static void registerPosition(Position position, String iconLink, boolean isPlayer, boolean isTemp) {
+        WaypointState waypointState = idToWaypointState.get(position.id);
+        if (waypointState != null && (!waypointState.isTemp || isTemp)) return;
+        if (!iconLinkToNativeImage.containsKey(iconLink)) {
+            try {
+                NativeImage nativeImage;
+                try {
+                    nativeImage = HTTP.makeImageHttpRequest(URI.create(iconLink).toURL());
+                } catch (Exception e) {
+                    if (isPlayer) {
+                        nativeImage = HTTP.makeImageHttpRequest(URI.create("https://mc-heads.net/avatar/" + position.name + "/32").toURL());
+                    } else {
+                        throw e;
+                    }
+                }
+                if (nativeImage.getWidth() == nativeImage.getHeight() && nativeImage.getWidth() <= 32) {
+                    iconLinkToNativeImage.put(iconLink, nativeImage);
+                } else {
+                    NativeImage nativeImage1 = new NativeImage(32, 32, true);
+                    nativeImage.resizeSubRectTo(0, 0, nativeImage.getWidth(), nativeImage.getHeight(), nativeImage1);
+                    iconLinkToNativeImage.put(iconLink, nativeImage1);
+                    nativeImage.close();
+                }
+            } catch (Exception e) {
+                iconLink = null;
+            }
+        }
+        WaypointState prev = idToWaypointState.put(position.id, new WaypointState(position.name, iconLink, isPlayer, isTemp));
+        if (prev != null) prev.isOld = true;
+    }
+
+    public static void clearRegisteredPositions() {
+        idToWaypointState.clear();
+    }
+
+    //partially from Earthcomputer/minimap-sync licensed under the MIT License
+    public static DynamicTexture getDynamicTexture(String link) {
+        if (iconLinkToTexture.containsKey(link)) return iconLinkToTexture.get(link);
+        if (!iconLinkToNativeImage.containsKey(link)) return null;
+        #if MC_VER >= MC_1_21_5
+        DynamicTexture texture = new DynamicTexture(() -> link, iconLinkToNativeImage.get(link));
+        #else
+        DynamicTexture texture = new DynamicTexture(iconLinkToNativeImage.get(link));
+        #endif
+        Minecraft.getInstance().getTextureManager().register(ClientMapHandler.getIconResourceLocation(link), texture);
+        DynamicTexture old = iconLinkToTexture.put(link, texture);
+        if (old != null) {
+            old.close();
+        }
+        return texture;
+    }
+
+    //partially from Earthcomputer/minimap-sync licensed under the MIT License
+    public static ResourceLocation getIconResourceLocation(String icon) {
+        #if MC_VER >= MC_1_21_5
+        return ResourceLocation.fromNamespaceAndPath("onlinemapsync", "xaeros_" + ClientMapHandler.makeResourceSafeString(icon));
+        #elif MC_VER >= MC_1_19_2
+        return ResourceLocation.tryBuild("onlinemapsync", "xaeros_" + ClientMapHandler.makeResourceSafeString(icon));
+        #else
+        return new ResourceLocation("onlinemapsync", "xaeros_" + ClientMapHandler.makeResourceSafeString(icon));
+        #endif
+    }
+
+    //from Earthcomputer/minimap-sync licensed under the MIT License
+    public static String makeResourceSafeString(String original) {
+        //noinspection deprecation
+        String hash = Hashing.sha1().hashUnencodedChars(original).toString();
+        original = original.toLowerCase(Locale.ROOT);
+        original = Util.sanitizeName(original, ResourceLocation::validPathChar);
+        return original + "/" + hash;
+    }
+
+    public void handlePlayerWaypoints() {
+        // Update the player positions obtained from the online Map with GameProfile data from the actual logged-in players
         // This is required so that the entity radar properly shows the player's skin on player head icons
-        if(CommonModConfig.Instance.enableEntityRadar()) {
-            Collection<PlayerInfo> playerList = mc.getConnection().getOnlinePlayers();
-            for (PlayerInfo playerListEntity : playerList) {
-                String playerName = playerListEntity.getProfile().getName();
+        if(config.general.enablePlayerRadar && mc.cameraEntity != null && mc.getConnection() != null) {
+            Vec3 camPosition = mc.cameraEntity.position();
+            boolean onlyShowFriendsPlayerRadar = config.friends.onlyShowFriendsPlayerRadar;
+            boolean alwaysShowFriendsPlayerRadar = config.friends.alwaysShowFriendsPlayerRadar;
+            int maxDistance = config.general.maxPlayerRadarDistance;
+
+            for (PlayerInfo playerInfo : mc.getConnection().getOnlinePlayers()) {
+                String playerName = playerInfo.getProfile().getName();
+                PlayerPosition playerPosition = playerPositions.get(playerName);
+                if (playerPosition == null) continue;
+
+                boolean isFriend = config.friends.friendList.contains(playerPosition.name);
+
+                if (onlyShowFriendsPlayerRadar && !isFriend) {
+                    playerPosition.gameProfile = null;
+                    continue;
+                }
+
+                if (!(alwaysShowFriendsPlayerRadar && isFriend)) {
+                    double d = camPosition.distanceTo(new Vec3(playerPosition.x, playerPosition.y, playerPosition.z));
+                    if (d > maxDistance) {
+                        playerPosition.gameProfile = null;
+                        continue;
+                    }
+                }
+
                 if (playerPositions.containsKey(playerName)) {
-                    playerPositions.get(playerName).gameProfile = playerListEntity.getProfile();
+                    playerPositions.get(playerName).gameProfile = playerInfo.getProfile();
                 }
             }
         }
 
-        if (CommonModConfig.Instance.enablePlayerWaypoints()) {
+        if (config.general.enablePlayerWaypoints) {
             // Keep track of which waypoints were previously shown
             // to remove any that are not to be shown anymore
-            currentPlayerWaypointNames.clear();
+            currentPlayerIds.clear();
 
             Map<String, AbstractClientPlayer> playerClientEntityMap = mc.level.players().stream().collect(
                     Collectors.toMap(a -> a.getGameProfile().getName(), a -> a));
 
-            // Add each player to the map
-            for (PlayerPosition playerPosition : playerPositions.values()) {
+            int minHudD = config.hud.minPlayerDistance;
+            int maxHudD = config.hud.maxPlayerDistance;
+            int minMiniD = config.minimap.minPlayerDistance;
+            int maxMiniD = config.minimap.maxPlayerDistance;
+            int minWorldD = config.worldmap.minPlayerDistance;
+            int maxWorldD = config.worldmap.maxPlayerDistance;
+
+            int minIconHudD = config.hud.minPlayerIconDistance;
+            int maxIconHudD = config.hud.maxPlayerIconDistance;
+            int minIconMiniD = config.minimap.minPlayerIconDistance;
+            int maxIconMiniD = config.minimap.maxPlayerIconDistance;
+            int minIconWorldD = config.worldmap.minPlayerIconDistance;
+            int maxIconWorldD = config.worldmap.maxPlayerIconDistance;
+
+            int onHud = 0;
+            int maxOnHud = config.hud.maxPlayerWaypoints;
+            int onMiniMap = 0;
+            int maxOnMiniMap = config.minimap.maxPlayerWaypoints;
+            int onWorldMap = 0;
+            int maxOnWorldMap = config.worldmap.maxPlayerWaypoints;
+
+            int iconsOnHud = 0;
+            int maxIconsOnHud = config.hud.maxPlayerIconWaypoints;
+            int iconsOnMiniMap = 0;
+            int maxIconsOnMiniMap = config.minimap.maxPlayerIconWaypoints;
+            int iconsOnWorldMap = 0;
+            int maxIconsOnWorldMap = config.worldmap.maxPlayerIconWaypoints;
+
+            boolean onlyShowFriends = config.friends.onlyShowFriendsWaypoints;
+            boolean onlyShowFriendsIcons = config.friends.onlyShowFriendsIconWaypoints;
+            boolean alwaysShowFriends = config.friends.alwaysShowFriendsWaypoints;
+            boolean alwaysShowFriendIcons = config.friends.alwaysShowFriendsIconWaypoints;
+
+            boolean enablePlayerIcons = config.general.enablePlayerIconWaypoints;
+
+            Vec3 cameraPos = mc.cameraEntity.position();
+            tempPlayerWaypointPositions.clear();
+            tempPlayerWaypointPositions.addAll(playerPositions.values());
+            tempPlayerWaypointPositions.sort(Comparator.comparing(p -> cameraPos.distanceToSqr(p.x, p.y, p.z)));
+
+            for (PlayerPosition playerPosition : tempPlayerWaypointPositions) {
                 if (playerPosition == null) continue;
                 String playerName = playerPosition.name;
+                WaypointState waypointState = idToWaypointState.get(playerPosition.id);
 
-                boolean isFriend = CommonModConfig.Instance.friendList().contains(playerName);
+                boolean isFriend = config.friends.friendList.contains(playerName);
+                if (onlyShowFriends && !isFriend) continue;
 
-                if (CommonModConfig.Instance.onlyShowFriendsWaypoints() && !isFriend) continue;
+                double d = cameraPos.distanceTo(new Vec3(playerPosition.x, playerPosition.y, playerPosition.z));
 
-                int minimumWaypointDistanceToUse;
-                int maximumWaypointDistanceToUse;
-                if (CommonModConfig.Instance.overwriteFriendDistances() && isFriend) {
-                    minimumWaypointDistanceToUse = CommonModConfig.Instance.minFriendDistance();
-                    maximumWaypointDistanceToUse = CommonModConfig.Instance.maxFriendDistance();
+                if (alwaysShowFriends && isFriend) {
+                    waypointState.renderOnHud = true;
+                    waypointState.renderOnMiniMap = true;
+                    waypointState.renderOnWorldMap = true;
                 } else {
-                    minimumWaypointDistanceToUse = CommonModConfig.Instance.minDistance();
-                    maximumWaypointDistanceToUse = CommonModConfig.Instance.maxDistance();
+                    waypointState.renderOnHud = onHud < maxOnHud && d >= minHudD && d <= maxHudD;
+                    waypointState.renderOnMiniMap = onMiniMap < maxOnMiniMap && d >= minMiniD && d <= maxMiniD;
+                    waypointState.renderOnWorldMap = onWorldMap < maxOnWorldMap && d >= minWorldD && d <= maxWorldD;
+                    if (waypointState.renderOnHud) onHud++;
+                    if (waypointState.renderOnMiniMap) onMiniMap++;
+                    if (waypointState.renderOnWorldMap) onWorldMap++;
                 }
 
-                if (minimumWaypointDistanceToUse > maximumWaypointDistanceToUse)
-                    maximumWaypointDistanceToUse = minimumWaypointDistanceToUse;
+                if (!(waypointState.renderOnHud || waypointState.renderOnMiniMap || waypointState.renderOnWorldMap)) continue;
 
-                // If closer than the minimum waypoint distance or further away than the maximum waypoint distance,
-                // don't show waypoint
-                double d = mc.cameraEntity.position().distanceTo(new Vec3(playerPosition.x, playerPosition.y, playerPosition.z));
-                if (d < minimumWaypointDistanceToUse || d > maximumWaypointDistanceToUse) continue;
+                if (!enablePlayerIcons || !waypointState.hasIcon) {
+                    waypointState.renderIconOnHud = false;
+                    waypointState.renderIconOnMiniMap = false;
+                    waypointState.renderIconOnWorldMap = false;
+                } else if (alwaysShowFriendIcons && isFriend) {
+                    waypointState.renderIconOnHud = true;
+                    waypointState.renderIconOnMiniMap = true;
+                    waypointState.renderIconOnWorldMap = true;
+                } else {
+                    waypointState.renderIconOnHud = iconsOnHud < maxIconsOnHud && d >= minIconHudD && d <= maxIconHudD;
+                    waypointState.renderIconOnMiniMap = iconsOnMiniMap < maxIconsOnMiniMap && d >= minIconMiniD && d <= maxIconMiniD;
+                    waypointState.renderIconOnWorldMap = iconsOnWorldMap < maxIconsOnWorldMap && d >= minIconWorldD && d <= maxIconWorldD;
+                    if (onlyShowFriendsIcons) {
+                        waypointState.renderIconOnHud &= isFriend;
+                        waypointState.renderIconOnMiniMap &= isFriend;
+                        waypointState.renderIconOnWorldMap &= isFriend;
+                    }
+                    if (waypointState.renderIconOnHud) iconsOnHud++;
+                    if (waypointState.renderIconOnMiniMap) iconsOnMiniMap++;
+                    if (waypointState.renderIconOnWorldMap) iconsOnWorldMap++;
+                }
 
                 // Check if this player is within the server's player entity tracking range
                 if (playerClientEntityMap.containsKey(playerName)) {
-                    ClipContext clipContext = new ClipContext(mc.cameraEntity.getEyePosition(),
+                    if (config.hud.hidePlayersInRange) waypointState.renderOnHud = false;
+                    if (config.minimap.hidePlayersInRange) waypointState.renderOnMiniMap = false;
+                    if (config.worldmap.hidePlayersInRange) waypointState.renderOnWorldMap = false;
+
+                    if (waypointState.renderOnHud && config.hud.hidePlayersVisible) {
+                        #if MC_VER >= MC_1_17_1
+                        ClipContext clipContext = new ClipContext(mc.cameraEntity.getEyePosition(),
+                        #else
+                        ClipContext clipContext = new ClipContext(mc.cameraEntity.getEyePosition(1),
+                        #endif
                             playerClientEntityMap.get(playerName).position().add(0, 1, 0),
-                            ClipContext.Block.VISUAL, ClipContext.Fluid.ANY, CollisionContext.empty());
-                    // If this player is visible, don't show waypoint
-                    if (mc.level.clip(clipContext).getType() != HitResult.Type.BLOCK) continue;
+                            ClipContext.Block.VISUAL, ClipContext.Fluid.ANY, mc.cameraEntity);
+                        // If this player is visible, don't show waypoint on Hud
+                        if (mc.level.clip(clipContext).getType() != HitResult.Type.BLOCK) {
+                            waypointState.renderOnHud = false;
+                        }
+                    }
                 }
-                currentPlayerWaypointNames.add(playerName);
-                addOrUpdatePlayerWaypoint(playerPosition);
+
+                if (waypointState.renderOnHud || waypointState.renderOnMiniMap || waypointState.renderOnWorldMap) {
+                    currentPlayerIds.add(playerPosition.id);
+                    addOrUpdatePlayerWaypoint(playerPosition, waypointState);
+                }
             }
+
             removeOldPlayerWaypoints();
 
-            int newPlayerWaypointColor = CommonModConfig.Instance.playerWaypointColor();
-            int newFriendWaypointColor = CommonModConfig.Instance.friendWaypointColor();
-            boolean newFriendColorOverride = CommonModConfig.Instance.overwriteFriendWaypointColor();
-            int newFriendListHashCode = CommonModConfig.Instance.friendList().hashCode();
+            int newPlayerWaypointColor = config.general.playerWaypointColor.ordinal();
+            int newFriendWaypointColor = config.friends.friendWaypointColor.ordinal();
+            boolean newFriendColorOverride = config.friends.overwriteFriendWaypointColor;
+            int newFriendListHashCode = config.friends.friendList.hashCode();
             if ((previousPlayerWaypointColor != newPlayerWaypointColor)
                     || (previousFriendWaypointColor != newFriendWaypointColor)
                     || (previousFriendColorOverride != newFriendColorOverride)
@@ -152,7 +355,7 @@ public abstract class ClientMapHandler {
         }
     }
 
-    abstract void addOrUpdatePlayerWaypoint(PlayerPosition playerPosition);
+    abstract void addOrUpdatePlayerWaypoint(PlayerPosition playerPosition, WaypointState waypointState);
 
     abstract void removeOldPlayerWaypoints();
 
@@ -160,39 +363,89 @@ public abstract class ClientMapHandler {
 
     abstract void updatePlayerWaypointColors();
 
-    public void handleMarkerWaypoints(List<WaypointPosition> markerPositions) {
-        if (CommonModConfig.Instance.enableMarkerWaypoints()) {
+    public void handleMarkerWaypoints(List<Position> markerPositions) {
+        if (config.general.enableMarkerWaypoints) {
             // Keep track of which waypoints were previously shown
             // to remove any that are not to be shown anymore
-            currentMarkerWaypointKeys.clear();
+            currentMarkerIds.clear();
 
-            for (WaypointPosition markerPosition : markerPositions) {
-                int minimumWaypointDistanceToUse = CommonModConfig.Instance.minDistanceMarker();
-                int maximumWaypointDistanceToUse = CommonModConfig.Instance.maxDistanceMarker();
-                if (minimumWaypointDistanceToUse > maximumWaypointDistanceToUse)
-                    maximumWaypointDistanceToUse = minimumWaypointDistanceToUse;
+            int minHudD = config.hud.minMarkerDistance;
+            int maxHudD = config.hud.maxMarkerDistance;
+            int minMiniD = config.minimap.minMarkerDistance;
+            int maxMiniD = config.minimap.maxMarkerDistance;
+            int minWorldD = config.worldmap.minMarkerDistance;
+            int maxWorldD = config.worldmap.maxMarkerDistance;
 
-                // If closer than the minimum waypoint distance or further away than the maximum waypoint distance,
-                // don't show waypoint
+            int minIconHudD = config.hud.minMarkerIconDistance;
+            int maxIconHudD = config.hud.maxMarkerIconDistance;
+            int minIconMiniD = config.minimap.minMarkerIconDistance;
+            int maxIconMiniD = config.minimap.maxMarkerIconDistance;
+            int minIconWorldD = config.worldmap.minMarkerIconDistance;
+            int maxIconWorldD = config.worldmap.maxMarkerIconDistance;
+
+            int onHud = 0;
+            int maxOnHud = config.hud.maxMarkerWaypoints;
+            int onMiniMap = 0;
+            int maxOnMiniMap = config.minimap.maxMarkerWaypoints;
+            int onWorldMap = 0;
+            int maxOnWorldMap = config.worldmap.maxMarkerWaypoints;
+
+            int iconsOnHud = 0;
+            int maxIconsOnHud = config.hud.maxMarkerIconWaypoints;
+            int iconsOnMiniMap = 0;
+            int maxIconsOnMiniMap = config.minimap.maxMarkerIconWaypoints;
+            int iconsOnWorldMap = 0;
+            int maxIconsOnWorldMap = config.worldmap.maxMarkerIconWaypoints;
+
+            boolean enableMarkerIcons = config.general.enableMarkerIcons;
+
+            Vec3 cameraPos = mc.cameraEntity.position();
+            markerPositions.sort(Comparator.comparing(p -> cameraPos.distanceToSqr(p.x, p.y, p.z)));
+            ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
+
+            for (Position markerPosition : markerPositions) {
+                WaypointState waypointState = idToWaypointState.get(markerPosition.id);
                 double d = mc.cameraEntity.position().distanceTo(new Vec3(markerPosition.x, markerPosition.y, markerPosition.z));
-                if (d < minimumWaypointDistanceToUse || d > maximumWaypointDistanceToUse) continue;
 
-                currentMarkerWaypointKeys.add(markerPosition.getKey());
-                addOrUpdateMarkerWaypoint(markerPosition);
+                waypointState.renderOnHud = onHud < maxOnHud && d >= minHudD && d <= maxHudD;
+                waypointState.renderOnMiniMap = onMiniMap < maxOnMiniMap && d >= minMiniD && d <= maxMiniD;
+                waypointState.renderOnWorldMap = onWorldMap < maxOnWorldMap && d >= minWorldD && d <= maxWorldD;
+                if (waypointState.renderOnHud) onHud++;
+                if (waypointState.renderOnMiniMap) onMiniMap++;
+                if (waypointState.renderOnWorldMap) onWorldMap++;
+
+                if (!(waypointState.renderOnHud || waypointState.renderOnMiniMap || waypointState.renderOnWorldMap)) continue;
+
+                if (enableMarkerIcons && waypointState.hasIcon && serverEntry.includeIconMarkerLayer(markerPosition.layer)) {
+                    waypointState.renderIconOnHud = iconsOnHud < maxIconsOnHud && d >= minIconHudD && d <= maxIconHudD;
+                    waypointState.renderIconOnMiniMap = iconsOnMiniMap < maxIconsOnMiniMap && d >= minIconMiniD && d <= maxIconMiniD;
+                    waypointState.renderIconOnWorldMap = iconsOnWorldMap < maxIconsOnWorldMap && d >= minIconWorldD && d <= maxIconWorldD;
+                    if (waypointState.renderIconOnHud) iconsOnHud++;
+                    if (waypointState.renderIconOnMiniMap) iconsOnMiniMap++;
+                    if (waypointState.renderIconOnWorldMap) iconsOnWorldMap++;
+                } else {
+                    waypointState.renderIconOnHud = false;
+                    waypointState.renderIconOnMiniMap = false;
+                    waypointState.renderIconOnWorldMap = false;
+                }
+
+                currentMarkerIds.add(markerPosition.id);
+                addOrUpdateMarkerWaypoint(markerPosition, waypointState);
             }
+
             removeOldMarkerWaypoints();
 
-            int newMarkerWaypointColor = CommonModConfig.Instance.markerWaypointColor();
+            int newMarkerWaypointColor = config.general.markerWaypointColor.ordinal();
             if (previousMarkerWaypointColor != newMarkerWaypointColor) {
                 previousMarkerWaypointColor = newMarkerWaypointColor;
                 updateMarkerWaypointColors();
             }
 
-            if (!markerMessageWasShown && currentMarkerWaypointKeys.size() > maxMarkerCountBeforeWarning && !CommonModConfig.Instance.ignoreMarkerMessage()) {
+            if (!markerMessageWasShown && (onHud > maxMarkerCountBeforeWarning || onMiniMap > maxMarkerCountBeforeWarning) && !config.general.ignoreMarkerMessage) {
                 markerMessageWasShown = true;
                 Utils.sendToClientChat(Text.literal("[" + AbstractModInitializer.MOD_NAME + "]: " +
                                 "Looks like you have quite a lot of markers from the server visible! " +
-                                "Did you know that you can chose the marker layers that are shown in the config, decrease their maximum distance or disable marker waypoints entirely? ")
+                                "Did you know that you can chose the marker layers that are shown in the config, decrease their maximum distance, set a limit on how many are displayed or disable marker waypoints entirely? (The default config already limits the amount to 40) ")
                         .withStyle(Style.EMPTY.withColor(ChatFormatting.GOLD))
                         .append(Text.literal("[Don't show this again]")
                                 .withStyle(Style.EMPTY.withClickEvent(
@@ -208,7 +461,7 @@ public abstract class ClientMapHandler {
         }
     }
 
-    abstract void addOrUpdateMarkerWaypoint(WaypointPosition markerPosition);
+    abstract void addOrUpdateMarkerWaypoint(Position markerPosition, WaypointState waypointState);
 
     abstract void removeOldMarkerWaypoints();
 

@@ -20,10 +20,9 @@
 
 package de.the_build_craft.remote_player_waypoints_for_xaero.common.connections;
 
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.ModConfig;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.PlayerPosition;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.AbstractModInitializer;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.WaypointPosition;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Text;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Utils;
 import net.minecraft.client.Minecraft;
@@ -38,10 +37,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
 
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.*;
+
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 23.07.2025
+ * @version 25.08.2025
  */
 public abstract class MapConnection {
     public URL queryURL;
@@ -50,6 +51,7 @@ public abstract class MapConnection {
     public String onlineMapConfigLink;
     long lastUpdateTimeMs;
     public boolean foundPlayer;
+    public boolean partOfLiveAtlas;
 
     public MapConnection() {
         this.mc = Minecraft.getInstance();
@@ -61,7 +63,7 @@ public abstract class MapConnection {
     }
 
     @NotNull
-    protected String getBaseURL(CommonModConfig.ServerEntry serverEntry, boolean useHttps) {
+    protected String getBaseURL(ModConfig.ServerEntry serverEntry, boolean useHttps) {
         String baseURL = serverEntry.link;
         if (!baseURL.startsWith(useHttps ? "https://" : "http://")){
             baseURL = (useHttps ? "https://" : "http://") + baseURL;
@@ -102,17 +104,18 @@ public abstract class MapConnection {
                 if (Objects.equals(p.name, clientName)) {
                     currentDimension = p.world;
                     foundPlayer = true;
+                    break;
                 }
             }
         }
 
-        if (CommonModConfig.Instance.debugMode() && CommonModConfig.Instance.chatLogInDebugMode()) {
+        if (config.general.debugMode && config.general.chatLogInDebugMode) {
             Utils.sendToClientChat("---");
         }
         for (PlayerPosition p : playerPositions) {
             UpdateAfkInfo(p);
 
-            if (CommonModConfig.Instance.debugMode() || (Objects.equals(p.world, currentDimension) && !Objects.equals(p.name, clientName))) {
+            if (config.general.debugMode || (Objects.equals(p.world, currentDimension) && !Objects.equals(p.name, clientName))) {
                 newPlayerPositions.put(p.name, p);
             }
         }
@@ -129,10 +132,10 @@ public abstract class MapConnection {
                 } else {
                     AbstractModInitializer.AfkTimeDic.put(playerPosition.name, (System.currentTimeMillis() - lastUpdateTimeMs));
                 }
-                if (CommonModConfig.Instance.debugMode() && CommonModConfig.Instance.chatLogInDebugMode()) {
+                if (config.general.debugMode && config.general.chatLogInDebugMode) {
                     Utils.sendToClientChat(playerPosition.name + "  afk_time: " + AbstractModInitializer.AfkTimeDic.get(playerPosition.name) / 1000);
                 }
-                if (AbstractModInitializer.AfkTimeDic.get(playerPosition.name) / 1000 >= CommonModConfig.Instance.timeUntilAfk()) {
+                if (AbstractModInitializer.AfkTimeDic.get(playerPosition.name) / 1000 >= config.general.timeUntilAfk) {
                     AbstractModInitializer.AfkDic.put(playerPosition.name, true);
                 }
             } else {

@@ -1,9 +1,8 @@
 /*
  *    This file is part of the Remote player waypoints for Xaero's Map mod
  *    licensed under the GNU GPL v3 License.
- *    (some parts of this file are originally from "RemotePlayers" by ewpratten)
  *
- *    Copyright (C) 2024 - 2025  Leander Knüttel and contributors
+ *    Copyright (C) 2025  Leander Knüttel and contributors
  *
  *    This program is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -19,22 +18,32 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
+package de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers;
+
+#if MC_VER >= MC_1_19_4
+import org.joml.Matrix4f;
+#else
+import com.mojang.math.Matrix4f;
+#endif
 
 /**
- * A marker's name and position
- *
- * @author ewpratten
- * @author eatmyvenom
  * @author Leander Knüttel
- * @version 23.07.2025
+ * @version 25.08.2025
  */
-public class WaypointPosition extends Position {
-    public WaypointPosition(String name, int x, int y, int z) {
-        super(name, x, y, z);
-    }
+public class XaeroIconRenderData {
+    public final Matrix4f pose;
+    public final float x;
+    public final float y;
+    public final int width;
+    public final int height;
+    public final float a;
 
-    public WaypointPosition(String name, float x, float y, float z) {
-        super(name, x, y, z);
+    public XaeroIconRenderData(Matrix4f pose, float x, float y, int width, int height, float a) {
+        this.pose = pose;
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.a = a;
     }
 }

@@ -28,7 +28,7 @@ import java.util.Map;
  *
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 25.07.2025
+ * @version 25.08.2025
  */
 public class DynmapMarkerUpdate {
     public static class Set {
@@ -37,6 +37,7 @@ public class DynmapMarkerUpdate {
             public float y;
             public float z;
             public String label;
+            public String icon = "";
         }
         public static class Area {
             public String fillcolor;

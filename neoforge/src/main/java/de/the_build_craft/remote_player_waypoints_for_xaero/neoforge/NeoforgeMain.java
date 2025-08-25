@@ -34,7 +34,7 @@ import net.neoforged.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 16.06.2024
+ * @version 25.08.2025
  */
 @Mod(AbstractModInitializer.MOD_ID)
 public class NeoforgeMain extends AbstractModInitializer
@@ -42,7 +42,8 @@ public class NeoforgeMain extends AbstractModInitializer
 	public NeoforgeMain(IEventBus eventBus)
 	{
 		loaderType = LoaderType.NeoForge;
-        CommonModConfigNeoForge config = new CommonModConfigNeoForge();
+        new ModConfigNeoForge();
+		new XaerosMapCompatNeoForge();
 
 		// Register the mod initializer (Actual event registration is done in the different proxies)
 		eventBus.addListener((FMLClientSetupEvent e) -> this.onInitializeClient());
@@ -51,6 +52,7 @@ public class NeoforgeMain extends AbstractModInitializer
 
 	@Override
 	public void onInitializeClient(){
+		new XaerosMapCompatNeoForge();
 		super.onInitializeClient();
 
 		//NeoForge Client init here
@@ -80,21 +82,4 @@ public class NeoforgeMain extends AbstractModInitializer
 	protected void initializeModCompat()
 	{
 	}
-
-	/*
-	@Override
-	protected void subscribeClientStartedEvent(Runnable eventHandler)
-	{
-		// FIXME What event is this?
-	}
-	
-	@Override
-	protected void subscribeServerStartingEvent(Consumer<MinecraftServer> eventHandler)
-	{
-		NeoForge.EVENT_BUS.addListener((ServerStartingEvent e) -> { eventHandler.accept(e.getServer()); });
-	}
-	
-	@Override
-	protected void runDelayedSetup() { *//*SingletonInjector.INSTANCE.runDelayedSetup();*//* }*/
-	
 }

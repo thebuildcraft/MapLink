@@ -21,7 +21,7 @@
 
 package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig;
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.*;
 
 /**
  * A wrapper to improve creating temp waypoints for markers
@@ -29,10 +29,10 @@ import de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConf
  * @author ewpratten
  * @author eatmyvenom
  * @author Leander Knüttel
- * @version 23.07.2025
+ * @version 25.08.2025
  */
 public class FixedWaypoint extends TempWaypoint {
-    public FixedWaypoint(WaypointPosition wp) {
-        super(wp.x, wp.y, wp.z, wp.name, CommonModConfig.Instance.markerWaypointColor());
+    public FixedWaypoint(Position p, WaypointState waypointState) {
+        super(p.x, p.y, p.z, p.name, config.general.markerWaypointColor.ordinal(), p.id, waypointState);
     }
 }

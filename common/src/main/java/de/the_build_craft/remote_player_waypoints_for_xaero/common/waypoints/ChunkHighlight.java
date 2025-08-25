@@ -25,7 +25,7 @@ import java.util.Set;
 
 /**
  * @author Leander Knüttel
- * @version 25.07.2025
+ * @version 25.08.2025
  */
 public class ChunkHighlight {
     public String name;
@@ -44,7 +44,7 @@ public class ChunkHighlight {
     }
 
     public ChunkHighlight(AreaMarker areaMarker) {
-        this(areaMarker.name, areaMarker.fillColor, areaMarker.lineColor, areaMarker.SetName);
+        this(areaMarker.name, areaMarker.fillColor, areaMarker.lineColor, areaMarker.layer);
         areas.add(areaMarker);
     }
 

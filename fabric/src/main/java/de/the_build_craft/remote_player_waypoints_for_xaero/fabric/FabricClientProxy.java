@@ -39,7 +39,7 @@ import org.apache.logging.log4j.Logger;
  * @author coolGi
  * @author Ran
  * @author Leander Knüttel
- * @version 22.05.2024
+ * @version 25.08.2025
  */
 @Environment(EnvType.CLIENT)
 public class FabricClientProxy implements AbstractModInitializer.IEventProxy
@@ -53,7 +53,6 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 		#if MC_VER > MC_1_18_2
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> FabricMain.registerClientCommands((CommandDispatcher<CommandSourceStack>) (CommandDispatcher<?>) dispatcher));
 		#else
-		//TODO test for MC <= 1.18.2
 		FabricMain.registerClientCommands((CommandDispatcher<CommandSourceStack>) (CommandDispatcher<?>) ClientCommandManager.DISPATCHER);
 		#endif
 

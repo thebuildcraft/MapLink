@@ -23,7 +23,6 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.common.connections;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.*;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.ClientMapHandler;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.PlayerPosition;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.WaypointPosition;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Utils;
 
 import java.io.IOException;
@@ -35,13 +34,16 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.*;
+
 /**
  * @author Leander Knüttel
- * @version 23.07.2025
+ * @version 25.08.2025
  */
 public class LiveAtlasConnection extends MapConnection {
     public static final Pattern dynmapRegexPattern = Pattern.compile("\\n +dynmap: \\{\\n(.*\\n)*?.*}\\n");
     public static final Pattern Pl3xMapRegexPattern = Pattern.compile("\n +\t+ +pl3xmap: \"(.+?)\"\n");
+    public static final Pattern SquareMapRegexPattern = Pattern.compile("\n +\t+ +squaremap: \"(.+?)\"\n");
     List<MapConnection> mapConnections = new ArrayList<>();
     int mapIndex;
 
@@ -52,7 +54,7 @@ public class LiveAtlasConnection extends MapConnection {
         }
     }
 
-    public LiveAtlasConnection(CommonModConfig.ServerEntry serverEntry, UpdateTask updateTask) throws IOException {
+    public LiveAtlasConnection(ModConfig.ServerEntry serverEntry, UpdateTask updateTask) throws IOException {
         try {
             setupConnections(serverEntry, true);
         } catch (Exception ignored) {
@@ -68,14 +70,14 @@ public class LiveAtlasConnection extends MapConnection {
         }
     }
 
-    private void setupConnections(CommonModConfig.ServerEntry serverEntry, boolean useHttps) throws IOException {
+    private void setupConnections(ModConfig.ServerEntry serverEntry, boolean useHttps) throws IOException {
         String baseURL = getBaseURL(serverEntry, useHttps);
         String liveAtlasHTML = HTTP.makeTextHttpRequest(URI.create(baseURL).toURL(), true);
         Matcher matcher = dynmapRegexPattern.matcher(liveAtlasHTML);
         while (matcher.find()) {
             String g = matcher.group();
             try {
-                mapConnections.add(new DynmapConnection(baseURL, g));
+                mapConnections.add(new DynmapConnection(baseURL, g, true));
             } catch (Exception e) {
                 AbstractModInitializer.LOGGER.error("error creating Dynmap connection for LiveAtlas");
             }
@@ -84,10 +86,18 @@ public class LiveAtlasConnection extends MapConnection {
         while (matcher.find()) {
             String g = matcher.group(1);
             try {
-                mapConnections.add(new Pl3xMapConnection(baseURL, g));
+                mapConnections.add(new Pl3xMapConnection(baseURL, g, true));
             } catch (Exception e) {
                 AbstractModInitializer.LOGGER.error("error creating Pl3xMap connection for LiveAtlas");
-                e.printStackTrace();
+            }
+        }
+        matcher = SquareMapRegexPattern.matcher(liveAtlasHTML);
+        while (matcher.find()) {
+            String g = matcher.group(1);
+            try {
+                mapConnections.add(new SquareMapConnection(baseURL, g, true));
+            } catch (Exception e) {
+                AbstractModInitializer.LOGGER.error("error creating Squaremap connection for LiveAtlas");
             }
         }
     }
@@ -95,7 +105,7 @@ public class LiveAtlasConnection extends MapConnection {
     @Override
     public HashMap<String, PlayerPosition> getPlayerPositions() throws IOException {
         if (mapConnections.isEmpty()) return new HashMap<>();
-        if (CommonModConfig.Instance.debugMode()) {
+        if (config.general.debugMode) {
             HashMap<String, PlayerPosition> debug = new HashMap<>();
             for (MapConnection mapConnection : mapConnections) {
                 debug.putAll(mapConnection.getPlayerPositions());
@@ -131,9 +141,10 @@ public class LiveAtlasConnection extends MapConnection {
             if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().removeAllMarkerWaypoints();
             return;
         }
-        CommonModConfig.ServerEntry serverEntry = CommonModConfig.Instance.getCurrentServerEntry();
-        if (serverEntry.markerVisibilityMode == CommonModConfig.ServerEntry.MarkerVisibilityMode.Auto) {
-            CommonModConfig.Instance.setMarkerLayers(serverEntry.ip, new ArrayList<>(getMarkerLayers()));
+
+        ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
+        if (serverEntry.needsMarkerLayerUpdate()) {
+            serverEntry.setMarkerLayers(new ArrayList<>(getMarkerLayers()));
         }
 
         mapConnections.get(mapIndex).getWaypointPositions();

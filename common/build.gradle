@@ -19,7 +19,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * file changed by: Leander Knüttel
- * date: 14.06.2024
+ * date: 25.08.2025
  */
 
 plugins {
@@ -34,9 +34,12 @@ minecraft {
 dependencies {
     // So mixins can be written in common
     compileOnly group:'org.spongepowered', name:'mixin', version:'0.8.5'
+    compileOnly group: 'io.github.llamalad7', name: 'mixinextras-common', version: '0.5.0'
+    annotationProcessor group: 'io.github.llamalad7', name: 'mixinextras-common', version: '0.5.0'
 
-    compileOnly "maven.modrinth:xaeros-world-map:${rootProject.xaeros_world_map_fabric_version}"
-    compileOnly "maven.modrinth:xaeros-minimap:${rootProject.xaeros_minimap_fabric_version}"
+    compileOnly("maven.modrinth:xaeros-world-map:${rootProject.xaeros_world_map_fabric_version}")
+    compileOnly("maven.modrinth:xaeros-minimap:${rootProject.xaeros_minimap_fabric_version}")
+    compileOnly("me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_config_api_fabric_version}")
 }
 
 publishing {

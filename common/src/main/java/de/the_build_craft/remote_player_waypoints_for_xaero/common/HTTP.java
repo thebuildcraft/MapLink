@@ -22,6 +22,7 @@
 package de.the_build_craft.remote_player_waypoints_for_xaero.common;
 
 import com.google.gson.Gson;
+import com.mojang.blaze3d.platform.NativeImage;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -36,7 +37,7 @@ import java.net.URL;
  * @author ewpratten
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 25.07.2025
+ * @version 25.08.2025
  */
 public class HTTP {
 
@@ -93,5 +94,19 @@ public class HTTP {
         }
 
         return response.toString();
+    }
+
+    public static NativeImage makeImageHttpRequest(URL url) throws IOException{
+        // Open an HTTP request
+        HttpURLConnection request = (HttpURLConnection) url.openConnection();
+        request.setRequestMethod("GET");
+        request.setRequestProperty("Content-Type", "image/png");
+        request.setRequestProperty("User-Agent", AbstractModInitializer.MOD_NAME);
+        request.setInstanceFollowRedirects(true);
+        request.setConnectTimeout(10_000);
+        request.setReadTimeout(10_000);
+
+        // Return the content
+        return NativeImage.read(request.getInputStream());
     }
 }

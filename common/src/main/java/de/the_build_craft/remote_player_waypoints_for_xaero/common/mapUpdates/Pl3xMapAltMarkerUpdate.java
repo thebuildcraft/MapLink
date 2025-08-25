@@ -24,7 +24,7 @@ import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Int
 
 /**
  * @author Leander Knüttel
- * @version 23.07.2025
+ * @version 25.08.2025
  */
 public class Pl3xMapAltMarkerUpdate {
     public String id;
@@ -33,5 +33,6 @@ public class Pl3xMapAltMarkerUpdate {
         public String tooltip;
         public String type;
         public Int3 point;
+        public String icon = "";
     }
 }

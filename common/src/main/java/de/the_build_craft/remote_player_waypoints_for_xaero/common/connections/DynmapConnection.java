@@ -35,19 +35,22 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.*;
+
 /**
  * Represents a connection to a dynmap server
  *
  * @author ewpratten
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 26.07.2025
+ * @version 25.08.2025
  */
 public class DynmapConnection extends MapConnection {
     private String markerStringTemplate = "";
     public String firstWorldName = "";
     public String[] worldNames = new String[0];
-    public DynmapConnection(CommonModConfig.ServerEntry serverEntry, UpdateTask updateTask) throws IOException {
+
+    public DynmapConnection(ModConfig.ServerEntry serverEntry, UpdateTask updateTask) throws IOException {
         try {
             generateLink(serverEntry, true);
         }
@@ -65,11 +68,12 @@ public class DynmapConnection extends MapConnection {
         }
     }
 
-    public DynmapConnection(String baseURL, String config) throws IOException {
+    public DynmapConnection(String baseURL, String config, boolean partOfLifeAtlas) throws IOException {
         generateLinkWithConfig(baseURL, config);
+        this.partOfLiveAtlas = partOfLifeAtlas;
     }
 
-    private void generateLink(CommonModConfig.ServerEntry serverEntry, boolean useHttps) throws IOException {
+    private void generateLink(ModConfig.ServerEntry serverEntry, boolean useHttps) throws IOException {
         String baseURL = getBaseURL(serverEntry, useHttps);
 
         try{
@@ -78,7 +82,7 @@ public class DynmapConnection extends MapConnection {
             // Test the url
             this.getPlayerPositions();
 
-            if (CommonModConfig.Instance.debugMode()){
+            if (config.general.debugMode){
                 Utils.sendToClientChat(("got link with method 1 | overwrite mode active!"));
             }
         }
@@ -89,7 +93,7 @@ public class DynmapConnection extends MapConnection {
 
                 generateLinkWithConfig(baseURL, mapConfig);
 
-                if (CommonModConfig.Instance.debugMode()){
+                if (config.general.debugMode){
                     Utils.sendToClientChat("got link with method 2 | that is good!");
                 }
             }
@@ -106,7 +110,7 @@ public class DynmapConnection extends MapConnection {
                     // Test the url
                     this.getPlayerPositions();
 
-                    if (CommonModConfig.Instance.debugMode()){
+                    if (config.general.debugMode){
                         Utils.sendErrorToClientChat("got link with method 3 instead of 2 | please report this on github!");
                     }
                 }
@@ -122,7 +126,7 @@ public class DynmapConnection extends MapConnection {
                     // Test the url
                     this.getPlayerPositions();
 
-                    if (CommonModConfig.Instance.debugMode()){
+                    if (config.general.debugMode){
                         Utils.sendErrorToClientChat("got link with method 4 instead of 2 | please report this on github!");
                     }
                 }
@@ -130,7 +134,7 @@ public class DynmapConnection extends MapConnection {
         }
 
         AbstractModInitializer.LOGGER.info("new link: " + queryURL);
-        if (CommonModConfig.Instance.debugMode()){
+        if (config.general.debugMode){
             Utils.sendToClientChat("new link: " + queryURL);
         }
     }
@@ -223,7 +227,9 @@ public class DynmapConnection extends MapConnection {
         PlayerPosition[] positions = new PlayerPosition[update.players.length];
         for (int i = 0; i < update.players.length; i++){
             DynmapPlayerUpdate.Player player = update.players[i];
-            positions[i] = new PlayerPosition(player.account, Math.round(player.x), Math.round(player.y), Math.round(player.z), player.world);
+            PlayerPosition playerPosition = new PlayerPosition(player.account, Math.round(player.x), Math.round(player.y), Math.round(player.z), player.world);
+            positions[i] = playerPosition;
+            ClientMapHandler.registerPlayerPosition(playerPosition, markerStringTemplate.replace("_markers_/marker_{world}.json", "faces/32x32/" + player.account + ".png"));
         }
 
         return HandlePlayerPositions(positions);
@@ -239,28 +245,28 @@ public class DynmapConnection extends MapConnection {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            for (DynmapMarkerUpdate.Set set : u.sets.values()) {
-                layers.add(set.label);
-            }
+            layers.addAll(u.sets.keySet());
         }
         return layers;
     }
 
     String lastMarkerDimension = "";
-    List<WaypointPosition> positions = new ArrayList<>();
+    int lastMarkerHash;
+    int lastAreaMarkerHash;
+    List<Position> positions = new ArrayList<>();
     List<AreaMarker> areaMarkers = new ArrayList<>();
 
     @Override
     public void getWaypointPositions() throws IOException {
-        CommonModConfig.ServerEntry serverEntry = CommonModConfig.Instance.getCurrentServerEntry();
-        if (serverEntry.markerVisibilityMode == CommonModConfig.ServerEntry.MarkerVisibilityMode.Auto) {
-            CommonModConfig.Instance.setMarkerLayers(serverEntry.ip, new ArrayList<>(getMarkerLayers()));
+        ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
+        if (serverEntry.needsMarkerLayerUpdate() && !partOfLiveAtlas) {
+            serverEntry.setMarkerLayers(new ArrayList<>(getMarkerLayers()));
         }
 
         if (ClientMapHandler.getInstance() == null) return;
 
         String dimension;
-        if (CommonModConfig.Instance.debugMode()){
+        if (config.general.debugMode){
             dimension = firstWorldName;
         }
         else {
@@ -272,46 +278,62 @@ public class DynmapConnection extends MapConnection {
         if (markerStringTemplate.isEmpty() || dimension.isEmpty()) {
             ClientMapHandler.getInstance().removeAllMarkerWaypoints();
             ClientMapHandler.getInstance().removeAllAreaMarkers(true);
+            return;
         }
-        if (lastMarkerDimension.equals(dimension)) {
+        int newMarkerHash = getMarkerVisibilityHash();
+        int newAreaMarkerHash = getAreaMarkerVisibilityHash();
+        if (lastMarkerDimension.equals(dimension)
+                && newMarkerHash == lastMarkerHash
+                && newAreaMarkerHash == lastAreaMarkerHash
+        ) {
             ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
             ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers, false);
             return;
         }
         lastMarkerDimension = dimension;
+        lastMarkerHash = newMarkerHash;
+        lastAreaMarkerHash = newAreaMarkerHash;
 
         DynmapMarkerUpdate update = HTTP.makeJSONHTTPRequest(URI.create(markerStringTemplate.replace("{world}", dimension).replace(" ", "%20")).toURL(), DynmapMarkerUpdate.class);
         positions.clear();
         areaMarkers.clear();
 
-        for (DynmapMarkerUpdate.Set set : update.sets.values()){
-            if (!serverEntry.includeMarkerLayer(set.label)) continue;
-
-            for (DynmapMarkerUpdate.Set.Marker m : set.markers.values()){
-                positions.add(new WaypointPosition(m.label, m.x, m.y, m.z));
-            }
-            for (DynmapMarkerUpdate.Set.Area a : set.areas.values()) {
-                if (a.x.length < 2 || a.z.length < 2 || a.x.length != a.z.length) continue;
-                Float3[] points;
-                if (a.x.length > 2) {
-                    points = new Float3[a.x.length];
-                    for (int i = 0; i < a.x.length; i++) {
-                        points[i] = new Float3(a.x[i], 0, a.z[i]);
-                    }
-                } else {
-                    points = new Float3[]{
-                            new Float3(a.x[0], 0, a.z[0]),
-                            new Float3(a.x[0], 0, a.z[1]),
-                            new Float3(a.x[1], 0, a.z[1]),
-                            new Float3(a.x[1], 0, a.z[0]),
-                    };
+        for (Map.Entry<String, DynmapMarkerUpdate.Set> set : update.sets.entrySet()){
+            if (serverEntry.includeMarkerLayer(set.getKey())) {
+                for (Map.Entry<String, DynmapMarkerUpdate.Set.Marker> markerEntry : set.getValue().markers.entrySet()) {
+                    DynmapMarkerUpdate.Set.Marker m = markerEntry.getValue();
+                    Position position = new Position(m.label, m.x, m.y, m.z, dimension + set.getKey() + markerEntry.getKey(), set.getKey());
+                    positions.add(position);
+                    ClientMapHandler.registerPosition(position,
+                            m.icon.equals("default") ? null : markerStringTemplate.replace("marker_{world}.json", m.icon + ".png"));
                 }
-                areaMarkers.add(new AreaMarker(a.label, 0f, 0f, 0f, points,
-                        new Color(a.color, a.opacity), new Color(a.fillcolor, a.fillopacity), set.label));
             }
-            for (DynmapMarkerUpdate.Set.Circle c : set.circles.values()) {
-                areaMarkers.add(new AreaMarker(c.label, c.x, c.y, c.z, convertEllipseToPolygon(c),
-                        new Color(c.color, c.opacity), new Color(c.fillcolor, c.fillopacity), set.label));
+            if (serverEntry.includeAreaMarkerLayer(set.getKey())) {
+                for (Map.Entry<String, DynmapMarkerUpdate.Set.Area> areaEntry : set.getValue().areas.entrySet()) {
+                    DynmapMarkerUpdate.Set.Area a = areaEntry.getValue();
+                    if (a.x.length < 2 || a.z.length < 2 || a.x.length != a.z.length) continue;
+                    Float3[] points;
+                    if (a.x.length > 2) {
+                        points = new Float3[a.x.length];
+                        for (int i = 0; i < a.x.length; i++) {
+                            points[i] = new Float3(a.x[i], 0, a.z[i]);
+                        }
+                    } else {
+                        points = new Float3[]{
+                                new Float3(a.x[0], 0, a.z[0]),
+                                new Float3(a.x[0], 0, a.z[1]),
+                                new Float3(a.x[1], 0, a.z[1]),
+                                new Float3(a.x[1], 0, a.z[0]),
+                        };
+                    }
+                    areaMarkers.add(new AreaMarker(a.label, 0f, 0f, 0f, points,
+                            new Color(a.color, a.opacity), new Color(a.fillcolor, a.fillopacity), set.getKey() + areaEntry.getKey(), set.getKey()));
+                }
+                for (Map.Entry<String, DynmapMarkerUpdate.Set.Circle> circleEntry : set.getValue().circles.entrySet()) {
+                    DynmapMarkerUpdate.Set.Circle c = circleEntry.getValue();
+                    areaMarkers.add(new AreaMarker(c.label, c.x, c.y, c.z, convertEllipseToPolygon(c),
+                            new Color(c.color, c.opacity), new Color(c.fillcolor, c.fillopacity), set.getKey() + circleEntry.getKey(), set.getKey()));
+                }
             }
         }
         ClientMapHandler.getInstance().handleMarkerWaypoints(positions);

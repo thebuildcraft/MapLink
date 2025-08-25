@@ -1,2 +1,3 @@
 accessWidener v1 named
 accessible method net/minecraft/client/gui/components/PlayerTabOverlay decorateName (Lnet/minecraft/client/multiplayer/PlayerInfo;Lnet/minecraft/network/chat/MutableComponent;)Lnet/minecraft/network/chat/Component;
+accessible field net/minecraft/client/renderer/RenderType GUI Lnet/minecraft/client/renderer/RenderType$CompositeRenderType;

@@ -32,9 +32,7 @@ import de.the_build_craft.remote_player_waypoints_for_xaero.common.connections.M
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.PlayerPosition;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Utils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ServerData;
-import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.commands.CommandSourceStack;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -47,13 +45,15 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.*;
+
 /**
  * Base for all mod loader initializers 
  * and handles most setup.
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 26.07.2025
+ * @version 25.08.2025
  */
 public abstract class AbstractModInitializer
 {
@@ -62,11 +62,12 @@ public abstract class AbstractModInitializer
 	public static final String VERSION = "4.0.0";
 	public static final Logger LOGGER = LogManager.getLogger("RemotePlayerWaypointsForXaero");
 	public static AbstractModInitializer INSTANCE;
+	public LoaderType loaderType;
 
 	// Update tasks
-	public static int TimerDelay;
-	private static final UpdateTask slowUpdateTask = new UpdateTask();
-	private static final FastUpdateTask fastUpdateTask = new FastUpdateTask();
+	public static int timerDelay;
+	private static UpdateTask slowUpdateTask;
+	private static FastUpdateTask fastUpdateTask;
 	private static ScheduledFuture<?> scheduledSlowUpdateTask;
 	private static ScheduledFuture<?> scheduledFastUpdateTask;
 
@@ -78,26 +79,9 @@ public abstract class AbstractModInitializer
 	public static HashMap<String, Boolean> AfkDic = new HashMap<>();
 	public static HashMap<String, Long> AfkTimeDic = new HashMap<>();
 	public static HashMap<String, PlayerPosition> lastPlayerDataDic = new HashMap<>();
-	public static int unknownAfkStateColor = 0x606060;
-	public static int AfkColor = 0xFF5500;
-	public static boolean showAfkInTabList = true;
-	public static boolean showAfkTimeInTabList = true;
-	public static boolean hideAfkMinutes = false;
 
-	// Area Marker Overlay
-	public static float areaFillAlphaMul = .5f;
-	public static float areaFillAlphaMin = 0;
-	public static float areaFillAlphaMax = .7f;
-	public static float areaLineAlphaMul = 1;
-	public static float areaLineAlphaMin = 0;
-	public static float areaLineAlphaMax = 1;
-	public static int blocksPerChunkThreshold = 128;
-
-	public static boolean enabled = true;
 	public static boolean xaeroMapInstalled = false;
 	public static boolean overwriteCurrentDimension = false;
-
-	public static HashMap<ClientLevel, HashMap<String, RemotePlayer>> fakePlayerEntities = new HashMap<>();
 
 	private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 	
@@ -109,12 +93,6 @@ public abstract class AbstractModInitializer
 	protected abstract IEventProxy createClientProxy();
 	protected abstract IEventProxy createServerProxy(boolean isDedicated);
 	protected abstract void initializeModCompat();
-	
-	//protected abstract void subscribeClientStartedEvent(Runnable eventHandler);
-	//protected abstract void subscribeServerStartingEvent(Consumer<MinecraftServer> eventHandler);
-	//protected abstract void runDelayedSetup();
-
-	public LoaderType loaderType;
 	
 	//===================//
 	// initialize events //
@@ -132,12 +110,11 @@ public abstract class AbstractModInitializer
 			new XaeroClientMapHandler();
 		}
 
-		unknownAfkStateColor = CommonModConfig.Instance.unknownAfkStateColor();
-		AfkColor = CommonModConfig.Instance.AfkColor();
-
-		TimerDelay = CommonModConfig.Instance.updateDelay();
+		slowUpdateTask = new UpdateTask();
+		fastUpdateTask = new FastUpdateTask();
+		timerDelay = config.general.updateDelay;
 		scheduledFastUpdateTask = scheduler.scheduleAtFixedRate(fastUpdateTask::run, 0, 100, TimeUnit.MILLISECONDS);
-		scheduledSlowUpdateTask = scheduler.scheduleAtFixedRate(slowUpdateTask::run, 0, TimerDelay, TimeUnit.MILLISECONDS);
+		scheduledSlowUpdateTask = scheduler.scheduleAtFixedRate(slowUpdateTask::run, 0, timerDelay, TimeUnit.MILLISECONDS);
 
 		this.printModInfo();
 
@@ -145,13 +122,10 @@ public abstract class AbstractModInitializer
 		this.createServerProxy(false).registerEvents();
 
 		this.initializeModCompat();
-		this.initConfig();
 
 		//Client Init here
 
 		LOGGER.info(MOD_NAME + " Initialized");
-
-		//this.subscribeClientStartedEvent(this::postInit);
 	}
 	
 	public void onInitializeServer()
@@ -163,18 +137,9 @@ public abstract class AbstractModInitializer
 
 		this.createServerProxy(true).registerEvents();
 
-		this.initConfig();
-
 		//Server Init here
 
 		LOGGER.info(MOD_NAME + " Initialized");
-
-		/*this.subscribeServerStartingEvent(server ->
-		{
-			this.postInit();
-			
-			LOGGER.info("Dedicated server initialized at " + server.getServerDirectory());
-		});*/
 	}
 	
 	//===========================//
@@ -195,18 +160,6 @@ public abstract class AbstractModInitializer
 	{
 		LOGGER.info(MOD_NAME + ", Version: " + VERSION);
 	}
-	
-	private void initConfig()
-	{
-
-	}
-	
-	/*private void postInit()
-	{
-		LOGGER.info("Post-Initializing Mod");
-		this.runDelayedSetup();
-		LOGGER.info("Mod Post-Initialized");
-	}*/
 
 	public static void registerClientCommands(CommandDispatcher<CommandSourceStack> dispatcher){
 		LiteralArgumentBuilder<CommandSourceStack> baseCommand = literal(MOD_ID);
@@ -274,7 +227,7 @@ public abstract class AbstractModInitializer
 
 		LiteralArgumentBuilder<CommandSourceStack> ignoreMarkerMessageCommand = baseCommand.then(literal("ignore_marker_message")
 				.executes(context -> {
-					CommonModConfig.Instance.setIgnoreMarkerMessage(true);
+					setIgnoreMarkerMessage(true);
 					Utils.sendToClientChat("You will not receive this warning again!");
 					return 1;
 				}));
@@ -301,10 +254,10 @@ public abstract class AbstractModInitializer
 	 * @param ms Time in seconds
 	 */
 	public static void setUpdateDelay(int ms) {
-		TimerDelay = ms;
+		timerDelay = ms;
 		if (scheduledSlowUpdateTask == null) return;
 		scheduledSlowUpdateTask.cancel(false);
-		scheduledSlowUpdateTask = scheduler.scheduleAtFixedRate(slowUpdateTask::run, 0, TimerDelay, TimeUnit.MILLISECONDS);
+		scheduledSlowUpdateTask = scheduler.scheduleAtFixedRate(slowUpdateTask::run, 0, timerDelay, TimeUnit.MILLISECONDS);
 		LOGGER.info("Remote update delay has been set to " + ms + " ms");
 	}
 
@@ -331,8 +284,8 @@ public abstract class AbstractModInitializer
         ServerData server = Minecraft.getInstance().getCurrentServer();
 		if (server != null){
             String address = server.ip.toLowerCase(Locale.ROOT);
-			if (!CommonModConfig.Instance.ignoredServers().contains(address)) CommonModConfig.Instance.ignoredServers().add(address);
-			CommonModConfig.Instance.saveConfig();
+			if (!config.general.ignoredServers.contains(address)) config.general.ignoredServers.add(address);
+			saveConfig();
 
 			Utils.sendToClientChat("You will not receive this warning again!");
 		}

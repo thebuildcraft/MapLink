@@ -24,7 +24,7 @@ import java.util.Objects;
 
 /**
  * @author Leander Knüttel
- * @version 25.07.2025
+ * @version 25.08.2025
  */
 public class Color {
     public int r;
@@ -75,7 +75,7 @@ public class Color {
     }
 
     public Color changeAlphaInThis(float alphaMul, float alphaMin, float alphaMax) {
-        a = Math.clamp(a * alphaMul, alphaMin, alphaMax);
+        a = Math.min(alphaMax, Math.max(alphaMin, a * alphaMul));
         return this;
     }
 

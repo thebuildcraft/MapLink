@@ -1,0 +1,57 @@
+/*
+ *    This file is part of the Remote player waypoints for Xaero's Map mod
+ *    licensed under the GNU GPL v3 License.
+ *
+ *    Copyright (C) 2025  Leander Knüttel and contributors
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *    (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package de.the_build_craft.remote_player_waypoints_for_xaero.mixins.common.mods.xaerominimap;
+
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.XaeroClientMapHandler;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
+import org.spongepowered.asm.mixin.injection.At;
+import xaero.common.minimap.waypoints.Waypoint;
+import xaero.hud.minimap.element.render.MinimapElementRenderLocation;
+import xaero.hud.minimap.waypoint.WaypointCollector;
+import xaero.hud.minimap.waypoint.render.AbstractWaypointRenderContext;
+import xaero.hud.minimap.waypoint.render.AbstractWaypointRenderProvider;
+import xaero.hud.minimap.waypoint.render.WaypointMapRenderContext;
+import xaero.hud.minimap.waypoint.render.world.WaypointWorldRenderContext;
+
+import java.util.List;
+
+/**
+ * @author Leander Knüttel
+ * @version 25.08.2025
+ */
+@Pseudo
+@Mixin(AbstractWaypointRenderProvider.class)
+public abstract class AbstractWaypointRenderProviderMixin {
+    @WrapOperation(method = "begin*", at = @At(value = "INVOKE", target = "Lxaero/hud/minimap/waypoint/WaypointCollector;collect(Ljava/util/List;)V"))
+    private void begin(WaypointCollector instance, List<Waypoint> destination, Operation<Void> original, MinimapElementRenderLocation location, AbstractWaypointRenderContext context) {
+        if (context instanceof WaypointWorldRenderContext) {
+            destination.addAll(XaeroClientMapHandler.idToHudPlayer.values());
+            destination.addAll(XaeroClientMapHandler.idToHudMarker.values());
+        } else if (context instanceof WaypointMapRenderContext) {
+            destination.addAll(XaeroClientMapHandler.idToMiniMapPlayer.values());
+            destination.addAll(XaeroClientMapHandler.idToMiniMapMarker.values());
+        }
+        original.call(instance, destination);
+    }
+}

@@ -33,6 +33,8 @@ import net.minecraft.network.chat.Style;
 import java.io.IOException;
 import java.util.*;
 
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.*;
+
 /**
  * Threaded task that is run once every few seconds to fetch data from the online map
  * and update the local maps
@@ -41,7 +43,7 @@ import java.util.*;
  * @author eatmyvenom
  * @author TheMrEngMan
  * @author Leander Knüttel
- * @version 26.07.2025
+ * @version 25.08.2025
  */
 public class UpdateTask {
     private final Minecraft mc;
@@ -80,16 +82,9 @@ public class UpdateTask {
             return;
         }
 
-        AbstractModInitializer.enabled = CommonModConfig.Instance.enabled();
-
         // Skip if disabled
-        if (!AbstractModInitializer.enabled) {
+        if (!config.general.enabled) {
             Reset();
-            if (ClientMapHandler.getInstance() != null) {
-                ClientMapHandler.getInstance().removeAllPlayerWaypoints();
-                ClientMapHandler.getInstance().removeAllMarkerWaypoints();
-                ClientMapHandler.getInstance().removeAllAreaMarkers(true);
-            }
             return;
         }
 
@@ -105,10 +100,10 @@ public class UpdateTask {
 
         if (AbstractModInitializer.getConnection() == null){
             try {
-                CommonModConfig.ServerEntry serverEntry = CommonModConfig.Instance.getCurrentServerEntry();
+                ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
 
                 if (Objects.equals(serverEntry, null)) {
-                    if (!(CommonModConfig.Instance.ignoredServers().contains(serverIP) || cantFindServerErrorWasShown)) {
+                    if (!(config.general.ignoredServers.contains(serverIP) || cantFindServerErrorWasShown)) {
                         String message = "[" + AbstractModInitializer.MOD_NAME + "]: " +
                                 "Could not find an online map link for this server. " +
                                 "Make sure to add it to the config. (this server ip was detected: " + serverIP + ") ";
@@ -138,15 +133,15 @@ public class UpdateTask {
                     AbstractModInitializer.connected = false;
                     return;
                 }
-                if (Objects.requireNonNull(serverEntry.maptype) == CommonModConfig.ServerEntry.Maptype.Dynmap) {
+                if (Objects.requireNonNull(serverEntry.maptype) == ModConfig.ServerEntry.MapType.Dynmap) {
                     AbstractModInitializer.setConnection(new DynmapConnection(serverEntry, this));
-                } else if (serverEntry.maptype == CommonModConfig.ServerEntry.Maptype.Squaremap) {
+                } else if (serverEntry.maptype == ModConfig.ServerEntry.MapType.Squaremap) {
                     AbstractModInitializer.setConnection(new SquareMapConnection(serverEntry, this));
-                } else if (serverEntry.maptype == CommonModConfig.ServerEntry.Maptype.Bluemap) {
+                } else if (serverEntry.maptype == ModConfig.ServerEntry.MapType.Bluemap) {
                     AbstractModInitializer.setConnection(new BlueMapConnection(serverEntry, this));
-                } else if (serverEntry.maptype == CommonModConfig.ServerEntry.Maptype.Pl3xMap) {
+                } else if (serverEntry.maptype == ModConfig.ServerEntry.MapType.Pl3xMap) {
                     AbstractModInitializer.setConnection(new Pl3xMapConnection(serverEntry, this));
-                } else if (serverEntry.maptype == CommonModConfig.ServerEntry.Maptype.LiveAtlas) {
+                } else if (serverEntry.maptype == ModConfig.ServerEntry.MapType.LiveAtlas) {
                     AbstractModInitializer.setConnection(new LiveAtlasConnection(serverEntry, this));
                 } else {
                     throw new IllegalStateException("Unexpected value: " + serverEntry.maptype);
@@ -179,7 +174,7 @@ public class UpdateTask {
             return;
         }
 
-        if (CommonModConfig.Instance.enableMarkerWaypoints() || CommonModConfig.Instance.enableAreaMarkers()){
+        if (config.general.enableMarkerWaypoints || config.general.enableAreaMarkerOverlay){
             try {
                 AbstractModInitializer.getConnection().getWaypointPositions();
             } catch (IOException e) {
@@ -196,19 +191,20 @@ public class UpdateTask {
         }
 
         AbstractModInitializer.connected = true;
-        AbstractModInitializer.AfkColor = CommonModConfig.Instance.AfkColor();
-        AbstractModInitializer.unknownAfkStateColor = CommonModConfig.Instance.unknownAfkStateColor();
-        AbstractModInitializer.showAfkInTabList = CommonModConfig.Instance.showAfkInTabList();
-        AbstractModInitializer.showAfkTimeInTabList = CommonModConfig.Instance.showAfkTimeInTabList();
-        AbstractModInitializer.hideAfkMinutes = CommonModConfig.Instance.hideAfkMinutes();
 
-        if (CommonModConfig.Instance.updateDelay() != AbstractModInitializer.TimerDelay){
-            AbstractModInitializer.setUpdateDelay(CommonModConfig.Instance.updateDelay());
+        if (config.general.updateDelay != AbstractModInitializer.timerDelay){
+            AbstractModInitializer.setUpdateDelay(config.general.updateDelay);
         }
     }
 
     private void Reset() {
         AbstractModInitializer.setConnection(null);
+        ClientMapHandler.clearRegisteredPositions();
+        if (ClientMapHandler.getInstance() != null) {
+            ClientMapHandler.getInstance().removeAllPlayerWaypoints();
+            ClientMapHandler.getInstance().removeAllMarkerWaypoints();
+            ClientMapHandler.getInstance().removeAllAreaMarkers(true);
+        }
         connectionErrorWasShown = false;
         cantFindServerErrorWasShown = false;
         cantGetPlayerPositionsErrorWasShown = false;

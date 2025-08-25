@@ -29,7 +29,7 @@ import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.Sq
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.AreaMarker;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Color;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.PlayerPosition;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.WaypointPosition;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Position;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Utils;
 
 import java.io.IOException;
@@ -37,15 +37,20 @@ import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URL;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.*;
 
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 26.07.2025
+ * @version 25.08.2025
  */
 public class SquareMapConnection extends MapConnection {
     private String markerStringTemplate = "";
-    public SquareMapConnection(CommonModConfig.ServerEntry serverEntry, UpdateTask updateTask) throws IOException {
+    private String markerIconLinkTemplate = "";
+    public SquareMapConnection(ModConfig.ServerEntry serverEntry, UpdateTask updateTask) throws IOException {
         try {
             generateLink(serverEntry, true);
         }
@@ -63,12 +68,30 @@ public class SquareMapConnection extends MapConnection {
         }
     }
 
-    private void generateLink(CommonModConfig.ServerEntry serverEntry, boolean useHttps) throws IOException {
-        String baseURL = getBaseURL(serverEntry, useHttps);
+    public SquareMapConnection(String baseURL, String link, boolean partOfLifeAtlas) throws IOException {
+        this.partOfLiveAtlas = partOfLifeAtlas;
+        Matcher matcher = Pattern.compile(".*?//\\w*(\\.\\w+)+(:\\w+)?").matcher(baseURL);
+        if (!matcher.find()) throw new RuntimeException("wrong url pattern");
+        baseURL = matcher.group();
+        if (link.contains("//")) {
+            baseURL = link;
+        } else {
+            if (!link.startsWith("/")) link = "/" + link;
+            baseURL += link;
+        }
+        if (baseURL.endsWith("/")) baseURL = baseURL.substring(0, baseURL.length() - 1);
+        setup(baseURL);
+    }
 
+    private void generateLink(ModConfig.ServerEntry serverEntry, boolean useHttps) throws IOException {
+        setup(getBaseURL(serverEntry, useHttps));
+    }
+
+    private void setup(String baseURL) throws IOException {
         // Build the url
         queryURL = URI.create(baseURL + "/tiles/players.json").toURL();
         markerStringTemplate = baseURL + "/tiles/{world}/markers.json";
+        markerIconLinkTemplate = baseURL + "/images/icon/registered/{icon}.png";
 
         onlineMapConfigLink = baseURL + "/tiles/settings.json";
 
@@ -76,7 +99,7 @@ public class SquareMapConnection extends MapConnection {
         this.getPlayerPositions();
 
         AbstractModInitializer.LOGGER.info("new link: " + queryURL);
-        if (CommonModConfig.Instance.debugMode()){
+        if (config.general.debugMode){
             Utils.sendToClientChat("new link: " + queryURL);
         }
     }
@@ -90,8 +113,10 @@ public class SquareMapConnection extends MapConnection {
         PlayerPosition[] positions = new PlayerPosition[update.players.length];
         for (int i = 0; i < update.players.length; i++){
             SquareMapPlayerUpdate.Player player = update.players[i];
-            positions[i] = new PlayerPosition(player.name, player.x,
-                    player.y == Integer.MIN_VALUE ? CommonModConfig.Instance.defaultY() : player.y, player.z, player.world);
+            PlayerPosition playerPosition = new PlayerPosition(player.name, player.x,
+                    player.y == Integer.MIN_VALUE ? config.general.defaultY : player.y, player.z, player.world);
+            ClientMapHandler.registerPlayerPosition(playerPosition, "https://mc-heads.net/avatar/" + player.uuid + "/32");
+            positions[i] = playerPosition;
         }
 
         return HandlePlayerPositions(positions);
@@ -107,7 +132,7 @@ public class SquareMapConnection extends MapConnection {
             for (SquareMapConfiguration.World world : squareMapConfiguration.worlds) {
                 SquareMapMarkerUpdate[] ml = HTTP.makeJSONHTTPRequest(URI.create(markerStringTemplate.replace("{world}", world.name)).toURL(), apiResponseType);
                 for (SquareMapMarkerUpdate markerLayer : ml) {
-                    layers.add(markerLayer.name);
+                    layers.add(markerLayer.id);
                 }
             }
             return layers;
@@ -117,7 +142,9 @@ public class SquareMapConnection extends MapConnection {
     }
 
     String lastMarkerDimension = "";
-    List<WaypointPosition> positions = new ArrayList<>();
+    int lastMarkerHash;
+    int lastAreaMarkerHash;
+    List<Position> positions = new ArrayList<>();
     List<AreaMarker> areaMarkers = new ArrayList<>();
 
     @Override
@@ -129,19 +156,26 @@ public class SquareMapConnection extends MapConnection {
             }
             return;
         }
-        CommonModConfig.ServerEntry serverEntry = CommonModConfig.Instance.getCurrentServerEntry();
-        if (serverEntry.markerVisibilityMode == CommonModConfig.ServerEntry.MarkerVisibilityMode.Auto) {
-            CommonModConfig.Instance.setMarkerLayers(serverEntry.ip, new ArrayList<>(getMarkerLayers()));
+        ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
+        if (serverEntry.needsMarkerLayerUpdate() && !partOfLiveAtlas) {
+            serverEntry.setMarkerLayers(new ArrayList<>(getMarkerLayers()));
         }
 
         if (ClientMapHandler.getInstance() == null) return;
 
-        if (lastMarkerDimension.equals(currentDimension)) {
+        int newMarkerHash = getMarkerVisibilityHash();
+        int newAreaMarkerHash = getAreaMarkerVisibilityHash();
+        if (lastMarkerDimension.equals(currentDimension)
+                && newMarkerHash == lastMarkerHash
+                && newAreaMarkerHash == lastAreaMarkerHash
+        ) {
             ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
             ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers, false);
             return;
         }
         lastMarkerDimension = currentDimension;
+        lastMarkerHash = newMarkerHash;
+        lastAreaMarkerHash = newAreaMarkerHash;
 
         Type apiResponseType = new TypeToken<SquareMapMarkerUpdate[]>() {}.getType();
 
@@ -152,15 +186,15 @@ public class SquareMapConnection extends MapConnection {
         areaMarkers.clear();
 
         for (SquareMapMarkerUpdate markerLayer : markersLayers){
-            if (!serverEntry.includeMarkerLayer(markerLayer.name)) continue;
-
             for (SquareMapMarkerUpdate.Marker marker : markerLayer.markers){
-                if (Objects.equals(marker.type, "icon")) {
-                    positions.add(new WaypointPosition(marker.tooltip, marker.point.x, CommonModConfig.Instance.defaultY(), marker.point.z));
+                if (Objects.equals(marker.type, "icon") && serverEntry.includeMarkerLayer(markerLayer.id)) {
+                    Position position = new Position(marker.tooltip, marker.point.x, config.general.defaultY, marker.point.z, currentDimension + markerLayer.id + marker.tooltip + marker.point.x + marker.point.z, markerLayer.id);
+                    positions.add(position);
+                    ClientMapHandler.registerPosition(position, markerIconLinkTemplate.replace("{icon}", marker.icon));
                 }
-                else if (Objects.equals(marker.type, "polygon")) {
-                    areaMarkers.add(new AreaMarker(marker.tooltip, 0, 0, 0, marker.points[0][0],//TODO: implement polygon holes
-                            new Color(marker.color, 1f), new Color(marker.fillColor, marker.opacity), markerLayer.name));
+                else if (Objects.equals(marker.type, "polygon") && serverEntry.includeAreaMarkerLayer(markerLayer.id)) {
+                    areaMarkers.add(new AreaMarker(marker.tooltip, 0, 0, 0, marker.points[0][0],
+                            new Color(marker.color, 1f), new Color(marker.fillColor, marker.opacity), markerLayer.id + marker.tooltip + Arrays.deepHashCode(marker.points), markerLayer.id));
                 }
             }
         }

@@ -36,22 +36,22 @@ import java.util.List;
 
 /**
  * @author Leander Knüttel
- * @version 23.07.2025
+ * @version 25.08.2025
  */
 @Pseudo
 @Mixin(HighlighterRegistry.class)
 public class HighlighterRegistryMixin {
     @Unique
-    private static final AreaMarkerHighlighter areaMarkerHighlighter = new AreaMarkerHighlighter();
+    private static final AreaMarkerHighlighter remote_player_waypoints_for_xaero$areaMarkerHighlighter = new AreaMarkerHighlighter();
 
     @Shadow
     private List<AbstractHighlighter> highlighters;
 
     @Inject(method = "getHighlighters", at = @At("RETURN"), cancellable = true, remap = false)
     private void injected(CallbackInfoReturnable<List<AbstractHighlighter>> cir) {
-        if (highlighters.contains(areaMarkerHighlighter)) return;
+        if (highlighters.contains(remote_player_waypoints_for_xaero$areaMarkerHighlighter)) return;
         List<AbstractHighlighter> newList = new ArrayList<>(highlighters);
-        newList.add(areaMarkerHighlighter);
+        newList.add(remote_player_waypoints_for_xaero$areaMarkerHighlighter);
         highlighters = newList;
         cir.setReturnValue(newList);
     }

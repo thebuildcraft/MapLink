@@ -6,9 +6,17 @@
     ],
     "client": [
         "common.client.PlayerListHudMixin",
-        "forge.mods.xaerominimap.MinimapRadarMixin",
+        "common.mods.xaerominimap.MinimapRadarMixin",
+        "common.mods.xaerominimap.WaypointMapRenderReaderMixin",
+        "common.mods.xaerominimap.AbstractWaypointRenderProviderMixin",
+        "common.mods.xaeroworldmap.WorldMapWaypointAccessor",
+        "common.mods.xaeroworldmap.WaypointReaderMixin",
+        "common.mods.xaeroworldmap.WaypointRenderProviderMixin",
+        "forge.mods.xaerominimap.MinimapElementRendererHandlerMixin",
+        "forge.mods.xaerominimap.WaypointWorldRendererMixin",
         "forge.mods.xaerominimap.WaypointsGuiRendererMixin",
-        "forge.mods.xaerominimap.MinimapElementRendererHandlerMixin"
+        "forge.mods.xaeroworldmap.HighlighterRegistryMixin",
+        "forge.mods.xaeroworldmap.WaypointRendererMixin"
     ],
     "server": [
     ],

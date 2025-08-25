@@ -32,14 +32,15 @@ import net.fabricmc.api.DedicatedServerModInitializer;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 15.06.2024
+ * @version 25.08.2025
  */
 public class FabricMain extends AbstractModInitializer implements ClientModInitializer, DedicatedServerModInitializer
 {
 	@Override
 	public void onInitializeClient(){
 		loaderType = LoaderType.Fabric;
-        CommonModConfigFabric config = new CommonModConfigFabric();
+        new ModConfigFabric();
+		new XaerosMapCompatFabric();
 		super.onInitializeClient();
 
 		//Fabric Client init here
@@ -52,7 +53,6 @@ public class FabricMain extends AbstractModInitializer implements ClientModIniti
 
 		//Fabric Server init here
 	}
-
 
 	@Override
 	protected void createInitialBindings() {
@@ -72,23 +72,4 @@ public class FabricMain extends AbstractModInitializer implements ClientModIniti
 	{
 		//mod compatibility setup here
 	}
-
-	// TODO can this be removed?
-	/*@Override
-	protected void subscribeClientStartedEvent(Runnable eventHandler) {
-		ClientLifecycleEvents.CLIENT_STARTED.register((mc) -> eventHandler.run());
-	}*/
-	
-	/*@Override
-	protected void subscribeServerStartingEvent(Consumer<MinecraftServer> eventHandler)
-	{
-		ServerLifecycleEvents.SERVER_STARTING.addPhaseOrdering(INITIAL_PHASE, Event.DEFAULT_PHASE);
-		ServerLifecycleEvents.SERVER_STARTING.register(INITIAL_PHASE, eventHandler::accept);
-	}*/
-	
-	/*@Override
-	protected void runDelayedSetup()
-	{
-		//setup after init here
-	}*/
 }

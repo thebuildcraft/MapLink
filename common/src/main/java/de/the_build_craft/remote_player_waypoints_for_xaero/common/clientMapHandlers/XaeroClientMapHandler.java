@@ -20,245 +20,178 @@
 
 package de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers;
 
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.AbstractModInitializer;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig;
+#if MC_VER >= MC_1_21_5
+import com.mojang.blaze3d.textures.GpuTexture;
+#endif
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.*;
-#if MC_VER == MC_1_17_1
-import xaero.common.AXaeroMinimap;
-import xaero.common.XaeroMinimapSession;
-import xaero.common.minimap.waypoints.WaypointWorld;
-#else
-import xaero.common.HudMod;
-import xaero.hud.minimap.BuiltInHudModules;
-import xaero.hud.minimap.module.MinimapSession;
+import de.the_build_craft.remote_player_waypoints_for_xaero.mixins.common.mods.xaeroworldmap.WorldMapWaypointAccessor;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import xaero.common.settings.ModSettings;
+#if MC_VER != MC_1_17_1
 import xaero.hud.minimap.waypoint.WaypointColor;
-import xaero.hud.minimap.waypoint.set.WaypointSet;
-import xaero.hud.minimap.world.MinimapWorld;
 #endif
 import it.unimi.dsi.fastutil.longs.*;
 import xaero.common.minimap.waypoints.Waypoint;
+import xaero.map.icon.XaeroIcon;
+import xaero.map.icon.XaeroIconAtlas;
 
 import java.util.*;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.AbstractModInitializer.LOGGER;
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.*;
 
 /**
  * @author Leander Knüttel
- * @version 26.07.2025
+ * @version 25.08.2025
  */
 public class XaeroClientMapHandler extends ClientMapHandler {
-    #if MC_VER == MC_1_17_1
-    private ArrayList<Waypoint> playerWaypointList = null;
-    private ArrayList<Waypoint> markerWaypointList = null;
-    #else
-    private WaypointSet playerWaypointList = null;
-    private WaypointSet markerWaypointList = null;
-    #endif
-    private static final String PLAYER_SET_NAME = AbstractModInitializer.MOD_NAME +  "_Player";
-    private static final String MARKER_SET_NAME = AbstractModInitializer.MOD_NAME +  "_Marker";
-
-    Map<String, Integer> playerWaypointNamesIndexes;
-    Map<String, Integer> markerWaypointKeysIndexes;
-
     public static final Long2ObjectMap<ChunkHighlight> chunkHighlightMap = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
     public static final LongSet regionsWithChunkHighlights = LongSets.synchronize(new LongOpenHashSet());
     public static int chunkHighlightHash;
     public static MapHighlightClearer mapHighlightClearer;
 
-    @Override
-    public void handlePlayerWaypoints(Map<String, PlayerPosition> playerPositions) {
-        initWaypointSets();
-        super.handlePlayerWaypoints(playerPositions);
-    }
+    private static final Map<String, XaeroIcon> iconLinkToXaeroIcon = new HashMap<>();
+
+    public static final Map<String, TempWaypoint> idToHudPlayer = new ConcurrentHashMap<>();
+    public static final Map<String, TempWaypoint> idToMiniMapPlayer = new ConcurrentHashMap<>();
+    public static final Map<String, xaero.map.mods.gui.Waypoint> idToWorldMapPlayer = new ConcurrentHashMap<>();
+
+    public static final Map<String, TempWaypoint> idToHudMarker = new ConcurrentHashMap<>();
+    public static final Map<String, TempWaypoint> idToMiniMapMarker = new ConcurrentHashMap<>();
+    public static final Map<String, xaero.map.mods.gui.Waypoint> idToWorldMapMarker = new ConcurrentHashMap<>();
 
     @Override
-    void addOrUpdatePlayerWaypoint(PlayerPosition playerPosition) {
-        synchronized (playerWaypointList) {
-            // If a waypoint for this player already exists, update it
-            if (playerWaypointNamesIndexes.containsKey(playerPosition.name)) {
-                Waypoint waypoint = playerWaypointList.get(playerWaypointNamesIndexes.get(playerPosition.name));
-
-                waypoint.setX(playerPosition.x);
-                waypoint.setY(playerPosition.y);
-                waypoint.setZ(playerPosition.z);
-            }
-            // Otherwise, add a waypoint for the player
-            else {
-                playerWaypointList.add(new PlayerWaypoint(playerPosition));
-            }
+    void addOrUpdatePlayerWaypoint(PlayerPosition playerPosition, WaypointState waypointState) {
+        if (waypointState.renderOnHud) {
+            addOrUpdateMiniMapWaypoint(playerPosition, idToHudPlayer, (player) -> new PlayerWaypoint(player, waypointState));
+        }
+        if (waypointState.renderOnMiniMap) {
+            addOrUpdateMiniMapWaypoint(playerPosition, idToMiniMapPlayer, (player) -> new PlayerWaypoint(player, waypointState));
+        }
+        if (waypointState.renderOnWorldMap) {
+            addOrUpdateWorldMapWaypoint(playerPosition, idToWorldMapPlayer, (player) -> new PlayerWaypoint(player, waypointState));
         }
     }
 
-    private void initWaypointSets() {
-        #if MC_VER == MC_1_17_1
-        AXaeroMinimap.INSTANCE.getSettings().renderAllSets = true;
-        #else
-        HudMod.INSTANCE.getSettings().renderAllSets = true;
-        #endif
-
-        // Access the current waypoint world
-        #if MC_VER == MC_1_17_1
-        WaypointWorld currentWorld = XaeroMinimapSession.getCurrentSession().getWaypointsManager().getCurrentWorld();
-
-        if (currentWorld.getSets().get(PLAYER_SET_NAME) == null){
-            currentWorld.addSet(PLAYER_SET_NAME);
+    private <P extends Position> void addOrUpdateMiniMapWaypoint(P position, Map<String, TempWaypoint> idToWaypoint, Function<P, TempWaypoint> waypointInit) {
+        if (idToWaypoint.containsKey(position.id)) {
+            Waypoint w = idToWaypoint.get(position.id);
+            w.setX(position.x);
+            w.setY(position.y);
+            w.setZ(position.z);
+        } else {
+            idToWaypoint.put(position.id, waypointInit.apply(position));
         }
-        if (currentWorld.getSets().get(MARKER_SET_NAME) == null){
-            currentWorld.addSet(MARKER_SET_NAME);
+    }
+
+    private <P extends Position> void addOrUpdateWorldMapWaypoint(P position, Map<String, xaero.map.mods.gui.Waypoint> idToWaypoint, Function<P, TempWaypoint> waypointInit) {
+        if (idToWaypoint.containsKey(position.id)) {
+            WorldMapWaypointAccessor w = (WorldMapWaypointAccessor) idToWaypoint.get(position.id);
+            w.setX(position.x);
+            w.setY(position.y);
+            w.setZ(position.z);
+        } else {
+            idToWaypoint.put(position.id, new CustomWorldMapWaypoint(waypointInit.apply(position)));
         }
+    }
 
-        playerWaypointList = currentWorld.getSets().get(PLAYER_SET_NAME).getList();
-        markerWaypointList = currentWorld.getSets().get(MARKER_SET_NAME).getList();
-        #else
-        MinimapSession session = BuiltInHudModules.MINIMAP.getCurrentSession();
-        MinimapWorld currentWorld = session.getWorldManager().getCurrentWorld();
-
-        if (currentWorld.getWaypointSet(PLAYER_SET_NAME) == null){
-            currentWorld.addWaypointSet(PLAYER_SET_NAME);
-        }
-        if (currentWorld.getWaypointSet(MARKER_SET_NAME) == null){
-            currentWorld.addWaypointSet(MARKER_SET_NAME);
-        }
-
-        playerWaypointList = currentWorld.getWaypointSet(PLAYER_SET_NAME);
-        markerWaypointList = currentWorld.getWaypointSet(MARKER_SET_NAME);
-        #endif
-
-        synchronized (playerWaypointList) {
-            // Create indexes of matching player names to waypoints to update the waypoints by index
-            playerWaypointNamesIndexes = new HashMap<>(playerWaypointList.size());
-            for (int i = 0; i < playerWaypointList.size(); i++) {
-                playerWaypointNamesIndexes.put(playerWaypointList.get(i).getName(), i);
-            }
-        }
-
-        synchronized (markerWaypointList) {
-            // Create indexes of matching marker keys to waypoints to update the waypoints by index
-            markerWaypointKeysIndexes = new HashMap<>(markerWaypointList.size());
-            for (int i = 0; i < markerWaypointList.size(); i++) {
-                markerWaypointKeysIndexes.put(TempWaypoint.getWaypointKey(markerWaypointList.get(i)), i);
-            }
+    private <W> void removeOldWaypointsFromMap(Map<String, W> map, Predicate<WaypointState> removeIf, Set<String> idHasToBeIn) {
+        Iterator<Map.Entry<String, W>> iterator = map.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, W> entry = iterator.next();
+            WaypointState waypointState = ClientMapHandler.getWaypointState(entry.getKey());
+            if (waypointState == null || removeIf.test(waypointState) || !idHasToBeIn.contains(entry.getKey())) iterator.remove();
         }
     }
 
     @Override
     void removeOldPlayerWaypoints() {
-        synchronized (playerWaypointList) {
-            // Remove any waypoints for players not shown on the map anymore
-            #if MC_VER == MC_1_17_1
-            playerWaypointList.removeIf(waypoint -> !currentPlayerWaypointNames.contains(waypoint.getName()));
-            #else
-            Iterator<Waypoint> iterator = playerWaypointList.getWaypoints().iterator();
-            while (iterator.hasNext()) {
-                Waypoint w = iterator.next();
-                if (!currentPlayerWaypointNames.contains(w.getName())) iterator.remove();
-            }
-            #endif
-        }
+        removeOldWaypointsFromMap(idToHudPlayer, w -> !w.renderOnHud, currentPlayerIds);
+        removeOldWaypointsFromMap(idToMiniMapPlayer, w -> !w.renderOnMiniMap, currentPlayerIds);
+        removeOldWaypointsFromMap(idToWorldMapPlayer, w -> !w.renderOnWorldMap, currentPlayerIds);
     }
 
     @Override
     public void removeAllPlayerWaypoints() {
-        synchronized (playerWaypointList) {
-            playerWaypointList.clear();
+        idToHudPlayer.clear();
+        idToMiniMapPlayer.clear();
+        idToWorldMapPlayer.clear();
+    }
+
+    private void updateMiniMapWaypointColors(Map<String, TempWaypoint> map, Function<TempWaypoint, Integer> waypointToColor) {
+        for (TempWaypoint waypoint : map.values()) {
+            #if MC_VER == MC_1_17_1
+            waypoint.setColor(waypointToColor.apply(waypoint));
+            #else
+            waypoint.setWaypointColor(WaypointColor.fromIndex(waypointToColor.apply(waypoint)));
+            #endif
+        }
+    }
+
+    private void updateWorldMapWaypointColors(Map<String, xaero.map.mods.gui.Waypoint> map, Function<xaero.map.mods.gui.Waypoint, Integer> waypointToColor) {
+        for (xaero.map.mods.gui.Waypoint waypoint : map.values()) {
+            ((WorldMapWaypointAccessor) waypoint).setColor(ModSettings.COLORS[waypointToColor.apply(waypoint)]);
         }
     }
 
     @Override
     void updatePlayerWaypointColors() {
-        synchronized (playerWaypointList) {
-            #if MC_VER == MC_1_17_1
-            for (Waypoint waypoint : playerWaypointList) {
-                waypoint.setColor(CommonModConfig.Instance.getPlayerWaypointColor(waypoint.getName()));
-            }
-            #else
-            for (Waypoint waypoint : playerWaypointList.getWaypoints()) {
-                waypoint.setWaypointColor(WaypointColor.fromIndex(CommonModConfig.Instance.getPlayerWaypointColor(waypoint.getName())));
-            }
-            #endif
-        }
+        updateMiniMapWaypointColors(idToHudPlayer, w -> getPlayerWaypointColor(w.getName()));
+        updateMiniMapWaypointColors(idToMiniMapPlayer, w -> getPlayerWaypointColor(w.getName()));
+        updateWorldMapWaypointColors(idToWorldMapPlayer, w -> getPlayerWaypointColor(w.getName()));
     }
 
     @Override
-    void addOrUpdateMarkerWaypoint(WaypointPosition markerPosition) {
-        synchronized (markerWaypointList) {
-            // If a waypoint for this marker already exists, update it
-            if (markerWaypointKeysIndexes.containsKey(markerPosition.getKey())) {
-                Waypoint waypoint = markerWaypointList.get(markerWaypointKeysIndexes.get(markerPosition.getKey()));
-
-                waypoint.setX(markerPosition.x);
-                waypoint.setY(markerPosition.y);
-                waypoint.setZ(markerPosition.z);
-            }
-            // Otherwise, add a waypoint for the marker
-            else {
-                markerWaypointList.add(new FixedWaypoint(markerPosition));
-            }
+    void addOrUpdateMarkerWaypoint(Position markerPosition, WaypointState waypointState) {
+        if (waypointState.renderOnHud) {
+            addOrUpdateMiniMapWaypoint(markerPosition, idToHudMarker, (p) -> new FixedWaypoint(p, waypointState));
+        }
+        if (waypointState.renderOnMiniMap) {
+            addOrUpdateMiniMapWaypoint(markerPosition, idToMiniMapMarker, (p) -> new FixedWaypoint(p, waypointState));
+        }
+        if (waypointState.renderOnWorldMap) {
+            addOrUpdateWorldMapWaypoint(markerPosition, idToWorldMapMarker, (p) -> new FixedWaypoint(p, waypointState));
         }
     }
 
     @Override
     void removeOldMarkerWaypoints() {
-        synchronized (markerWaypointList) {
-            // Remove any waypoints for markers not shown on the map anymore
-            #if MC_VER == MC_1_17_1
-            markerWaypointList.removeIf(waypoint -> !currentMarkerWaypointKeys.contains(TempWaypoint.getWaypointKey(waypoint)));
-            #else
-            Iterator<Waypoint> iterator = markerWaypointList.getWaypoints().iterator();
-            while (iterator.hasNext()) {
-                Waypoint w = iterator.next();
-                if (!currentMarkerWaypointKeys.contains(TempWaypoint.getWaypointKey(w))) iterator.remove();
-            }
-            #endif
-        }
+        removeOldWaypointsFromMap(idToHudMarker, w -> !w.renderOnHud, currentMarkerIds);
+        removeOldWaypointsFromMap(idToMiniMapMarker, w -> !w.renderOnMiniMap, currentMarkerIds);
+        removeOldWaypointsFromMap(idToWorldMapMarker, w -> !w.renderOnWorldMap, currentMarkerIds);
     }
 
     @Override
     public void removeAllMarkerWaypoints() {
-        synchronized (markerWaypointList) {
-            markerWaypointList.clear();
-        }
+        idToHudMarker.clear();
+        idToMiniMapMarker.clear();
+        idToWorldMapMarker.clear();
     }
 
     @Override
     void updateMarkerWaypointColors() {
-        synchronized (markerWaypointList) {
-            #if MC_VER == MC_1_17_1
-            for (Waypoint waypoint : markerWaypointList) {
-                waypoint.setColor(CommonModConfig.Instance.markerWaypointColor());
-            }
-            #else
-            for (Waypoint waypoint : markerWaypointList.getWaypoints()){
-                waypoint.setWaypointColor(WaypointColor.fromIndex(CommonModConfig.Instance.markerWaypointColor()));
-            }
-            #endif
-        }
+        updateMiniMapWaypointColors(idToHudMarker, w -> config.general.markerWaypointColor.ordinal());
+        updateMiniMapWaypointColors(idToMiniMapMarker, w -> config.general.markerWaypointColor.ordinal());
+        updateWorldMapWaypointColors(idToWorldMapMarker, w -> config.general.markerWaypointColor.ordinal());
     }
 
-    boolean enableAreaMarkers = false;
+    int lastAreaMarkerHash;
 
     @Override
     public void handleAreaMarkers(List<AreaMarker> markerPositions, boolean refresh) {
-        if (AbstractModInitializer.blocksPerChunkThreshold != CommonModConfig.Instance.blocksPerChunkThreshold()
-                || enableAreaMarkers != CommonModConfig.Instance.enableAreaMarkers()
-                || AbstractModInitializer.areaFillAlphaMul != CommonModConfig.Instance.areaFillAlphaMul()
-                || AbstractModInitializer.areaFillAlphaMin != CommonModConfig.Instance.areaFillAlphaMin()
-                || AbstractModInitializer.areaFillAlphaMax != CommonModConfig.Instance.areaFillAlphaMax()
-                || AbstractModInitializer.areaLineAlphaMul != CommonModConfig.Instance.areaLineAlphaMul()
-                || AbstractModInitializer.areaLineAlphaMin != CommonModConfig.Instance.areaLineAlphaMin()
-                || AbstractModInitializer.areaLineAlphaMax != CommonModConfig.Instance.areaLineAlphaMax()) {
+        int newAreaMarkerHash = getAreaMarkerVisibilityHash();
+        if (lastAreaMarkerHash != newAreaMarkerHash) {
             refresh = true;
-            AbstractModInitializer.blocksPerChunkThreshold = CommonModConfig.Instance.blocksPerChunkThreshold();
-            enableAreaMarkers = CommonModConfig.Instance.enableAreaMarkers();
-            AbstractModInitializer.areaFillAlphaMul = CommonModConfig.Instance.areaFillAlphaMul();
-            AbstractModInitializer.areaFillAlphaMin = CommonModConfig.Instance.areaFillAlphaMin();
-            AbstractModInitializer.areaFillAlphaMax = CommonModConfig.Instance.areaFillAlphaMax();
-            AbstractModInitializer.areaLineAlphaMul = CommonModConfig.Instance.areaLineAlphaMul();
-            AbstractModInitializer.areaLineAlphaMin = CommonModConfig.Instance.areaLineAlphaMin();
-            AbstractModInitializer.areaLineAlphaMax = CommonModConfig.Instance.areaLineAlphaMax();
         }
+        lastAreaMarkerHash = newAreaMarkerHash;
         if (!refresh) return;
         removeAllAreaMarkers(false);
-        if (enableAreaMarkers) {
+        if (config.general.enableAreaMarkerOverlay) {
             for (Map.Entry<AreaMarker, List<Long>> cords : markerPositions.parallelStream()
                     .collect(Collectors.toMap(a -> a, this::rasterizeAreaMarker)).entrySet()) {
                 for (long cord : cords.getValue()) {
@@ -318,7 +251,7 @@ public class XaeroClientMapHandler extends ClientMapHandler {
             globalZMax >>= 4;
             int area = (1 + globalXMax - globalXMin) * (1 + globalZMax - globalZMin);
             if (area > 500_000) {
-                AbstractModInitializer.LOGGER.warn("polygon to large: " + areaMarker.name);
+                LOGGER.warn("polygon to large: " + areaMarker.name);
                 return new ArrayList<>();
             }
 
@@ -339,7 +272,7 @@ public class XaeroClientMapHandler extends ClientMapHandler {
             Long2IntMap result = new Long2IntOpenHashMap(area);
             Collections.sort(edges);
 
-            int z = edges.getFirst().zMin;
+            int z = edges.get(0).zMin;
             List<Edge> activeEdges = new ArrayList<>();
             List<Integer> intersections = new ArrayList<>();
 
@@ -368,7 +301,7 @@ public class XaeroClientMapHandler extends ClientMapHandler {
                         }
                     }
                 } else {
-                    AbstractModInitializer.LOGGER.error("error in polygon rasterization: " + areaMarker.name);
+                    LOGGER.error("error in polygon rasterization: " + areaMarker.name);
                     return new ArrayList<>();
                 }
 
@@ -385,7 +318,7 @@ public class XaeroClientMapHandler extends ClientMapHandler {
                 z++;
             }
             return result.long2IntEntrySet().stream()
-                    .filter(entry -> entry.getIntValue() >= AbstractModInitializer.blocksPerChunkThreshold)
+                    .filter(entry -> entry.getIntValue() >= config.general.blocksPerChunkThreshold)
                     .map(Long2IntMap.Entry::getLongKey)
                     .collect(Collectors.toList());
         } catch (Throwable t) {
@@ -416,5 +349,22 @@ public class XaeroClientMapHandler extends ClientMapHandler {
             if (zMin == e.zMin) return Float.compare(xHit, e.xHit);
             return Integer.compare(zMin, e.zMin);
         }
+    }
+
+    public static XaeroIcon getXaeroIcon(String link) {
+        if (iconLinkToXaeroIcon.containsKey(link)) return iconLinkToXaeroIcon.get(link);
+        DynamicTexture dynamicTexture = getDynamicTexture(link);
+        if (dynamicTexture == null) return null;
+        #if MC_VER >= MC_1_21_5
+        GpuTexture texture = dynamicTexture.getTexture();
+        XaeroIcon icon = XaeroIconAtlas.Builder.begin().setPreparedTexture(texture)
+                .setIconWidth(texture.getWidth(0)).setWidth(texture.getWidth(0)).build().createIcon();
+        #else
+        int textureId = dynamicTexture.getId();
+        XaeroIcon icon = XaeroIconAtlas.Builder.begin().setPreparedTexture(textureId)
+                .setIconWidth(dynamicTexture.getPixels().getWidth()).setWidth(dynamicTexture.getPixels().getWidth()).build().createIcon();
+        #endif
+        iconLinkToXaeroIcon.put(link, icon);
+        return icon;
     }
 }

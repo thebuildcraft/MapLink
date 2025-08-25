@@ -22,7 +22,7 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.fabric.wrappers;
 
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
-import de.the_build_craft.remote_player_waypoints_for_xaero.fabric.ModConfig;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.ModConfig;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

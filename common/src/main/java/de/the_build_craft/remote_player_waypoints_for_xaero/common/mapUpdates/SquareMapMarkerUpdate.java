@@ -36,7 +36,7 @@ import java.util.List;
 
 /**
  * @author Leander Knüttel
- * @version 25.07.2025
+ * @version 25.08.2025
  */
 public class SquareMapMarkerUpdate {
     public static class Marker{
@@ -48,9 +48,11 @@ public class SquareMapMarkerUpdate {
         public String fillColor;
         public String color;
         public float opacity;
+        public String icon = "";
     }
 
     public String name;
+    public String id;
     public Marker[] markers = new Marker[0];
 
     public static class PointsAdapterFactory implements TypeAdapterFactory {
@@ -76,11 +78,17 @@ public class SquareMapMarkerUpdate {
         @Override
         public Int3[][][] read(JsonReader jsonReader) throws IOException {
             jsonReader.beginArray();
-            Int3[][][] result = switch (jsonReader.peek()) {
-                case BEGIN_ARRAY -> read3dArray(jsonReader);
-                case BEGIN_OBJECT -> new Int3[][][]{{readArray(jsonReader)}};
-                default -> throw new IllegalArgumentException();
-            };
+            Int3[][][] result;
+            switch (jsonReader.peek()) {
+                case BEGIN_ARRAY:
+                    result = read3dArray(jsonReader);
+                    break;
+                case BEGIN_OBJECT:
+                    result = new Int3[][][]{{readArray(jsonReader)}};
+                    break;
+                default:
+                    throw new IllegalArgumentException();
+            }
             jsonReader.endArray();
             return result;
         }
@@ -90,7 +98,11 @@ public class SquareMapMarkerUpdate {
             while (jsonReader.hasNext()) {
                 list.add(gson.fromJson(jsonReader, Int3.class));
             }
-            return list.toArray(Int3[]::new);
+            Int3[] arr = new Int3[list.size()];
+            for (int i = 0; i < list.size(); i++) {
+                arr[i] = list.get(i);
+            }
+            return arr;
         }
 
         Int3[][][] read3dArray(JsonReader jsonReader) throws IOException {
@@ -98,7 +110,11 @@ public class SquareMapMarkerUpdate {
             while (jsonReader.hasNext()) {
                 list.add(gson.fromJson(jsonReader, array2dType));
             }
-            return list.toArray(Int3[][][]::new);
+            Int3[][][] arr = new Int3[list.size()][][];
+            for (int i = 0; i < list.size(); i++) {
+                arr[i] = list.get(i);
+            }
+            return arr;
         }
     }
 }

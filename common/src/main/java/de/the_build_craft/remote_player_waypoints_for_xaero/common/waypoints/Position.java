@@ -21,30 +21,38 @@
 
 package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.ClientMapHandler;
+
 /**
  * A marker's name and position
  *
  * @author Leander Knüttel
- * @version 23.07.2025
+ * @version 25.08.2025
  */
-public abstract class Position {
+public class Position {
     public final String name;
     public final int x;
     public final int y;
     public final int z;
+    public final String id;
+    public final String layer;
 
-    public Position(String name, int x, int y, int z) {
+    public Position(String name, int x, int y, int z, String id, String layer) {
         this.name = getDisplayName(name);
         this.x = x;
         this.y = y;
         this.z = z;
+        this.id = ClientMapHandler.waypointPrefix +id;
+        this.layer = layer;
     }
 
-    public Position(String name, float x, float y, float z) {
+    public Position(String name, float x, float y, float z, String id, String layer) {
         this.name = getDisplayName(name);
-        this.x = Math.round(x);
-        this.y = Math.round(y);
-        this.z = Math.round(z);
+        this.x = (int) Math.floor(x);
+        this.y = (int) Math.floor(y);
+        this.z = (int) Math.floor(z);
+        this.id = ClientMapHandler.waypointPrefix + id;
+        this.layer = layer;
     }
 
     public boolean CompareCords(Position otherPosition){
@@ -54,9 +62,5 @@ public abstract class Position {
     static String getDisplayName(String name){
         return org.apache.commons.lang3.StringEscapeUtils
                 .unescapeHtml4(name.replaceAll("<.+?>|\\R|\\n", "").trim());
-    }
-
-    public String getKey() {
-        return name + " " + x + " " + y + " " + z;
     }
 }

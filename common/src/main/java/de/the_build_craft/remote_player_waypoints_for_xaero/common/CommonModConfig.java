@@ -20,204 +20,68 @@
 
 package de.the_build_craft.remote_player_waypoints_for_xaero.common;
 
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Text;
+import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.Minecraft;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
 /**
  * @author Leander Knüttel
- * @version 26.07.2025
+ * @version 25.08.2025
  */
 public abstract class CommonModConfig {
+    public static ModConfig config;
+
     public CommonModConfig() {
-        Instance = this;
+        config = getConfig();
     }
-    public static CommonModConfig Instance;
-    public abstract void saveConfig();
 
-    public abstract boolean enabled();
-    public abstract boolean enablePlayerWaypoints();
-    public abstract boolean enableMarkerWaypoints();
-    public abstract boolean enableAreaMarkers();
-    public abstract boolean enableEntityRadar();
+    protected abstract ModConfig getConfig();
 
-    public abstract WaypointRenderBelowMode minimapWaypointsRenderBelow();
-    public abstract int updateDelay();
-    public abstract int minDistance();
-    public abstract int maxDistance();
-    public abstract int maxIconDistance();
-    public abstract int minDistanceMarker();
-    public abstract int maxDistanceMarker();
-    public abstract int defaultY();
-    public abstract int timeUntilAfk();
-    public abstract int unknownAfkStateColor();
-    public abstract int AfkColor();
-    public abstract int playerWaypointColor();
-    public abstract int markerWaypointColor();
-    public abstract boolean showAfkTimeInTabList();
-    public abstract boolean showAfkInTabList();
-    public abstract boolean hideAfkMinutes();
-    public abstract boolean debugMode();
-    public abstract boolean chatLogInDebugMode();
-    public abstract List<String> ignoredServers();
-    public abstract List<ServerEntry> serverEntries();
-    public abstract void setMarkerLayers(String ip, List<String> layers);
-    public abstract void setIgnoreMarkerMessage(boolean on);
-    public abstract boolean ignoreMarkerMessage();
+    public static void saveConfig() {
+        AutoConfig.getConfigHolder(ModConfig.class).save();
+    }
 
-    public abstract float areaFillAlphaMul();
-    public abstract float areaFillAlphaMin();
-    public abstract float areaFillAlphaMax();
-    public abstract float areaLineAlphaMul();
-    public abstract float areaLineAlphaMin();
-    public abstract float areaLineAlphaMax();
-    public abstract int blocksPerChunkThreshold();
+    public static void setIgnoreMarkerMessage(boolean on) {
+        config.general.ignoreMarkerMessage = on;
+        saveConfig();
+    }
 
-    public abstract List<String> friendList();
-    public abstract boolean onlyShowFriendsWaypoints();
-    public abstract boolean onlyShowFriendsIcons();
-    public abstract boolean overwriteFriendDistances();
-    public abstract int minFriendDistance();
-    public abstract int maxFriendDistance();
-    public abstract int maxFriendIconDistance();
-    public abstract boolean overwriteFriendWaypointColor();
-    public abstract int friendWaypointColor();
-
-    public int getPlayerWaypointColor(String playerName) {
-        if (overwriteFriendWaypointColor() && friendList().contains(playerName)){
-            return friendWaypointColor();
+    public static int getPlayerWaypointColor(String playerName) {
+        if (config.friends.overwriteFriendWaypointColor && config.friends.friendList.contains(playerName)){
+            return config.friends.friendWaypointColor.ordinal();
         }
         else {
-            return playerWaypointColor();
+            return config.general.playerWaypointColor.ordinal();
         }
     }
 
-    public ServerEntry getCurrentServerEntry() {
+    public static ModConfig.ServerEntry getCurrentServerEntry() {
         String serverIP = Objects.requireNonNull(Minecraft.getInstance().getCurrentServer()).ip.toLowerCase(Locale.ROOT);
-        ServerEntry serverEntry = null;
-        for (ServerEntry server : serverEntries()){
+        for (ModConfig.ServerEntry server : config.general.serverEntries){
             if (Objects.equals(serverIP, server.ip.toLowerCase(Locale.ROOT))){
-                serverEntry = server;
+                return server;
             }
         }
-        return serverEntry;
+        return null;
     }
 
-    public int getWaypointLayerOrder() {
-        WaypointRenderBelowMode waypointRenderBelowMode = minimapWaypointsRenderBelow();
-        boolean playerListDown = Minecraft.getInstance().options.keyPlayerList.isDown();
-
-        if (waypointRenderBelowMode == CommonModConfig.WaypointRenderBelowMode.ALWAYS) {
-            return -1;
-        } else if (waypointRenderBelowMode == CommonModConfig.WaypointRenderBelowMode.WHEN_PLAYER_LIST_SHOWN) {
-            if (playerListDown) return -1;
-        } else if (waypointRenderBelowMode == CommonModConfig.WaypointRenderBelowMode.WHEN_PLAYER_LIST_HIDDEN) {
-            if (!playerListDown) return -1;
-        }
-        return 100;
+    public static int getWaypointLayerOrder() {
+        return config.general.minimapWaypointsRenderBelow.isActive() ? -1 : 100;
     }
 
-    public static class ServerEntry {
-        public Maptype maptype;
-        public String ip;
-        public String link;
-        public MarkerVisibilityMode markerVisibilityMode;
-        public List<String> markerLayers;
-
-        public ServerEntry() {
-            this("", "", Maptype.Dynmap, MarkerVisibilityMode.Auto, new ArrayList<>());
-        }
-
-        public ServerEntry(String ip, String link, Maptype maptype, MarkerVisibilityMode markerVisibilityMode, List<String> markerLayers) {
-            this.ip = ip;
-            this.link = link;
-            this.maptype = maptype;
-            this.markerVisibilityMode = markerVisibilityMode;
-            this.markerLayers = markerLayers;
-        }
-
-        public enum Maptype {
-            Dynmap,
-            Squaremap,
-            Bluemap,
-            Pl3xMap,
-            LiveAtlas;
-
-            Maptype() {
-            }
-        }
-
-        public enum MarkerVisibilityMode {
-            Auto,
-            All,
-            None,
-            BlackList,
-            WhiteList;
-
-            MarkerVisibilityMode() {
-            }
-        }
-
-        public boolean includeMarkerLayer(String layer) {
-            switch (markerVisibilityMode) {
-                case Auto:
-                case All:
-                    return true;
-                case None:
-                    return false;
-                case BlackList:
-                    return !markerLayers.contains(layer);
-                case WhiteList:
-                    return markerLayers.contains(layer);
-                default:
-                    throw new IllegalArgumentException();
-            }
-        }
+    public static int getMarkerVisibilityHash() {
+        ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
+        if (serverEntry == null) return 0;
+        return Objects.hash(config.general.enableMarkerWaypoints, serverEntry.markerVisibilityMode, serverEntry.markerLayers);
     }
 
-    public enum WaypointColor {
-        Black,
-        DarkBlue,
-        DarkGreen,
-        DarkAqua,
-        DarkRed,
-        DarkPurple,
-        Gold,
-        Gray,
-        DarkGray,
-        Blue,
-        Green,
-        Aqua,
-        Red,
-        LightPurple,
-        Yellow,
-        White;
-
-        WaypointColor(){
-        }
-
-        @Override
-        public String toString() {
-            return Text.translatable("WaypointColor." + this.name()).getString();
-        }
-    }
-
-    public enum WaypointRenderBelowMode {
-        NEVER,
-        ALWAYS,
-        WHEN_PLAYER_LIST_SHOWN,
-        WHEN_PLAYER_LIST_HIDDEN;
-
-        WaypointRenderBelowMode(){
-        }
-
-        @Override
-        public String toString() {
-            return Text.translatable("text.autoconfig.remote_player_waypoints_for_xaero.option.general.minimapWaypointsRenderBelow." + this.name()).getString();
-        }
+    public static int getAreaMarkerVisibilityHash() {
+        ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
+        if (serverEntry == null) return 0;
+        return Objects.hash(config.general.enableAreaMarkerOverlay, serverEntry.areaMarkerVisibilityMode, serverEntry.areaMarkerLayers,
+                config.general.blocksPerChunkThreshold, config.general.areaFillAlphaMul, config.general.areaFillAlphaMin, config.general.areaFillAlphaMax,
+                config.general.areaLineAlphaMul, config.general.areaLineAlphaMin, config.general.areaLineAlphaMax);
     }
 }

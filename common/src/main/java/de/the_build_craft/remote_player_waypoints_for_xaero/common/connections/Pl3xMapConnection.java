@@ -29,7 +29,7 @@ import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.Pl
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.Pl3xMapMarkerUpdate;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.Pl3xMapPlayerUpdate;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.PlayerPosition;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.WaypointPosition;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Position;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Utils;
 
 import java.io.IOException;
@@ -40,16 +40,19 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.*;
+
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 23.07.2025
+ * @version 25.08.2025
  */
 public class Pl3xMapConnection extends MapConnection{
     private String markerLayerStringTemplate = "";
     private String markerStringTemplate = "";
+    private String markerIconLinkTemplate = "";
     int version;
-    public Pl3xMapConnection(CommonModConfig.ServerEntry serverEntry, UpdateTask updateTask) throws IOException {
+    public Pl3xMapConnection(ModConfig.ServerEntry serverEntry, UpdateTask updateTask) throws IOException {
         try {
             generateLink(serverEntry, true);
         }
@@ -67,7 +70,8 @@ public class Pl3xMapConnection extends MapConnection{
         }
     }
 
-    public Pl3xMapConnection(String baseURL, String link) throws IOException {
+    public Pl3xMapConnection(String baseURL, String link, boolean partOfLifeAtlas) throws IOException {
+        this.partOfLiveAtlas = partOfLifeAtlas;
         Matcher matcher = Pattern.compile(".*?//\\w*(\\.\\w+)+(:\\w+)?").matcher(baseURL);
         if (!matcher.find()) throw new RuntimeException("wrong url pattern");
         baseURL = matcher.group();
@@ -81,13 +85,14 @@ public class Pl3xMapConnection extends MapConnection{
         setup(baseURL);
     }
 
-    private void generateLink(CommonModConfig.ServerEntry serverEntry, boolean useHttps) throws IOException {
+    private void generateLink(ModConfig.ServerEntry serverEntry, boolean useHttps) throws IOException {
         setup(getBaseURL(serverEntry, useHttps));
     }
 
     private void setup(String baseURL) throws IOException {
         onlineMapConfigLink = baseURL + "/tiles/settings.json";
         markerLayerStringTemplate = baseURL + "/tiles/{world}/markers.json";
+        markerIconLinkTemplate = baseURL + "/images/icon/registered/{icon}.png";
 
         // test which version is needed
         if (HTTP.makeTextHttpRequest(URI.create(onlineMapConfigLink).toURL()).contains("\"players\":[")) {
@@ -103,7 +108,7 @@ public class Pl3xMapConnection extends MapConnection{
         this.getPlayerPositions();
 
         AbstractModInitializer.LOGGER.info("new link: " + queryURL);
-        if (CommonModConfig.Instance.debugMode()){
+        if (config.general.debugMode){
             Utils.sendToClientChat("new link: " + queryURL);
         }
     }
@@ -117,15 +122,22 @@ public class Pl3xMapConnection extends MapConnection{
         PlayerPosition[] positions = new PlayerPosition[update.players.length];
         for (int i = 0; i < update.players.length; i++){
             Pl3xMapPlayerUpdate.Player player = update.players[i];
-            if (version == 0) positions[i] = new PlayerPosition(player.name, player.position.x, CommonModConfig.Instance.defaultY(), player.position.z, player.world);
-            else if (version == 1) positions[i] = new PlayerPosition(player.name, player.x, CommonModConfig.Instance.defaultY(), player.z, player.world);
+            PlayerPosition playerPosition = null;
+            if (version == 0) playerPosition = new PlayerPosition(player.name, player.position.x, config.general.defaultY, player.position.z, player.world);
+            else if (version == 1) playerPosition = new PlayerPosition(player.name, player.x, config.general.defaultY, player.z, player.world);
+            if (playerPosition == null) continue;
+            ClientMapHandler.registerPlayerPosition(playerPosition, "https://mc-heads.net/avatar/" + player.uuid + "/32");
+            positions[i] = playerPosition;
         }
 
         return HandlePlayerPositions(positions);
     }
 
     private String lastMarkerDimension = "";
-    List<WaypointPosition> positions = new ArrayList<>();
+    int lastMarkerHash;
+    //int lastAreaMarkerHash;
+    List<Position> positions = new ArrayList<>();
+    //List<AreaMarker> areaMarkers = new ArrayList<>();
 
     @Override
     public void getWaypointPositions() throws IOException {
@@ -133,9 +145,9 @@ public class Pl3xMapConnection extends MapConnection{
             if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().removeAllMarkerWaypoints();
             return;
         }
-        CommonModConfig.ServerEntry serverEntry = CommonModConfig.Instance.getCurrentServerEntry();
-        if (serverEntry.markerVisibilityMode == CommonModConfig.ServerEntry.MarkerVisibilityMode.Auto) {
-            CommonModConfig.Instance.setMarkerLayers(serverEntry.ip, new ArrayList<>(getMarkerLayers()));
+        ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
+        if (serverEntry.needsMarkerLayerUpdate() && !partOfLiveAtlas) {
+            serverEntry.setMarkerLayers(new ArrayList<>(getMarkerLayers()));
         }
 
         if (ClientMapHandler.getInstance() == null) return;
@@ -144,13 +156,21 @@ public class Pl3xMapConnection extends MapConnection{
             ClientMapHandler.getInstance().removeAllMarkerWaypoints();
             return;
         }
-        if (lastMarkerDimension.equals(currentDimension)) {
+        int newMarkerHash = getMarkerVisibilityHash();
+        //int newAreaMarkerHash = CommonModConfig.Instance.getAreaMarkerVisibilityHash();
+        if (lastMarkerDimension.equals(currentDimension)
+                //&& newAreaMarkerHash == lastAreaMarkerHash
+                && newMarkerHash == lastMarkerHash) {
             ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
+            //ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers, false);
             return;
         }
         lastMarkerDimension = currentDimension;
+        lastMarkerHash = newMarkerHash;
+        //lastAreaMarkerHash = newAreaMarkerHash;
 
         positions.clear();
+        //areaMarkers.clear();
 
         if (version == 0) {
             for (String layer : getMarkerLayers(false)){
@@ -160,8 +180,11 @@ public class Pl3xMapConnection extends MapConnection{
                 Pl3xMapMarkerUpdate[] markers = HTTP.makeJSONHTTPRequest(reqUrl, apiResponseType);
 
                 for (Pl3xMapMarkerUpdate marker : markers){
-                    if (!Objects.equals(marker.type, "icon")) continue;
-                    positions.add(new WaypointPosition(marker.options.tooltip.content, marker.data.point.x, CommonModConfig.Instance.defaultY(), marker.data.point.z));
+                    if (Objects.equals(marker.type, "icon") && serverEntry.includeMarkerLayer(layer)) {
+                        Position position = new Position(marker.options.tooltip.content, marker.data.point.x, config.general.defaultY, marker.data.point.z, currentDimension + layer + marker.data.key, layer);
+                        ClientMapHandler.registerPosition(position, marker.data.image.equals("marker-icon") ? null : markerIconLinkTemplate.replace("{icon}", marker.data.image));
+                        positions.add(position);
+                    }
                 }
             }
         } else if (version == 1) {
@@ -170,16 +193,19 @@ public class Pl3xMapConnection extends MapConnection{
             Pl3xMapAltMarkerUpdate[] markerLayers = HTTP.makeJSONHTTPRequest(reqUrl, apiResponseType);
 
             for (Pl3xMapAltMarkerUpdate layer : markerLayers){
-                if (!Objects.equals(layer.id, "pl3xmap_players") && serverEntry.includeMarkerLayer(layer.id)) {
+                if (!Objects.equals(layer.id, "pl3xmap_players")) {
                     for (Pl3xMapAltMarkerUpdate.Marker marker : layer.markers) {
-                        if (!Objects.equals(marker.type, "icon")) continue;
-                        positions.add(new WaypointPosition(marker.tooltip, marker.point.x, CommonModConfig.Instance.defaultY(), marker.point.z));
+                        if (Objects.equals(marker.type, "icon")  && serverEntry.includeMarkerLayer(layer.id)) {
+                            Position position = new Position(marker.tooltip, marker.point.x, config.general.defaultY, marker.point.z, currentDimension + layer.id + marker.tooltip + marker.point.x + marker.point.z, layer.id);
+                            ClientMapHandler.registerPosition(position, marker.icon.equals("marker-icon") ? null : markerIconLinkTemplate.replace("{icon}", marker.icon));
+                            positions.add(position);
+                        }
                     }
                 }
             }
         }
         ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
-        //ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers);
+        //ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers, true);
     }
 
     @Override
@@ -212,9 +238,8 @@ public class Pl3xMapConnection extends MapConnection{
 
                 HashSet<String> layers = new HashSet<>();
 
-                CommonModConfig.ServerEntry serverEntry = CommonModConfig.Instance.getCurrentServerEntry();
                 for (Pl3xMapMarkerLayerConfig layer : markerLayers){
-                    if (!Objects.equals(layer.key, "pl3xmap_players") && serverEntry.includeMarkerLayer(layer.key)) {
+                    if (!Objects.equals(layer.key, "pl3xmap_players")) {
                         layers.add(layer.key);
                     }
                 }
@@ -243,9 +268,8 @@ public class Pl3xMapConnection extends MapConnection{
 
                 HashSet<String> layers = new HashSet<>();
 
-                CommonModConfig.ServerEntry serverEntry = CommonModConfig.Instance.getCurrentServerEntry();
                 for (Pl3xMapAltMarkerUpdate layer : markerLayers){
-                    if (!Objects.equals(layer.id, "pl3xmap_players") && serverEntry.includeMarkerLayer(layer.id)) {
+                    if (!Objects.equals(layer.id, "pl3xmap_players")) {
                         layers.add(layer.id);
                     }
                 }

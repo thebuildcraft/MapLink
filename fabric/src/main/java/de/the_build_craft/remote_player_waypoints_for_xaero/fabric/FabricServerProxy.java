@@ -40,7 +40,7 @@ import org.apache.logging.log4j.Logger;
  * @author Ran
  * @author Tomlee
  * @author Leander Knüttel
- * @version 22.05.2024
+ * @version 25.08.2025
  */
 public class FabricServerProxy implements AbstractModInitializer.IEventProxy
 {
@@ -68,16 +68,5 @@ public class FabricServerProxy implements AbstractModInitializer.IEventProxy
 	public FabricServerProxy(boolean isDedicated)
 	{
 		this.isDedicated = isDedicated;
-	}
-
-	private boolean isValidTime()//TODO is this needed???
-	{
-		if (isDedicated)
-		{
-			return true;
-		}
-
-		//FIXME: This may cause init issue...
-		return !(Minecraft.getInstance().screen instanceof TitleScreen);
 	}
 }

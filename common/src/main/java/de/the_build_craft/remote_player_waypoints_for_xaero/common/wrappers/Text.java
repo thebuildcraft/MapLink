@@ -36,7 +36,6 @@ public class Text {
         return Component.translatable(translateKey);
     }
 
-    //TODO implement Style functions & Actions
     #else
     public static MutableComponent literal(String string) {
         return new TextComponent(string);
@@ -45,7 +44,5 @@ public class Text {
     public static MutableComponent translatable(String translateKey) {
         return new TranslatableComponent(translateKey);
     }
-
-    //TODO implement Style functions & Actions (write to chat, if not supported in current version)
     #endif
 }

@@ -1,7 +1,6 @@
 /*
  *    This file is part of the Remote player waypoints for Xaero's Map mod
  *    licensed under the GNU GPL v3 License.
- *    (some parts of this file are originally from the Distant Horizons mod by James Seibel)
  *
  *    Copyright (C) 2024 - 2025  Leander Knüttel and contributors
  *
@@ -19,10 +18,22 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package de.the_build_craft.remote_player_waypoints_for_xaero.mixins.common.mods.examplemixinintomod;
+package de.the_build_craft.remote_player_waypoints_for_xaero.fabric;
 
-public class ExampleMixin {
-    // This isn't a real mixin, but if a mixin into a mod were to be created it would be like this
-    // The folder that this mixin is in should be the mod id so that our mixin plugin applies it only when that mod is detected
-    // Other than that, everything else should be the same as a normal mixin
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.ModConfig;
+import me.shedaniel.autoconfig.AutoConfig;
+import me.shedaniel.autoconfig.serializer.JanksonConfigSerializer;
+import me.shedaniel.autoconfig.serializer.PartitioningSerializer;
+
+/**
+ * @author Leander Knüttel
+ * @version 25.08.2025
+ */
+public class ModConfigFabric extends CommonModConfig {
+    @Override
+    protected ModConfig getConfig() {
+        AutoConfig.register(ModConfig.class, PartitioningSerializer.wrap(JanksonConfigSerializer::new));
+        return AutoConfig.getConfigHolder(ModConfig.class).getConfig();
+    }
 }

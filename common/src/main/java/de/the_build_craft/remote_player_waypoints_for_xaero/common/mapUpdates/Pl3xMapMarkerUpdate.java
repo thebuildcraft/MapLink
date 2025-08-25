@@ -24,11 +24,13 @@ import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Int
 
 /**
  * @author Leander Knüttel
- * @version 23.07.2025
+ * @version 25.08.2025
  */
 public class Pl3xMapMarkerUpdate {
     public static class Data{
         public Int3 point;
+        public String key;
+        public String image = "";
     }
 
     public static class Options{

@@ -27,28 +27,14 @@ import de.the_build_craft.remote_player_waypoints_for_xaero.forge.wrappers.Forge
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.*;
-#if MC_VER == MC_1_16_5
-import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
-#elif MC_VER == MC_1_17_1
-import net.minecraftforge.fmlserverevents.FMLServerStartingEvent;
-#else
-#endif
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-
-// these imports change due to forge refactoring classes in 1.19
-#if MC_VER < MC_1_19_2
-//import net.minecraftforge.client.model.data.ModelDataMap;
-
-import java.util.Random;
-#else
-#endif
 
 /**
  * main entry point on Forge
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 16.06.2024
+ * @version 25.08.2025
  */
 @Mod(AbstractModInitializer.MOD_ID)
 public class ForgeMain extends AbstractModInitializer
@@ -56,7 +42,8 @@ public class ForgeMain extends AbstractModInitializer
 	public ForgeMain()
 	{
 		loaderType = LoaderType.Forge;
-        CommonModConfigForge config = new CommonModConfigForge();
+        new ModConfigForge();
+		new XaerosMapCompatForge();
 
 		// Register the mod initializer (Actual event registration is done in the different proxies)
 		FMLJavaModLoadingContext.get().getModEventBus().addListener((FMLClientSetupEvent e) -> this.onInitializeClient());
@@ -94,25 +81,4 @@ public class ForgeMain extends AbstractModInitializer
 	protected void initializeModCompat()
 	{
 	}
-	
-	/*@Override
-	protected void subscribeClientStartedEvent(Runnable eventHandler)
-	{
-		// FIXME What event is this?
-		MinecraftForge.EVENT_BUS.addListener();
-	}
-	
-	@Override
-	protected void subscribeServerStartingEvent(Consumer<MinecraftServer> eventHandler)
-	{
-		MinecraftForge.EVENT_BUS.addListener((#if MC_VER >= MC_1_18_2 ServerStartingEvent #else FMLServerStartingEvent #endif e) ->
-		{
-			eventHandler.accept(e.getServer());
-		});
-	}
-	
-	@Override
-	protected void runDelayedSetup() {
-		//setup after init here
-	}*/
 }

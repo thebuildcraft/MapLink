@@ -29,7 +29,7 @@ import java.util.Map;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 23.07.2025
+ * @version 25.08.2025
  */
 public class BlueMapMarkerSet {
     public static class Marker {
@@ -39,6 +39,7 @@ public class BlueMapMarkerSet {
         public Float3[] shape = new Float3[0];
         public Color lineColor;
         public Color fillColor;
+        public String icon = "";
     }
     public Map<String, Marker> markers = new HashMap<>();
 }

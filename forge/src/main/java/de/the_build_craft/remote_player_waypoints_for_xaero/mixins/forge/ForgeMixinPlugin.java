@@ -21,6 +21,7 @@
 
 package de.the_build_craft.remote_player_waypoints_for_xaero.mixins.forge;
 
+import com.llamalad7.mixinextras.MixinExtrasBootstrap;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -32,7 +33,7 @@ import java.util.Set;
  * @author coolGi
  * @author cortex
  * @author Leander Knüttel
- * @version 03.07.2024
+ * @version 25.08.2025
  */
 public class ForgeMixinPlugin implements IMixinConfigPlugin
 {
@@ -54,7 +55,9 @@ public class ForgeMixinPlugin implements IMixinConfigPlugin
     }
 	
 	@Override
-	public void onLoad(String mixinPackage) { }
+	public void onLoad(String mixinPackage) {
+		MixinExtrasBootstrap.init();
+	}
 	
 	@Override
 	public String getRefMapperConfig() { return null; }

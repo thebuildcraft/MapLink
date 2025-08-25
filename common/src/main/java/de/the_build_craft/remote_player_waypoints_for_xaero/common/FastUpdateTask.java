@@ -22,26 +22,29 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.common;
 
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.ClientMapHandler;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.PlayerPosition;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.RemotePlayer;
+#if MC_VER >= MC_1_21_6
 import net.minecraft.world.waypoints.TrackedWaypoint;
+import java.util.UUID;
+import java.util.stream.Collectors;
+#endif
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.*;
 
 /**
  * @author Leander Knüttel
- * @version 26.07.2025
+ * @version 25.08.2025
  */
 public class FastUpdateTask {
     private final Minecraft mc;
-    public static final Map<String, PlayerPosition> playerPositions = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
-    final Map<String, PlayerPosition> onlinePlayerPositions = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
+    public static final Map<String, PlayerPosition> playerPositions = new ConcurrentHashMap<>();
+    private final Map<String, PlayerPosition> onlinePlayerPositions = new ConcurrentHashMap<>();
     private static FastUpdateTask instance;
 
     public FastUpdateTask() {
@@ -65,7 +68,7 @@ public class FastUpdateTask {
                 || mc.getCurrentServer() == null
                 || mc.getConnection() == null
                 || !mc.getConnection().getConnection().isConnected()
-                || !AbstractModInitializer.enabled
+                || !config.general.enabled
                 || ClientMapHandler.getInstance() == null) {
             return;
         }
@@ -83,12 +86,16 @@ public class FastUpdateTask {
                     if (trackedWaypoint.type == TrackedWaypoint.Type.VEC3I) {
                         TrackedWaypoint.Vec3iWaypoint vec3iWaypoint = (TrackedWaypoint.Vec3iWaypoint) trackedWaypoint;
                         vec3iWaypoint.id().left().ifPresent(uuid -> {
-                            if (uuidPlayerMap.containsKey(uuid)) playerPositions.put(uuidPlayerMap.get(uuid),
-                                    new PlayerPosition(uuidPlayerMap.get(uuid),
-                                            vec3iWaypoint.vector.getX(),
-                                            vec3iWaypoint.vector.getY(),
-                                            vec3iWaypoint.vector.getZ(),
-                                            ""));
+                            if (uuidPlayerMap.containsKey(uuid)) {
+                                String name = uuidPlayerMap.get(uuid);
+                                PlayerPosition playerPosition = new PlayerPosition(name,
+                                        vec3iWaypoint.vector.getX(),
+                                        vec3iWaypoint.vector.getY(),
+                                        vec3iWaypoint.vector.getZ(),
+                                        "");
+                                ClientMapHandler.registerTempPlayerPosition(playerPosition);
+                                playerPositions.put(name, playerPosition);
+                            }
                         });
                     }
                 });
@@ -96,11 +103,13 @@ public class FastUpdateTask {
 
         for (AbstractClientPlayer player : mc.level.players()) {
             if (player instanceof RemotePlayer) {
-                playerPositions.put(player.getGameProfile().getName(), new PlayerPosition(player));
+                PlayerPosition playerPosition = new PlayerPosition(player);
+                ClientMapHandler.registerTempPlayerPosition(playerPosition);
+                playerPositions.put(player.getGameProfile().getName(), playerPosition);
             }
         }
 
-        ClientMapHandler.getInstance().handlePlayerWaypoints(playerPositions);
+        ClientMapHandler.getInstance().handlePlayerWaypoints();
     }
 
     public void updateFromOnlineMap(HashMap<String, PlayerPosition> onlinePlayerPositions) {

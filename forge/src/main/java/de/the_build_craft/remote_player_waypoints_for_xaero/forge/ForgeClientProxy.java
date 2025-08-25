@@ -36,7 +36,7 @@ import org.apache.logging.log4j.Logger;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 23.05.2024
+ * @version 25.08.2025
  */
 public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 {
@@ -48,7 +48,7 @@ public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 		LOGGER.info("Registering Forge Client Events");
 
 		#if MC_VER > MC_1_17_1
-		//TODO remove #if once more Events are registered
+		// remove #if once more Events are registered
 		// (Forge throws an error if this line is there, but no event is registered)
 		MinecraftForge.EVENT_BUS.register(this);
 		#endif

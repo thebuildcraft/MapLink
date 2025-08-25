@@ -37,18 +37,22 @@ import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Util
 
 import java.lang.reflect.Type;
 
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.*;
+
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 27.07.2025
+ * @version 25.08.2025
  */
 public class BlueMapConnection extends MapConnection {
-    public List<Integer> lastWorldIndices = new ArrayList<>(List.of(0));
-    public List<URL> playerUrls = new ArrayList<>();
-    public List<URL> markerUrls = new ArrayList<>();
-    public List<String> worlds = new ArrayList<>();
+    List<Integer> lastWorldIndices = new ArrayList<>(Collections.singletonList(0));
+    List<URL> playerUrls = new ArrayList<>();
+    List<URL> markerUrls = new ArrayList<>();
+    List<String> worlds = new ArrayList<>();
+    List<String> playerHeadIconUrlTemplates = new ArrayList<>();
+    private String markerIconLinkTemplate = "";
 
-    public BlueMapConnection(CommonModConfig.ServerEntry serverEntry, UpdateTask updateTask) throws IOException {
+    public BlueMapConnection(ModConfig.ServerEntry serverEntry, UpdateTask updateTask) throws IOException {
         try {
             generateLinks(serverEntry, true);
         }
@@ -67,10 +71,12 @@ public class BlueMapConnection extends MapConnection {
         }
     }
 
-    private void generateLinks(CommonModConfig.ServerEntry serverEntry, boolean useHttps) throws IOException {
+    private void generateLinks(ModConfig.ServerEntry serverEntry, boolean useHttps) throws IOException {
         playerUrls.clear();
         markerUrls.clear();
         worlds.clear();
+        playerHeadIconUrlTemplates.clear();
+
         String baseURL = getBaseURL(serverEntry, useHttps);
         AbstractModInitializer.LOGGER.info("baseURL " + baseURL);
         // Get config and build the urls
@@ -79,23 +85,25 @@ public class BlueMapConnection extends MapConnection {
             playerUrls.add(URI.create((baseURL + "/maps/" + w + "/live/players.json?").replace(" ", "%20")).toURL());
             markerUrls.add(URI.create((baseURL + "/maps/" + w + "/live/markers.json?").replace(" ", "%20")).toURL());
             worlds.add(w);
+            playerHeadIconUrlTemplates.add(baseURL + "/maps/" + w + "/assets/playerheads/{uuid}.png");
         }
 
         onlineMapConfigLink = baseURL + "/settings.json?";
+        markerIconLinkTemplate = baseURL + "/{icon}";
 
         // Test the urls
         this.getPlayerPositions();
 
         for (URL url : playerUrls){
-            AbstractModInitializer.LOGGER.info("new link: " + url);
-            if (CommonModConfig.Instance.debugMode()){
+            AbstractModInitializer.LOGGER.info("new player link: " + url);
+            if (config.general.debugMode){
                 Utils.sendToClientChat("new link: " + url);
             }
         }
 
         for (URL url : markerUrls){
-            AbstractModInitializer.LOGGER.info("new link: " + url);
-            if (CommonModConfig.Instance.debugMode()){
+            AbstractModInitializer.LOGGER.info("new marker link: " + url);
+            if (config.general.debugMode){
                 Utils.sendToClientChat("new link: " + url);
             }
         }
@@ -112,54 +120,64 @@ public class BlueMapConnection extends MapConnection {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            for (Map.Entry<String, BlueMapMarkerSet> m : sets.entrySet()) {
-                layers.add(m.getKey());
-            }
+            layers.addAll(sets.keySet());
         }
         return layers;
     }
 
     int lastWorldIndicesHash;
-    List<WaypointPosition> positions = new ArrayList<>();
+    int lastMarkerHash;
+    int lastAreaMarkerHash;
+    List<Position> positions = new ArrayList<>();
     List<AreaMarker> areaMarkers = new ArrayList<>();
 
     @Override
     public void getWaypointPositions() throws IOException {
         Type apiResponseType = new TypeToken<Map<String, BlueMapMarkerSet>>() {}.getType();
 
-        CommonModConfig.ServerEntry serverEntry = CommonModConfig.Instance.getCurrentServerEntry();
-        if (serverEntry.markerVisibilityMode == CommonModConfig.ServerEntry.MarkerVisibilityMode.Auto) {
-            CommonModConfig.Instance.setMarkerLayers(serverEntry.ip, new ArrayList<>(getMarkerLayers()));
+        ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
+        if (serverEntry.needsMarkerLayerUpdate()) {
+            serverEntry.setMarkerLayers(new ArrayList<>(getMarkerLayers()));
         }
 
         if (ClientMapHandler.getInstance() == null) return;
 
         int newWorldIndicesHash = lastWorldIndices.hashCode();
-        if (newWorldIndicesHash == lastWorldIndicesHash) {
+        int newMarkerHash = getMarkerVisibilityHash();
+        int newAreaMarkerHash = getAreaMarkerVisibilityHash();
+        if (newWorldIndicesHash == lastWorldIndicesHash
+                && newMarkerHash == lastMarkerHash
+                && newAreaMarkerHash == lastAreaMarkerHash
+        ) {
             ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
             ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers, false);
             return;
         }
         lastWorldIndicesHash = newWorldIndicesHash;
+        lastMarkerHash = newMarkerHash;
+        lastAreaMarkerHash = newAreaMarkerHash;
         positions.clear();
         areaMarkers.clear();
 
         for (int i : lastWorldIndices) {
             Map<String, BlueMapMarkerSet> markerSets = HTTP.makeJSONHTTPRequest(markerUrls.get(i), apiResponseType);
-            for (Map.Entry<String, BlueMapMarkerSet> m : markerSets.entrySet()) {
-                if (CommonModConfig.Instance.debugMode() && CommonModConfig.Instance.chatLogInDebugMode()) {
+            for (Map.Entry<String, BlueMapMarkerSet> markerSetEntry : markerSets.entrySet()) {
+                if (config.general.debugMode && config.general.chatLogInDebugMode) {
                     Utils.sendToClientChat("====================================");
-                    Utils.sendToClientChat("markerSet: " + m.getKey());
+                    Utils.sendToClientChat("markerSet: " + markerSetEntry.getKey());
                 }
 
-                if (!serverEntry.includeMarkerLayer(m.getKey())) continue;
-
-                for (BlueMapMarkerSet.Marker marker : m.getValue().markers.values()) {
+                for (Map.Entry<String, BlueMapMarkerSet.Marker> markerEntry : markerSetEntry.getValue().markers.entrySet()) {
+                    BlueMapMarkerSet.Marker marker = markerEntry.getValue();
                     Float3 pos = marker.position;
                     if (Objects.equals(marker.type, "poi") || Objects.equals(marker.type, "html")) {
-                        positions.add(new WaypointPosition(marker.label, pos.x, pos.y, pos.z));
+                        if (!serverEntry.includeMarkerLayer(markerSetEntry.getKey())) continue;
+                        Position position = new Position(marker.label, pos.x, pos.y, pos.z, i + markerSetEntry.getKey() + markerEntry.getKey(), markerSetEntry.getKey());
+                        positions.add(position);
+                        ClientMapHandler.registerPosition(position, marker.icon.startsWith("http") ? marker.icon : (marker.icon.equals("assets/poi.svg") ? null : markerIconLinkTemplate.replace("{icon}", marker.icon)));
                     } else if (Objects.equals(marker.type, "shape")) {
-                        areaMarkers.add(new AreaMarker(marker.label, pos.x, pos.y, pos.z, marker.shape, marker.lineColor, marker.fillColor, m.getKey()));
+                        if (!serverEntry.includeAreaMarkerLayer(markerSetEntry.getKey())) continue;
+                        areaMarkers.add(new AreaMarker(marker.label, pos.x, pos.y, pos.z, marker.shape, marker.lineColor, marker.fillColor, markerSetEntry.getKey() + markerEntry.getKey(), markerSetEntry.getKey()));
                     }
                 }
             }
@@ -179,10 +197,10 @@ public class BlueMapConnection extends MapConnection {
         if (AbstractModInitializer.overwriteCurrentDimension && !Objects.equals(currentDimension, "")){
             lastWorldIndices.clear();
             lastWorldIndices.add(worlds.indexOf(currentDimension));
-            update = HTTP.makeJSONHTTPRequest(playerUrls.get(lastWorldIndices.getFirst()), BlueMapPlayerUpdate.class);
+            update = HTTP.makeJSONHTTPRequest(playerUrls.get(lastWorldIndices.get(0)), BlueMapPlayerUpdate.class);
         }
         else{
-            if (!lastWorldIndices.isEmpty()) update = getBlueMapPlayerUpdate(clientName, update, lastWorldIndices.getFirst());
+            if (!lastWorldIndices.isEmpty()) update = getBlueMapPlayerUpdate(clientName, update, lastWorldIndices.get(0));
             if (!correctWorld){
                 lastWorldIndices.clear();
                 for (int i = 0; i < playerUrls.size(); i++) {
@@ -199,17 +217,12 @@ public class BlueMapConnection extends MapConnection {
         }
         // Build a list of positions
         PlayerPosition[] positions = new PlayerPosition[update.players.length];
-        if (correctWorld){
-            for (int i = 0; i < update.players.length; i++) {
-                BlueMapPlayerUpdate.Player player = update.players[i];
-                positions[i] = new PlayerPosition(player.name, player.position.x, player.position.y, player.position.z, player.foreign ? "foreign" : "thisWorld");
-            }
-        }
-        else {
-            for (int i = 0; i < update.players.length; i++) {
-                BlueMapPlayerUpdate.Player player = update.players[i];
-                positions[i] = new PlayerPosition(player.name, player.position.x, player.position.y, player.position.z, "unknown");
-            }
+        for (int i = 0; i < update.players.length; i++) {
+            BlueMapPlayerUpdate.Player player = update.players[i];
+            PlayerPosition playerPosition = new PlayerPosition(player.name, player.position.x, player.position.y, player.position.z, correctWorld ? (player.foreign ? "foreign" : "thisWorld") : "unknown");
+            positions[i] = playerPosition;
+            if (!correctWorld) continue;
+            ClientMapHandler.registerPlayerPosition(playerPosition, playerHeadIconUrlTemplates.get(lastWorldIndices.get(0)).replace("{uuid}", player.uuid));
         }
         return HandlePlayerPositions(positions);
     }
@@ -225,7 +238,7 @@ public class BlueMapConnection extends MapConnection {
             }
         }
         catch (Exception ignored){
-            if (CommonModConfig.Instance.debugMode()){
+            if (config.general.debugMode){
                 Utils.sendToClientChat("removed broken link: " + playerUrls.get(worldIndex));
             }
             playerUrls.remove(worldIndex);
