@@ -24,12 +24,17 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.common;
 import com.google.gson.Gson;
 import com.mojang.blaze3d.platform.NativeImage;
 
+import javax.net.ssl.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
+
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.config;
 
 /**
  * HTTP utils
@@ -37,7 +42,7 @@ import java.net.URL;
  * @author ewpratten
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 25.08.2025
+ * @version 26.08.2025
  */
 public class HTTP {
 
@@ -75,15 +80,31 @@ public class HTTP {
         return makeTextHttpRequest(url, false);
     }
 
-    public static String makeTextHttpRequest(URL url, boolean includeNewLine) throws IOException{
+    public static HttpURLConnection openHTTPConnection(URL url, String contentType) throws IOException {
         // Open an HTTP request
         HttpURLConnection request = (HttpURLConnection) url.openConnection();
         request.setRequestMethod("GET");
-        request.setRequestProperty("Content-Type", "application/json");
+        request.setRequestProperty("Content-Type", contentType);
         request.setRequestProperty("User-Agent", AbstractModInitializer.MOD_NAME);
         request.setInstanceFollowRedirects(true);
         request.setConnectTimeout(10_000);
         request.setReadTimeout(10_000);
+        // completely insecure and should normally not be used!
+        if (config.general.ignoreCertificatesUseAtYourOwnRisk && request instanceof HttpsURLConnection) {
+            try {
+                SSLContext sc = SSLContext.getInstance("SSL");
+                sc.init(null, new TrustManager[]{new TrustAnyTrustManager()}, new SecureRandom());
+                HostnameVerifier allHostsValid = (hostname, session) -> true;
+                ((HttpsURLConnection) request).setSSLSocketFactory(sc.getSocketFactory());
+                ((HttpsURLConnection) request).setHostnameVerifier(allHostsValid);
+            } catch (Exception ignored) {}
+        }
+        return request;
+    }
+
+    public static String makeTextHttpRequest(URL url, boolean includeNewLine) throws IOException{
+        // Open an HTTP request
+        HttpURLConnection request = openHTTPConnection(url, "application/json");
 
         // Get the content
         BufferedReader responseReader = new BufferedReader(new InputStreamReader(request.getInputStream()));
@@ -99,15 +120,25 @@ public class HTTP {
 
     public static NativeImage makeImageHttpRequest(URL url) throws IOException{
         // Open an HTTP request
-        HttpURLConnection request = (HttpURLConnection) url.openConnection();
-        request.setRequestMethod("GET");
-        request.setRequestProperty("Content-Type", "image/png");
-        request.setRequestProperty("User-Agent", AbstractModInitializer.MOD_NAME);
-        request.setInstanceFollowRedirects(true);
-        request.setConnectTimeout(10_000);
-        request.setReadTimeout(10_000);
+        HttpURLConnection request = openHTTPConnection(url, "image/png");
 
         // Return the content
         return NativeImage.read(request.getInputStream());
+    }
+
+    /**
+     * completely insecure and should normally not be used!
+     */
+    static class TrustAnyTrustManager implements X509TrustManager {
+
+        public void checkClientTrusted(X509Certificate[] chain, String authType) {
+        }
+
+        public void checkServerTrusted(X509Certificate[] chain, String authType) {
+        }
+
+        public X509Certificate[] getAcceptedIssuers() {
+            return null;
+        }
     }
 }
