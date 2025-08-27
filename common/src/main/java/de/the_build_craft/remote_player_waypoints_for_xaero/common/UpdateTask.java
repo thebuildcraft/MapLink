@@ -43,7 +43,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
  * @author eatmyvenom
  * @author TheMrEngMan
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 28.08.2025
  */
 public class UpdateTask {
     private final Minecraft mc;
@@ -200,6 +200,7 @@ public class UpdateTask {
     private void Reset() {
         AbstractModInitializer.setConnection(null);
         ClientMapHandler.clearRegisteredPositions();
+        FastUpdateTask.getInstance().clearAllPlayerPositions();
         if (ClientMapHandler.getInstance() != null) {
             ClientMapHandler.getInstance().removeAllPlayerWaypoints();
             ClientMapHandler.getInstance().removeAllMarkerWaypoints();

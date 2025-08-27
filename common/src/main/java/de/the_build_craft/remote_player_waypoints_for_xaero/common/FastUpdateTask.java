@@ -39,7 +39,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
 
 /**
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 28.08.2025
  */
 public class FastUpdateTask {
     private final Minecraft mc;
@@ -115,6 +115,11 @@ public class FastUpdateTask {
     public void updateFromOnlineMap(HashMap<String, PlayerPosition> onlinePlayerPositions) {
         this.onlinePlayerPositions.clear();
         this.onlinePlayerPositions.putAll(onlinePlayerPositions);
+    }
+
+    public void clearAllPlayerPositions() {
+        playerPositions.clear();
+        onlinePlayerPositions.clear();
     }
 
     public static FastUpdateTask getInstance() {
