@@ -24,12 +24,8 @@ import com.google.common.reflect.TypeToken;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.*;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.ClientMapHandler;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.configurations.Pl3xMapConfiguration;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.Pl3xMapAltMarkerUpdate;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.Pl3xMapMarkerLayerConfig;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.Pl3xMapMarkerUpdate;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.Pl3xMapPlayerUpdate;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.PlayerPosition;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Position;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.*;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.*;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Utils;
 
 import java.io.IOException;
@@ -37,6 +33,7 @@ import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,7 +42,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 25.08.2025
+ * @version 28.08.2025
  */
 public class Pl3xMapConnection extends MapConnection{
     private String markerLayerStringTemplate = "";
@@ -135,9 +132,17 @@ public class Pl3xMapConnection extends MapConnection{
 
     private String lastMarkerDimension = "";
     int lastMarkerHash;
-    //int lastAreaMarkerHash;
+    int lastAreaMarkerHash;
     List<Position> positions = new ArrayList<>();
-    //List<AreaMarker> areaMarkers = new ArrayList<>();
+    List<AreaMarker> areaMarkers = new ArrayList<>();
+    private final Map<String, Function<Pl3xMapMarkerUpdate, Int3[][]>> areaTypes = new HashMap<>();
+    {
+        areaTypes.put("circ", m -> new Int3[][]{convertCircleToPolygon(m.data.center, m.data.radius)});
+        areaTypes.put("multipoly", m -> Arrays.stream(m.data.polygons).flatMap(p -> Arrays.stream(p.polylines)).map(pl -> pl.points).toArray(Int3[][]::new));
+        areaTypes.put("poly", m -> Arrays.stream(m.data.polylines).map(pl -> pl.points).toArray(Int3[][]::new));
+        areaTypes.put("line", m -> new Int3[][]{m.data.points});
+        areaTypes.put("rect", m -> new Int3[][]{{m.data.point1, new Int3(m.data.point1.x, 0, m.data.point2.z), m.data.point2, new Int3(m.data.point2.x, 0, m.data.point1.z)}});
+    }
 
     @Override
     public void getWaypointPositions() throws IOException {
@@ -157,20 +162,20 @@ public class Pl3xMapConnection extends MapConnection{
             return;
         }
         int newMarkerHash = getMarkerVisibilityHash();
-        //int newAreaMarkerHash = CommonModConfig.Instance.getAreaMarkerVisibilityHash();
+        int newAreaMarkerHash = getAreaMarkerVisibilityHash();
         if (lastMarkerDimension.equals(currentDimension)
-                //&& newAreaMarkerHash == lastAreaMarkerHash
+                && newAreaMarkerHash == lastAreaMarkerHash
                 && newMarkerHash == lastMarkerHash) {
             ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
-            //ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers, false);
+            ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers, false);
             return;
         }
         lastMarkerDimension = currentDimension;
         lastMarkerHash = newMarkerHash;
-        //lastAreaMarkerHash = newAreaMarkerHash;
+        lastAreaMarkerHash = newAreaMarkerHash;
 
         positions.clear();
-        //areaMarkers.clear();
+        areaMarkers.clear();
 
         if (version == 0) {
             for (String layer : getMarkerLayers(false)){
@@ -185,27 +190,52 @@ public class Pl3xMapConnection extends MapConnection{
                         ClientMapHandler.registerPosition(position, marker.data.image.equals("marker-icon") ? null : markerIconLinkTemplate.replace("{icon}", marker.data.image));
                         positions.add(position);
                     }
+                    if (!(serverEntry.includeAreaMarkerLayer(layer) && areaTypes.containsKey(marker.type))) continue;
+                    Int3[][] polygons = areaTypes.get(marker.type).apply(marker);
+                    areaMarkers.add(new AreaMarker(marker.options.tooltip.content,
+                            0,
+                            0,
+                            0,
+                            polygons,
+                            (marker.options.stroke != null && marker.options.stroke.enabled) ? new Color(marker.options.stroke.color) : new Color(),
+                            (marker.options.fill != null && marker.options.fill.enabled) ? new Color(marker.options.fill.color) : new Color(),
+                            currentDimension + layer + marker.data.key,
+                            layer));
                 }
             }
         } else if (version == 1) {
-            Type apiResponseType = new TypeToken<Pl3xMapAltMarkerUpdate[]>() {}.getType();
+            Type apiResponseType = new TypeToken<SquareMapMarkerUpdate[]>() {}.getType();
             URL reqUrl = URI.create(markerLayerStringTemplate.replace("{world}", currentDimension.replaceAll(":", "-"))).toURL();
-            Pl3xMapAltMarkerUpdate[] markerLayers = HTTP.makeJSONHTTPRequest(reqUrl, apiResponseType);
+            SquareMapMarkerUpdate[] markerLayers = HTTP.makeJSONHTTPRequest(reqUrl, apiResponseType);
 
-            for (Pl3xMapAltMarkerUpdate layer : markerLayers){
+            for (SquareMapMarkerUpdate layer : markerLayers){
                 if (!Objects.equals(layer.id, "pl3xmap_players")) {
-                    for (Pl3xMapAltMarkerUpdate.Marker marker : layer.markers) {
+                    for (SquareMapMarkerUpdate.Marker marker : layer.markers) {
                         if (Objects.equals(marker.type, "icon")  && serverEntry.includeMarkerLayer(layer.id)) {
                             Position position = new Position(marker.tooltip, marker.point.x, config.general.defaultY, marker.point.z, currentDimension + layer.id + marker.tooltip + marker.point.x + marker.point.z, layer.id);
                             ClientMapHandler.registerPosition(position, marker.icon.equals("marker-icon") ? null : markerIconLinkTemplate.replace("{icon}", marker.icon));
                             positions.add(position);
+                        }
+                        else if (Objects.equals(marker.type, "polygon") && serverEntry.includeAreaMarkerLayer(layer.id)) {
+                            areaMarkers.add(new AreaMarker(marker.tooltip, 0, 0, 0, Arrays.stream(marker.points).flatMap(Arrays::stream).toArray(Int3[][]::new),
+                                    new Color(marker.color, 1f), new Color(marker.fillColor, marker.opacity), layer.id + marker.tooltip + Arrays.deepHashCode(marker.points), layer.id));
                         }
                     }
                 }
             }
         }
         ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
-        //ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers, true);
+        ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers, true);
+    }
+
+    Int3[] convertCircleToPolygon(Int3 center, float radius) {
+        int N = 40;
+        Int3[] points = new Int3[N];
+        for (int i = 0; i < N; i++) {
+            double a = (Math.PI * 2 / N) * i;
+            points[i] = new Float3(center.x + radius * Math.sin(a), center.y, center.z + radius * Math.cos(a)).toInt3();
+        }
+        return points;
     }
 
     @Override
@@ -247,14 +277,14 @@ public class Pl3xMapConnection extends MapConnection{
                 return layers;
             }
             if (version == 1) {
-                Type apiResponseType = new TypeToken<Pl3xMapAltMarkerUpdate[]>() {}.getType();
+                Type apiResponseType = new TypeToken<SquareMapMarkerUpdate[]>() {}.getType();
 
                 if (all) {
                     Pl3xMapConfiguration configuration = HTTP.makeJSONHTTPRequest(URI.create(onlineMapConfigLink).toURL(), Pl3xMapConfiguration.class);
                     HashSet<String> layerSet = new HashSet<>();
                     for (Pl3xMapConfiguration.World ws : configuration.worlds) {
-                        Pl3xMapAltMarkerUpdate[] mls = HTTP.makeJSONHTTPRequest(URI.create(markerLayerStringTemplate.replace("{world}", ws.name.replaceAll(":", "-"))).toURL(), apiResponseType);
-                        for (Pl3xMapAltMarkerUpdate ml : mls) {
+                        SquareMapMarkerUpdate[] mls = HTTP.makeJSONHTTPRequest(URI.create(markerLayerStringTemplate.replace("{world}", ws.name.replaceAll(":", "-"))).toURL(), apiResponseType);
+                        for (SquareMapMarkerUpdate ml : mls) {
                             if (!Objects.equals(ml.id, "pl3xmap_players")) {
                                 layerSet.add(ml.id);
                             }
@@ -264,11 +294,11 @@ public class Pl3xMapConnection extends MapConnection{
                 }
 
                 URL reqUrl = URI.create(markerLayerStringTemplate.replace("{world}", currentDimension.replaceAll(":", "-"))).toURL();
-                Pl3xMapAltMarkerUpdate[] markerLayers = HTTP.makeJSONHTTPRequest(reqUrl, apiResponseType);
+                SquareMapMarkerUpdate[] markerLayers = HTTP.makeJSONHTTPRequest(reqUrl, apiResponseType);
 
                 HashSet<String> layers = new HashSet<>();
 
-                for (Pl3xMapAltMarkerUpdate layer : markerLayers){
+                for (SquareMapMarkerUpdate layer : markerLayers){
                     if (!Objects.equals(layer.id, "pl3xmap_players")) {
                         layers.add(layer.id);
                     }

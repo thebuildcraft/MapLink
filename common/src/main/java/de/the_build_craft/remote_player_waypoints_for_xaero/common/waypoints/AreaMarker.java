@@ -24,23 +24,37 @@ import java.util.Arrays;
 
 /**
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 28.08.2025
  */
 public class AreaMarker extends Position {
-    public final Float3[] points;
+    public final Int3[][] polygons;
     public final Color lineColor;
     public final Color fillColor;
 
-    public AreaMarker(String name, int x, int y, int z, Int3[] points, Color lineColor, Color fillColor, String id, String layer) {
+    public AreaMarker(String name, float x, float y, float z, Float3[] polygons, Color lineColor, Color fillColor, String id, String layer) {
         super(name, x, y, z, id, layer);
-        this.points = Arrays.stream(points).map(Int3::toFloat3).toArray(Float3[]::new);
+        this.polygons = new Int3[][]{Arrays.stream(polygons).map(Float3::toInt3).toArray(Int3[]::new)};
         this.lineColor = lineColor;
         this.fillColor = fillColor;
     }
 
-    public AreaMarker(String name, float x, float y, float z, Float3[] points, Color lineColor, Color fillColor, String id, String layer) {
+    public AreaMarker(String name, int x, int y, int z, Int3[] polygons, Color lineColor, Color fillColor, String id, String layer) {
         super(name, x, y, z, id, layer);
-        this.points = points;
+        this.polygons = new Int3[][]{polygons};
+        this.lineColor = lineColor;
+        this.fillColor = fillColor;
+    }
+
+    public AreaMarker(String name, float x, float y, float z, Float3[][] polygons, Color lineColor, Color fillColor, String id, String layer) {
+        super(name, x, y, z, id, layer);
+        this.polygons = Arrays.stream(polygons).map(a -> Arrays.stream(a).map(Float3::toInt3).toArray(Int3[]::new)).toArray(Int3[][]::new);
+        this.lineColor = lineColor;
+        this.fillColor = fillColor;
+    }
+
+    public AreaMarker(String name, int x, int y, int z, Int3[][] polygons, Color lineColor, Color fillColor, String id, String layer) {
+        super(name, x, y, z, id, layer);
+        this.polygons = polygons;
         this.lineColor = lineColor;
         this.fillColor = fillColor;
     }

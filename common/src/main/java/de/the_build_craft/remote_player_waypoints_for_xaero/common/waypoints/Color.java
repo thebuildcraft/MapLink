@@ -24,7 +24,7 @@ import java.util.Objects;
 
 /**
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 28.08.2025
  */
 public class Color {
     public int r;
@@ -48,6 +48,13 @@ public class Color {
         g = Integer.parseInt(hex.substring(2, 4), 16);
         b = Integer.parseInt(hex.substring(4, 6), 16);
         this.a = a;
+    }
+
+    public Color(int argb) {
+        a = ((argb >>> 24) & 255) / 255f;
+        r = (argb >>> 16) & 255;
+        g = (argb >>> 8) & 255;
+        b = argb & 255;
     }
 
     public int getAsRGBA() {

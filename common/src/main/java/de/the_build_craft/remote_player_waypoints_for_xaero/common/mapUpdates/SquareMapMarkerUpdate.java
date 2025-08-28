@@ -30,13 +30,12 @@ import com.google.gson.stream.JsonWriter;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Int3;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 28.08.2025
  */
 public class SquareMapMarkerUpdate {
     public static class Marker{
@@ -47,7 +46,7 @@ public class SquareMapMarkerUpdate {
         public Int3[][][] points = new Int3[0][][];
         public String fillColor;
         public String color;
-        public float opacity;
+        public float opacity = 0.5f;
         public String icon = "";
     }
 
@@ -63,7 +62,6 @@ public class SquareMapMarkerUpdate {
     }
 
     public static class PointsAdapter extends TypeAdapter<Int3[][][]> {
-        private static final Type array2dType = new TypeToken<Int3[][]>() {}.getType();
         private final Gson gson;
 
         public PointsAdapter(Gson gson) {
@@ -81,7 +79,7 @@ public class SquareMapMarkerUpdate {
             Int3[][][] result;
             switch (jsonReader.peek()) {
                 case BEGIN_ARRAY:
-                    result = read3dArray(jsonReader);
+                    result = read2dOr3dArray(jsonReader);
                     break;
                 case BEGIN_OBJECT:
                     result = new Int3[][][]{{readArray(jsonReader)}};
@@ -105,10 +103,31 @@ public class SquareMapMarkerUpdate {
             return arr;
         }
 
-        Int3[][][] read3dArray(JsonReader jsonReader) throws IOException {
+        Int3[][][] read2dOr3dArray(JsonReader jsonReader) throws IOException {
             List<Int3[][]> list = new ArrayList<>();
             while (jsonReader.hasNext()) {
-                list.add(gson.fromJson(jsonReader, array2dType));
+                jsonReader.beginArray();
+                switch (jsonReader.peek()) {
+                    case BEGIN_ARRAY:
+                        List<Int3[]> list2 = new ArrayList<>();
+                        while (jsonReader.hasNext()) {
+                            jsonReader.beginArray();
+                            list2.add(readArray(jsonReader));
+                            jsonReader.endArray();
+                        }
+                        Int3[][] arr = new Int3[list2.size()][];
+                        for (int i = 0; i < list2.size(); i++) {
+                            arr[i] = list2.get(i);
+                        }
+                        list.add(arr);
+                        break;
+                    case BEGIN_OBJECT:
+                        list.add(new Int3[][]{readArray(jsonReader)});
+                        break;
+                    default:
+                        throw new IllegalArgumentException();
+                }
+                jsonReader.endArray();
             }
             Int3[][][] arr = new Int3[list.size()][][];
             for (int i = 0; i < list.size(); i++) {

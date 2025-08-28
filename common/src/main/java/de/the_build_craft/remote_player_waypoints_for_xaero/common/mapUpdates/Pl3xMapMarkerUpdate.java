@@ -24,20 +24,53 @@ import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Int
 
 /**
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 28.08.2025
  */
 public class Pl3xMapMarkerUpdate {
-    public static class Data{
-        public Int3 point;
+    public static class Data {
         public String key;
+        //Icon
+        public Int3 point;
         public String image = "";
+        //Circle
+        public Int3 center;
+        public float radius;
+        //Multipolygon
+        public Polygon[] polygons = new Polygon[0];
+        //Polygon
+        public Polyline[] polylines = new Polyline[0];
+        //Polyline
+        public Int3[] points = new Int3[0];
+        //Rectangle
+        public Int3 point1;
+        public Int3 point2;
     }
 
-    public static class Options{
-        public static class ToolTip{
+    public static class Polygon {
+        public Polyline[] polylines = new Polyline[0];
+    }
+
+    public static class Polyline {
+        public Int3[] points = new Int3[0];
+    }
+
+    public static class Options {
+        public static class ToolTip {
             public String content;
         }
+        public static class Stroke {
 
+            public boolean enabled = true;
+            public int color = -13399809;
+        }
+        public static class Fill {
+
+            public boolean enabled;
+            public int color = -13399809;
+        }
+
+        public Stroke stroke;
+        public Fill fill;
         public ToolTip tooltip;
     }
 

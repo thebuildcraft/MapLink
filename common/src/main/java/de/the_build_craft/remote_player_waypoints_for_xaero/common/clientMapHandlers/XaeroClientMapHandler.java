@@ -47,7 +47,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
 
 /**
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 28.08.2025
  */
 public class XaeroClientMapHandler extends ClientMapHandler {
     public static final Long2ObjectMap<ChunkHighlight> chunkHighlightMap = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
@@ -224,50 +224,59 @@ public class XaeroClientMapHandler extends ClientMapHandler {
     //for the visualizer and reference implementation (I made some changes)
     List<Long> rasterizeAreaMarker(AreaMarker areaMarker) {
         try {
-            if (areaMarker.points.length == 0) return new ArrayList<>();
+            if (areaMarker.polygons.length == 0) return new ArrayList<>();
 
-            Int3[] points = Arrays.stream(areaMarker.points)
-                    .map(Float3::toInt3).toArray(Int3[]::new);
+            Int3[][] polygons = Arrays.stream(areaMarker.polygons).toArray(Int3[][]::new);
 
             List<Edge> edges = new ArrayList<>();
-            int globalXMin = Integer.MAX_VALUE;
-            int globalXMax = Integer.MIN_VALUE;
-            int globalZMin = Integer.MAX_VALUE;
-            int globalZMax = Integer.MIN_VALUE;
-            for (int i = 0; i < points.length; i++) {
-                Int3 point = points[i];
-                Int3 otherPoint = points[(i + 1) % points.length];
-                globalXMin = Math.min(globalXMin, point.x);
-                globalXMax = Math.max(globalXMax, point.x);
-                globalZMin = Math.min(globalZMin, point.z);
-                globalZMax = Math.max(globalZMax, point.z);
-                if (point.z != otherPoint.z) {
-                    edges.add(new Edge(point, otherPoint));
+            List<Long> additionalChunks = new ArrayList<>();
+            List<Edge> tempEdges = new ArrayList<>();
+            int area = 0;
+            for (Int3[] polygon : polygons) {
+                tempEdges.clear();
+
+                int globalXMin = Integer.MAX_VALUE;
+                int globalXMax = Integer.MIN_VALUE;
+                int globalZMin = Integer.MAX_VALUE;
+                int globalZMax = Integer.MIN_VALUE;
+
+                for (int i = 0; i < polygon.length; i++) {
+                    Int3 point = polygon[i];
+                    Int3 otherPoint = polygon[(i + 1) % polygon.length];
+                    globalXMin = Math.min(globalXMin, point.x);
+                    globalXMax = Math.max(globalXMax, point.x);
+                    globalZMin = Math.min(globalZMin, point.z);
+                    globalZMax = Math.max(globalZMax, point.z);
+                    if (point.z != otherPoint.z) {
+                        tempEdges.add(new Edge(point, otherPoint));
+                    }
                 }
-            }
-            globalXMin >>= 4;
-            globalXMax >>= 4;
-            globalZMin >>= 4;
-            globalZMax >>= 4;
-            int area = (1 + globalXMax - globalXMin) * (1 + globalZMax - globalZMin);
-            if (area > 500_000) {
-                LOGGER.warn("polygon to large: " + areaMarker.name);
-                return new ArrayList<>();
+
+                globalXMin >>= 4;
+                globalXMax >>= 4;
+                globalZMin >>= 4;
+                globalZMax >>= 4;
+
+                area += (1 + globalXMax - globalXMin) * (1 + globalZMax - globalZMin);
+                if (area > 500_000) {
+                    LOGGER.warn("polygon to large: " + areaMarker.name);
+                    return new ArrayList<>();
+                }
+
+                if (globalXMin == globalXMax) {
+                    for (int z = globalZMin; z <= globalZMax; z++) {
+                        additionalChunks.add(MathUtils.combineIntsToLong(globalXMin, z));
+                    }
+                } else if (globalZMin == globalZMax) {
+                    for (int x = globalXMin; x <= globalXMax; x++) {
+                        additionalChunks.add(MathUtils.combineIntsToLong(x, globalZMin));
+                    }
+                } else {
+                    edges.addAll(tempEdges);
+                }
             }
 
-            if (globalXMin == globalXMax) {
-                List<Long> list = new ArrayList<>(1 + globalZMax - globalZMin);
-                for (int z = globalZMin; z <= globalZMax; z++) {
-                    list.add(MathUtils.combineIntsToLong(globalXMin, z));
-                }
-                return list;
-            } else if (globalZMin == globalZMax) {
-                List<Long> list = new ArrayList<>(1 + globalXMax - globalXMin);
-                for (int x = globalXMin; x <= globalXMax; x++) {
-                    list.add(MathUtils.combineIntsToLong(x, globalZMin));
-                }
-                return list;
-            }
+            if (edges.isEmpty()) return additionalChunks;
 
             Long2IntMap result = new Long2IntOpenHashMap(area);
             Collections.sort(edges);
@@ -317,10 +326,12 @@ public class XaeroClientMapHandler extends ClientMapHandler {
 
                 z++;
             }
-            return result.long2IntEntrySet().stream()
+            List<Long> resultList = result.long2IntEntrySet().stream()
                     .filter(entry -> entry.getIntValue() >= config.general.blocksPerChunkThreshold)
                     .map(Long2IntMap.Entry::getLongKey)
                     .collect(Collectors.toList());
+            resultList.addAll(additionalChunks);
+            return resultList;
         } catch (Throwable t) {
             t.printStackTrace();
             return new ArrayList<>();

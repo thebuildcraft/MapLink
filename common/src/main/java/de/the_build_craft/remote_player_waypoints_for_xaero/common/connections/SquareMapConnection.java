@@ -26,10 +26,7 @@ import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHand
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.configurations.SquareMapConfiguration;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.SquareMapMarkerUpdate;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.SquareMapPlayerUpdate;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.AreaMarker;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Color;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.PlayerPosition;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Position;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.*;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Utils;
 
 import java.io.IOException;
@@ -45,7 +42,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 25.08.2025
+ * @version 28.08.2025
  */
 public class SquareMapConnection extends MapConnection {
     private String markerStringTemplate = "";
@@ -193,7 +190,7 @@ public class SquareMapConnection extends MapConnection {
                     ClientMapHandler.registerPosition(position, markerIconLinkTemplate.replace("{icon}", marker.icon));
                 }
                 else if (Objects.equals(marker.type, "polygon") && serverEntry.includeAreaMarkerLayer(markerLayer.id)) {
-                    areaMarkers.add(new AreaMarker(marker.tooltip, 0, 0, 0, marker.points[0][0],
+                    areaMarkers.add(new AreaMarker(marker.tooltip, 0, 0, 0, Arrays.stream(marker.points).flatMap(Arrays::stream).toArray(Int3[][]::new),
                             new Color(marker.color, 1f), new Color(marker.fillColor, marker.opacity), markerLayer.id + marker.tooltip + Arrays.deepHashCode(marker.points), markerLayer.id));
                 }
             }
