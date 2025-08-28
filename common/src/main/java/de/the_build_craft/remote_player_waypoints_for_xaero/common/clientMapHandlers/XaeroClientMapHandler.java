@@ -333,7 +333,7 @@ public class XaeroClientMapHandler extends ClientMapHandler {
             resultList.addAll(additionalChunks);
             return resultList;
         } catch (Throwable t) {
-            t.printStackTrace();
+            LOGGER.error("unexpected error in polygon rasterization", t);
             return new ArrayList<>();
         }
     }

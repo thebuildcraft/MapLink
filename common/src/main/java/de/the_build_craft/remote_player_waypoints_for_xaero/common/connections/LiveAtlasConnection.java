@@ -38,7 +38,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
 
 /**
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 28.08.2025
  */
 public class LiveAtlasConnection extends MapConnection {
     public static final Pattern dynmapRegexPattern = Pattern.compile("\\n +dynmap: \\{\\n(.*\\n)*?.*}\\n");
@@ -79,7 +79,7 @@ public class LiveAtlasConnection extends MapConnection {
             try {
                 mapConnections.add(new DynmapConnection(baseURL, g, true));
             } catch (Exception e) {
-                AbstractModInitializer.LOGGER.error("error creating Dynmap connection for LiveAtlas");
+                AbstractModInitializer.LOGGER.error("error creating Dynmap connection for LiveAtlas", e);
             }
         }
         matcher = Pl3xMapRegexPattern.matcher(liveAtlasHTML);
@@ -88,7 +88,7 @@ public class LiveAtlasConnection extends MapConnection {
             try {
                 mapConnections.add(new Pl3xMapConnection(baseURL, g, true));
             } catch (Exception e) {
-                AbstractModInitializer.LOGGER.error("error creating Pl3xMap connection for LiveAtlas");
+                AbstractModInitializer.LOGGER.error("error creating Pl3xMap connection for LiveAtlas", e);
             }
         }
         matcher = SquareMapRegexPattern.matcher(liveAtlasHTML);
@@ -97,7 +97,7 @@ public class LiveAtlasConnection extends MapConnection {
             try {
                 mapConnections.add(new SquareMapConnection(baseURL, g, true));
             } catch (Exception e) {
-                AbstractModInitializer.LOGGER.error("error creating Squaremap connection for LiveAtlas");
+                AbstractModInitializer.LOGGER.error("error creating Squaremap connection for LiveAtlas", e);
             }
         }
     }

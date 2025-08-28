@@ -30,9 +30,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Style;
 
-import java.io.IOException;
 import java.util.*;
 
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.AbstractModInitializer.LOGGER;
 import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.*;
 
 /**
@@ -65,7 +65,7 @@ public class UpdateTask {
             runUpdate();
         }
         catch (Exception e){
-            e.printStackTrace();
+            LOGGER.error("Error in slow Update Task", e);
         }
     }
 
@@ -95,7 +95,7 @@ public class UpdateTask {
             if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().removeAllAreaMarkers(true);
             currentServerIP = serverIP;
             Reset();
-            AbstractModInitializer.LOGGER.info("Server ip has changed!");
+            LOGGER.info("Server ip has changed!");
         }
 
         if (AbstractModInitializer.getConnection() == null){
@@ -152,7 +152,7 @@ public class UpdateTask {
                     Utils.sendErrorToClientChat("[" + AbstractModInitializer.MOD_NAME + "]: " +
                             "Error while connecting to the online map. " +
                             "Please check you config or report a bug.");
-                    e.printStackTrace();
+                    LOGGER.error("Error while connecting to the online map.", e);
                 }
                 AbstractModInitializer.connected = false;
                 return;
@@ -163,13 +163,13 @@ public class UpdateTask {
         try {
             // this must be run no matter if it's activated in the config, to get the "currentDimension" and AFK info
             FastUpdateTask.getInstance().updateFromOnlineMap(AbstractModInitializer.getConnection().getPlayerPositions());
-        } catch (IOException e) {
+        } catch (Exception e) {
             if (!cantGetPlayerPositionsErrorWasShown){
                 cantGetPlayerPositionsErrorWasShown = true;
                 Utils.sendErrorToClientChat("[" + AbstractModInitializer.MOD_NAME + "]: " +
-                        "Failed to make online map request (for player waypoints). Please check your config (probably your link...) or report a bug.");
+                        "Failed to make online map request (for player waypoints). Please check your config (maybe your link...) or report a bug.");
             }
-            e.printStackTrace();
+            LOGGER.error("Failed to get player positions from the online map.", e);
             AbstractModInitializer.setConnection(null);
             return;
         }
@@ -177,13 +177,13 @@ public class UpdateTask {
         if (config.general.enableMarkerWaypoints || config.general.enableAreaMarkerOverlay){
             try {
                 AbstractModInitializer.getConnection().getWaypointPositions();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 if (!cantGetMarkerPositionsErrorWasShown) {
                     cantGetMarkerPositionsErrorWasShown = true;
                     Utils.sendErrorToClientChat("[" + AbstractModInitializer.MOD_NAME + "]: " +
-                            "Failed to make online map request (for marker waypoints). Please check your config (probably your link...) or report a bug.");
+                            "Failed to make online map request (for marker waypoints). Please check your config (maybe your link...) or report a bug.");
                 }
-                e.printStackTrace();
+                LOGGER.error("Failed to get marker positions from the online map.", e);
             }
         } else if (ClientMapHandler.getInstance() != null) {
             ClientMapHandler.getInstance().removeAllMarkerWaypoints();
