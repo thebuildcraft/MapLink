@@ -31,7 +31,6 @@ import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Util
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.network.chat.ClickEvent;
@@ -119,10 +118,10 @@ public abstract class ClientMapHandler {
                         throw e;
                     }
                 }
-                if (nativeImage.getWidth() == nativeImage.getHeight() && nativeImage.getWidth() <= 32) {
+                if (nativeImage.getWidth() == nativeImage.getHeight() && nativeImage.getWidth() <= 64) {
                     iconLinkToNativeImage.put(iconLink, nativeImage);
                 } else {
-                    NativeImage nativeImage1 = new NativeImage(32, 32, true);
+                    NativeImage nativeImage1 = new NativeImage(64, 64, true);
                     nativeImage.resizeSubRectTo(0, 0, nativeImage.getWidth(), nativeImage.getHeight(), nativeImage1);
                     iconLinkToNativeImage.put(iconLink, nativeImage1);
                     nativeImage.close();
@@ -148,6 +147,7 @@ public abstract class ClientMapHandler {
         #else
         DynamicTexture texture = new DynamicTexture(iconLinkToNativeImage.get(link));
         #endif
+        texture.setFilter(false, false);
         Minecraft.getInstance().getTextureManager().register(ClientMapHandler.getIconResourceLocation(link), texture);
         DynamicTexture old = iconLinkToTexture.put(link, texture);
         if (old != null) {
