@@ -20,45 +20,18 @@
 
 package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
+import java.util.UUID;
+
 /**
  * @author Leander Knüttel
  * @version 29.08.2025
  */
-public class Float3 {
-    public final float x;
-    public final float y;
-    public final float z;
+public class MutablePlayerPosition {
+    public final UUID uuid;
+    public final MutableFloat3 pos;
 
-    public Float3(float x, float y, float z) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-    }
-
-    public Float3(double x, double y, double z) {
-        this.x = (float) x;
-        this.y = (float) y;
-        this.z = (float) z;
-    }
-
-    @Override
-    public String toString() {
-        return x + " " + y + " " + z;
-    }
-
-    public Int3 roundToInt3() {
-        return new Int3(Math.round(x), Math.round(y), Math.round(z));
-    }
-
-    public Int3 floorToInt3() {
-        return new Int3((int) Math.floor(x), (int) Math.floor(y), (int) Math.floor(z));
-    }
-
-    public Int3 ceilToInt3() {
-        return new Int3((int) Math.ceil(x), (int) Math.ceil(y), (int) Math.ceil(z));
-    }
-
-    public Float3 add(Float3 float3) {
-        return new Float3(x + float3.x, y + float3.y, z + float3.z);
+    public MutablePlayerPosition(PlayerPosition playerPosition) {
+        this.uuid = playerPosition.gameProfile.getId();
+        this.pos = new MutableFloat3(playerPosition.pos);
     }
 }

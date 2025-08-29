@@ -29,10 +29,11 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
  * @author ewpratten
  * @author eatmyvenom
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 29.08.2025
  */
 public class FixedWaypoint extends TempWaypoint {
     public FixedWaypoint(Position p, WaypointState waypointState) {
-        super(p.x, p.y, p.z, p.name, config.general.markerWaypointColor.ordinal(), p.id, waypointState);
+        super((int) Math.floor(p.pos.x), (int) Math.floor(p.pos.y), (int) Math.floor(p.pos.z),
+                p.name, config.general.markerWaypointColor.ordinal(), p.id, waypointState);
     }
 }

@@ -29,10 +29,11 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
  * @author ewpratten
  * @author eatmyvenom
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 29.08.2025
  */
 public class PlayerWaypoint extends TempWaypoint {
-    public PlayerWaypoint(PlayerPosition player, WaypointState waypointState) {
-        super(player.x, player.y, player.z, player.name, getPlayerWaypointColor(player.name), player.id, waypointState);
+    public PlayerWaypoint(PlayerPosition p, WaypointState waypointState) {
+        super((int) Math.floor(p.pos.x), (int) Math.floor(p.pos.y), (int) Math.floor(p.pos.z),
+                p.name, getPlayerWaypointColor(p.name), p.id, waypointState);
     }
 }

@@ -27,36 +27,30 @@ import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHand
  * A marker's name and position
  *
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 29.08.2025
  */
 public class Position {
     public final String name;
-    public final int x;
-    public final int y;
-    public final int z;
+    public final Float3 pos;
     public final String id;
     public final String layer;
 
     public Position(String name, int x, int y, int z, String id, String layer) {
         this.name = getDisplayName(name);
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.pos = new Float3(x + 0.5f, y, z + 0.5f);
         this.id = ClientMapHandler.waypointPrefix +id;
         this.layer = layer;
     }
 
     public Position(String name, float x, float y, float z, String id, String layer) {
         this.name = getDisplayName(name);
-        this.x = (int) Math.floor(x);
-        this.y = (int) Math.floor(y);
-        this.z = (int) Math.floor(z);
+        this.pos = new Float3(x, y,z);
         this.id = ClientMapHandler.waypointPrefix + id;
         this.layer = layer;
     }
 
     public boolean CompareCords(Position otherPosition){
-        return (this.x == otherPosition.x) && (this.y == otherPosition.y) && (this.z == otherPosition.z);
+        return (this.pos.x == otherPosition.pos.x) && (this.pos.y == otherPosition.pos.y) && (this.pos.z == otherPosition.pos.z);
     }
 
     static String getDisplayName(String name){

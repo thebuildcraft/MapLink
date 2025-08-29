@@ -22,12 +22,12 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
 /**
  * @author Leander Knüttel
- * @version 23.07.2025
+ * @version 29.08.2025
  */
 public class Int3 {
-    public int x;
-    public int y;
-    public int z;
+    public final int x;
+    public final int y;
+    public final int z;
 
     public Int3(int x, int y, int z) {
         this.x = x;

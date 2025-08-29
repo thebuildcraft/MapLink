@@ -32,7 +32,7 @@ import java.util.List;
 
 /**
  * @author Leander Knüttel
- * @version 26.08.2025
+ * @version 29.08.2025
  */
 @Config(name = "remote_player_waypoints_for_xaero")
 #if MC_VER < MC_1_20_6
@@ -111,11 +111,15 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         public WaypointColor playerWaypointColor = WaypointColor.Black;
 
         @ConfigEntry.Gui.Tooltip()
-        public boolean enablePlayerRadar = false;
+        public boolean enablePlayerTrackerSystem = false;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 100, max = 100000)
-        public int maxPlayerRadarDistance = 100000;
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100000)
+        public int maxPlayerTrackerHudAndMinimapDistance = 100000;
+
+        @ConfigEntry.Gui.Tooltip()
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100000)
+        public int maxPlayerTrackerWorldmapDistance = 100000;
 
         //AFK options
         @ConfigEntry.Gui.PrefixText
@@ -209,13 +213,13 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         public boolean onlyShowFriendsIconWaypoints = false;
 
-        public boolean onlyShowFriendsPlayerRadar = false;
+        public boolean onlyShowFriendsPlayerTracker = false;
 
         public boolean alwaysShowFriendsWaypoints = true;
 
         public boolean alwaysShowFriendsIconWaypoints = true;
 
-        public boolean alwaysShowFriendsPlayerRadar = true;
+        public boolean alwaysShowFriendsPlayerTracker = true;
 
         public boolean overwriteFriendWaypointColor = false;
 

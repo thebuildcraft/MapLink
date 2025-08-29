@@ -42,7 +42,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 28.08.2025
+ * @version 29.08.2025
  */
 public class Pl3xMapConnection extends MapConnection{
     private String markerLayerStringTemplate = "";
@@ -233,7 +233,7 @@ public class Pl3xMapConnection extends MapConnection{
         Int3[] points = new Int3[N];
         for (int i = 0; i < N; i++) {
             double a = (Math.PI * 2 / N) * i;
-            points[i] = new Float3(center.x + radius * Math.sin(a), center.y, center.z + radius * Math.cos(a)).toInt3();
+            points[i] = new Float3(center.x + radius * Math.sin(a), center.y, center.z + radius * Math.cos(a)).roundToInt3();
         }
         return points;
     }

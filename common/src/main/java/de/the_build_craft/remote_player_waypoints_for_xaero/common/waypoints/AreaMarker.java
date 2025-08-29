@@ -24,7 +24,7 @@ import java.util.Arrays;
 
 /**
  * @author Leander Knüttel
- * @version 28.08.2025
+ * @version 29.08.2025
  */
 public class AreaMarker extends Position {
     public final Int3[][] polygons;
@@ -33,7 +33,7 @@ public class AreaMarker extends Position {
 
     public AreaMarker(String name, float x, float y, float z, Float3[] polygons, Color lineColor, Color fillColor, String id, String layer) {
         super(name, x, y, z, id, layer);
-        this.polygons = new Int3[][]{Arrays.stream(polygons).map(Float3::toInt3).toArray(Int3[]::new)};
+        this.polygons = new Int3[][]{Arrays.stream(polygons).map(Float3::roundToInt3).toArray(Int3[]::new)};
         this.lineColor = lineColor;
         this.fillColor = fillColor;
     }
@@ -47,7 +47,7 @@ public class AreaMarker extends Position {
 
     public AreaMarker(String name, float x, float y, float z, Float3[][] polygons, Color lineColor, Color fillColor, String id, String layer) {
         super(name, x, y, z, id, layer);
-        this.polygons = Arrays.stream(polygons).map(a -> Arrays.stream(a).map(Float3::toInt3).toArray(Int3[]::new)).toArray(Int3[][]::new);
+        this.polygons = Arrays.stream(polygons).map(a -> Arrays.stream(a).map(Float3::roundToInt3).toArray(Int3[]::new)).toArray(Int3[][]::new);
         this.lineColor = lineColor;
         this.fillColor = fillColor;
     }

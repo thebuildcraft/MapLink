@@ -51,7 +51,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.FastUp
 
 /**
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 29.08.2025
  */
 public abstract class ClientMapHandler {
     public static final String waypointPrefix = "onlinemapsync_";
@@ -61,7 +61,7 @@ public abstract class ClientMapHandler {
     private static final Map<String, WaypointState> idToWaypointState = new ConcurrentHashMap<>();
 
     private static ClientMapHandler instance;
-    private final Minecraft mc;
+    protected final Minecraft mc;
 
     private static final int maxMarkerCountBeforeWarning = 25;
     private boolean markerMessageWasShown = false;
@@ -177,40 +177,6 @@ public abstract class ClientMapHandler {
     }
 
     public void handlePlayerWaypoints() {
-        // Update the player positions obtained from the online Map with GameProfile data from the actual logged-in players
-        // This is required so that the entity radar properly shows the player's skin on player head icons
-        if(config.general.enablePlayerRadar && mc.cameraEntity != null && mc.getConnection() != null) {
-            Vec3 camPosition = mc.cameraEntity.position();
-            boolean onlyShowFriendsPlayerRadar = config.friends.onlyShowFriendsPlayerRadar;
-            boolean alwaysShowFriendsPlayerRadar = config.friends.alwaysShowFriendsPlayerRadar;
-            int maxDistance = config.general.maxPlayerRadarDistance;
-
-            for (PlayerInfo playerInfo : mc.getConnection().getOnlinePlayers()) {
-                String playerName = playerInfo.getProfile().getName();
-                PlayerPosition playerPosition = playerPositions.get(playerName);
-                if (playerPosition == null) continue;
-
-                boolean isFriend = config.friends.friendList.contains(playerPosition.name);
-
-                if (onlyShowFriendsPlayerRadar && !isFriend) {
-                    playerPosition.gameProfile = null;
-                    continue;
-                }
-
-                if (!(alwaysShowFriendsPlayerRadar && isFriend)) {
-                    double d = camPosition.distanceTo(new Vec3(playerPosition.x, playerPosition.y, playerPosition.z));
-                    if (d > maxDistance) {
-                        playerPosition.gameProfile = null;
-                        continue;
-                    }
-                }
-
-                if (playerPositions.containsKey(playerName)) {
-                    playerPositions.get(playerName).gameProfile = playerInfo.getProfile();
-                }
-            }
-        }
-
         if (config.general.enablePlayerWaypoints) {
             // Keep track of which waypoints were previously shown
             // to remove any that are not to be shown anymore
@@ -257,7 +223,7 @@ public abstract class ClientMapHandler {
             Vec3 cameraPos = mc.cameraEntity.position();
             tempPlayerWaypointPositions.clear();
             tempPlayerWaypointPositions.addAll(playerPositions.values());
-            tempPlayerWaypointPositions.sort(Comparator.comparing(p -> cameraPos.distanceToSqr(p.x, p.y, p.z)));
+            tempPlayerWaypointPositions.sort(Comparator.comparing(p -> cameraPos.distanceToSqr(p.pos.x, p.pos.y, p.pos.z)));
 
             for (PlayerPosition playerPosition : tempPlayerWaypointPositions) {
                 if (playerPosition == null) continue;
@@ -267,7 +233,7 @@ public abstract class ClientMapHandler {
                 boolean isFriend = config.friends.friendList.contains(playerName);
                 if (onlyShowFriends && !isFriend) continue;
 
-                double d = cameraPos.distanceTo(new Vec3(playerPosition.x, playerPosition.y, playerPosition.z));
+                double d = cameraPos.distanceTo(new Vec3(playerPosition.pos.x, playerPosition.pos.y, playerPosition.pos.z));
 
                 if (alwaysShowFriends && isFriend) {
                     waypointState.renderOnHud = true;
@@ -355,11 +321,13 @@ public abstract class ClientMapHandler {
         }
     }
 
+    public abstract void reset();
+
     abstract void addOrUpdatePlayerWaypoint(PlayerPosition playerPosition, WaypointState waypointState);
 
     abstract void removeOldPlayerWaypoints();
 
-    public abstract void removeAllPlayerWaypoints();
+    abstract void removeAllPlayerWaypoints();
 
     abstract void updatePlayerWaypointColors();
 
@@ -400,12 +368,12 @@ public abstract class ClientMapHandler {
             boolean enableMarkerIcons = config.general.enableMarkerIcons;
 
             Vec3 cameraPos = mc.cameraEntity.position();
-            markerPositions.sort(Comparator.comparing(p -> cameraPos.distanceToSqr(p.x, p.y, p.z)));
+            markerPositions.sort(Comparator.comparing(p -> cameraPos.distanceToSqr(p.pos.x, p.pos.y, p.pos.z)));
             ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
 
             for (Position markerPosition : markerPositions) {
                 WaypointState waypointState = idToWaypointState.get(markerPosition.id);
-                double d = mc.cameraEntity.position().distanceTo(new Vec3(markerPosition.x, markerPosition.y, markerPosition.z));
+                double d = mc.cameraEntity.position().distanceTo(new Vec3(markerPosition.pos.x, markerPosition.pos.y, markerPosition.pos.z));
 
                 waypointState.renderOnHud = onHud < maxOnHud && d >= minHudD && d <= maxHudD;
                 waypointState.renderOnMiniMap = onMiniMap < maxOnMiniMap && d >= minMiniD && d <= maxMiniD;

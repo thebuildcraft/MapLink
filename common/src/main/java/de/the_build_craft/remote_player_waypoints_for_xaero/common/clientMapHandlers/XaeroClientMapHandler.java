@@ -25,7 +25,9 @@ import com.mojang.blaze3d.textures.GpuTexture;
 #endif
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.*;
 import de.the_build_craft.remote_player_waypoints_for_xaero.mixins.common.mods.xaeroworldmap.WorldMapWaypointAccessor;
+import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.world.phys.Vec3;
 import xaero.common.settings.ModSettings;
 #if MC_VER != MC_1_17_1
 import xaero.hud.minimap.waypoint.WaypointColor;
@@ -44,10 +46,11 @@ import java.util.stream.Collectors;
 
 import static de.the_build_craft.remote_player_waypoints_for_xaero.common.AbstractModInitializer.LOGGER;
 import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.*;
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.FastUpdateTask.playerPositions;
 
 /**
  * @author Leander Knüttel
- * @version 28.08.2025
+ * @version 29.08.2025
  */
 public class XaeroClientMapHandler extends ClientMapHandler {
     public static final Long2ObjectMap<ChunkHighlight> chunkHighlightMap = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
@@ -65,6 +68,77 @@ public class XaeroClientMapHandler extends ClientMapHandler {
     public static final Map<String, TempWaypoint> idToMiniMapMarker = new ConcurrentHashMap<>();
     public static final Map<String, xaero.map.mods.gui.Waypoint> idToWorldMapMarker = new ConcurrentHashMap<>();
 
+    public static final Map<UUID, MutablePlayerPosition> hudAndMinimapPlayerTrackerPositions = new ConcurrentHashMap<>();
+    public static final Map<UUID, MutablePlayerPosition> worldmapPlayerTrackerPositions = new ConcurrentHashMap<>();
+
+    private final Set<UUID> currentHudAndMinimapPlayerTrackerUUIDs = new HashSet<>();
+    private final Set<UUID> currentWorldmapPlayerTrackerUUIDs = new HashSet<>();
+
+    @Override
+    public void reset() {
+        removeAllPlayerWaypoints();
+        removeAllMarkerWaypoints();
+        removeAllAreaMarkers(true);
+        hudAndMinimapPlayerTrackerPositions.clear();
+        worldmapPlayerTrackerPositions.clear();
+    }
+
+    @Override
+    public void handlePlayerWaypoints() {
+        super.handlePlayerWaypoints();
+        // Update the player positions obtained from the online Map with GameProfile data from the actual logged-in players
+        // This is required for the player tracker system
+        if(config.general.enablePlayerTrackerSystem && mc.cameraEntity != null && mc.getConnection() != null) {
+            Vec3 camPosition = mc.cameraEntity.position();
+
+            currentHudAndMinimapPlayerTrackerUUIDs.clear();
+            currentWorldmapPlayerTrackerUUIDs.clear();
+
+            for (PlayerInfo playerInfo : mc.getConnection().getOnlinePlayers()) {
+                PlayerPosition playerPosition = playerPositions.get(playerInfo.getProfile().getName());
+                if (playerPosition == null) continue;
+
+                boolean isFriend = config.friends.friendList.contains(playerPosition.name);
+
+                if (config.friends.onlyShowFriendsPlayerTracker && !isFriend) continue;
+
+                WaypointState waypointState = getWaypointState(playerPosition.id);
+
+                boolean showOnHudAndMinimap = !(waypointState.renderOnHud || waypointState.renderOnMiniMap);
+                boolean showOnWorldmap = !(waypointState.renderOnWorldMap);
+
+                if (!(config.friends.alwaysShowFriendsPlayerTracker && isFriend)) {
+                    double d = camPosition.distanceTo(new Vec3(playerPosition.pos.x, playerPosition.pos.y, playerPosition.pos.z));
+                    if (d > config.general.maxPlayerTrackerHudAndMinimapDistance) {
+                        showOnHudAndMinimap = false;
+                    }
+                    if (d > config.general.maxPlayerTrackerWorldmapDistance) {
+                        showOnWorldmap = false;
+                    }
+                }
+
+                playerPosition.gameProfile = playerInfo.getProfile();
+
+                if (showOnHudAndMinimap) {
+                    hudAndMinimapPlayerTrackerPositions.computeIfAbsent(playerInfo.getProfile().getId(), uuid -> new MutablePlayerPosition(playerPosition))
+                            .pos.updateFrom(playerPosition.pos);
+                    currentHudAndMinimapPlayerTrackerUUIDs.add(playerInfo.getProfile().getId());
+                }
+                if (showOnWorldmap) {
+                    worldmapPlayerTrackerPositions.computeIfAbsent(playerInfo.getProfile().getId(), uuid -> new MutablePlayerPosition(playerPosition))
+                            .pos.updateFrom(playerPosition.pos);
+                    currentWorldmapPlayerTrackerUUIDs.add(playerInfo.getProfile().getId());
+                }
+            }
+
+            hudAndMinimapPlayerTrackerPositions.keySet().removeIf(p -> !currentHudAndMinimapPlayerTrackerUUIDs.contains(p));
+            worldmapPlayerTrackerPositions.keySet().removeIf(p -> !currentWorldmapPlayerTrackerUUIDs.contains(p));
+        } else {
+            hudAndMinimapPlayerTrackerPositions.clear();
+            worldmapPlayerTrackerPositions.clear();
+        }
+    }
+
     @Override
     void addOrUpdatePlayerWaypoint(PlayerPosition playerPosition, WaypointState waypointState) {
         if (waypointState.renderOnHud) {
@@ -81,9 +155,10 @@ public class XaeroClientMapHandler extends ClientMapHandler {
     private <P extends Position> void addOrUpdateMiniMapWaypoint(P position, Map<String, TempWaypoint> idToWaypoint, Function<P, TempWaypoint> waypointInit) {
         if (idToWaypoint.containsKey(position.id)) {
             Waypoint w = idToWaypoint.get(position.id);
-            w.setX(position.x);
-            w.setY(position.y);
-            w.setZ(position.z);
+            Int3 pos = position.pos.floorToInt3();
+            w.setX(pos.x);
+            w.setY(pos.y);
+            w.setZ(pos.z);
         } else {
             idToWaypoint.put(position.id, waypointInit.apply(position));
         }
@@ -92,9 +167,10 @@ public class XaeroClientMapHandler extends ClientMapHandler {
     private <P extends Position> void addOrUpdateWorldMapWaypoint(P position, Map<String, xaero.map.mods.gui.Waypoint> idToWaypoint, Function<P, TempWaypoint> waypointInit) {
         if (idToWaypoint.containsKey(position.id)) {
             WorldMapWaypointAccessor w = (WorldMapWaypointAccessor) idToWaypoint.get(position.id);
-            w.setX(position.x);
-            w.setY(position.y);
-            w.setZ(position.z);
+            Int3 pos = position.pos.floorToInt3();
+            w.setX(pos.x);
+            w.setY(pos.y);
+            w.setZ(pos.z);
         } else {
             idToWaypoint.put(position.id, new CustomWorldMapWaypoint(waypointInit.apply(position)));
         }
@@ -117,7 +193,7 @@ public class XaeroClientMapHandler extends ClientMapHandler {
     }
 
     @Override
-    public void removeAllPlayerWaypoints() {
+    void removeAllPlayerWaypoints() {
         idToHudPlayer.clear();
         idToMiniMapPlayer.clear();
         idToWorldMapPlayer.clear();
