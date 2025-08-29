@@ -46,6 +46,8 @@
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.enableMarkerWaypoints": "Enable Marker Waypoints",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.enableMarkerWaypoints.@PrefixText": "Marker Options",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.enableMarkerIcons": "Enable Custom Icons on Marker Waypoints",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.showDefaultMarkerIcons": "Also Show Default Marker Icons",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.showDefaultMarkerIcons.@Tooltip": "If OFF: replaces default icons with text waypoints.\nThe Bluemap-default-icon is a svg, which is NOT supported!\n...So yes... this setting is basically only here in case you like the default Dynmap house icon ☺",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.markerWaypointColor": "Marker Waypoint Color",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.markerWaypointColor.@Tooltip": "Only for those without a custom icon.",
 

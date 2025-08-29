@@ -148,6 +148,9 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         public boolean enableMarkerIcons = true;
 
+        @ConfigEntry.Gui.Tooltip
+        public boolean showDefaultMarkerIcons = true;
+
         @ConfigEntry.Gui.Tooltip()
         @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
         public WaypointColor markerWaypointColor = WaypointColor.Gray;

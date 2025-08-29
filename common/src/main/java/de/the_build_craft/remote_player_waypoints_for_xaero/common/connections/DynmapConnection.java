@@ -43,7 +43,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
  * @author ewpratten
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 25.08.2025
+ * @version 29.08.2025
  */
 public class DynmapConnection extends MapConnection {
     private String markerStringTemplate = "";
@@ -305,7 +305,7 @@ public class DynmapConnection extends MapConnection {
                     Position position = new Position(m.label, m.x, m.y, m.z, dimension + set.getKey() + markerEntry.getKey(), set.getKey());
                     positions.add(position);
                     ClientMapHandler.registerPosition(position,
-                            m.icon.equals("default") ? null : markerStringTemplate.replace("marker_{world}.json", m.icon + ".png"));
+                            (!config.general.showDefaultMarkerIcons && m.icon.equals("default")) ? null : markerStringTemplate.replace("marker_{world}.json", m.icon + ".png"));
                 }
             }
             if (serverEntry.includeAreaMarkerLayer(set.getKey())) {

@@ -187,7 +187,8 @@ public class Pl3xMapConnection extends MapConnection{
                 for (Pl3xMapMarkerUpdate marker : markers){
                     if (Objects.equals(marker.type, "icon") && serverEntry.includeMarkerLayer(layer)) {
                         Position position = new Position(marker.options.tooltip.content, marker.data.point.x, config.general.defaultY, marker.data.point.z, currentDimension + layer + marker.data.key, layer);
-                        ClientMapHandler.registerPosition(position, marker.data.image.equals("marker-icon") ? null : markerIconLinkTemplate.replace("{icon}", marker.data.image));
+                        ClientMapHandler.registerPosition(position,
+                                (!config.general.showDefaultMarkerIcons && marker.data.image.equals("marker-icon")) ? null : markerIconLinkTemplate.replace("{icon}", marker.data.image));
                         positions.add(position);
                     }
                     if (!(serverEntry.includeAreaMarkerLayer(layer) && areaTypes.containsKey(marker.type))) continue;
