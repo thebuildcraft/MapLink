@@ -38,7 +38,7 @@ import xaero.map.mods.SupportMods;
 @Mixin(SupportMods.class)
 public class SupportModMixin {
     @Inject(method =  "load", at = @At("TAIL"))
-    private void load(CallbackInfo ci) {
+    private static void load(CallbackInfo ci) {
         try {
             WorldMap.playerTrackerSystemManager.register(AbstractModInitializer.MOD_ID, new RemotePlayerTrackerSystem(
                     new RemotePlayerTrackerReader(), XaeroClientMapHandler.worldmapPlayerTrackerPositions));
