@@ -43,7 +43,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
  * @author ewpratten
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 29.08.2025
+ * @version 30.08.2025
  */
 public class DynmapConnection extends MapConnection {
     private String markerStringTemplate = "";
@@ -202,8 +202,9 @@ public class DynmapConnection extends MapConnection {
     }
 
     private void setWorldNames() throws IOException {
-        DynmapConfiguration.World[] worlds = HTTP.makeJSONHTTPRequest(
-                URI.create(onlineMapConfigLink).toURL(), DynmapConfiguration.class).worlds;
+        DynmapConfiguration dynmapConfiguration = HTTP.makeJSONHTTPRequest(
+                URI.create(onlineMapConfigLink).toURL(), DynmapConfiguration.class);
+        DynmapConfiguration.World[] worlds = dynmapConfiguration.worlds;
         worldNames = new String[worlds.length];
         for (int k = 0, worldsLength = worlds.length; k < worldsLength; k++) {
             worldNames[k] = worlds[k].name.replace(" ", "%20");
@@ -211,6 +212,8 @@ public class DynmapConnection extends MapConnection {
 
         // Get the first world name. I know it seems random. Just trust me...
         firstWorldName = worldNames[0];
+
+        UpdateTask.nextUpdateDelay = Math.max(UpdateTask.nextUpdateDelay, (int) Math.ceil(dynmapConfiguration.updaterate));
     }
 
     /**

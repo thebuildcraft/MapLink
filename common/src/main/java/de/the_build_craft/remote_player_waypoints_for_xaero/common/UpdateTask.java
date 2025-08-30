@@ -43,7 +43,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
  * @author eatmyvenom
  * @author TheMrEngMan
  * @author Leander Knüttel
- * @version 29.08.2025
+ * @version 30.08.2025
  */
 public class UpdateTask {
     private final Minecraft mc;
@@ -60,12 +60,19 @@ public class UpdateTask {
 
     private String currentServerIP = "";
 
+    public static int nextUpdateDelay = 1000;
+
     public void run() {
-        try{
+        try {
             runUpdate();
         }
-        catch (Exception e){
+        catch (Exception e) {
             LOGGER.error("Error in slow Update Task", e);
+        }
+        try {
+            AbstractModInitializer.setUpdateDelay(nextUpdateDelay);
+        } catch (Exception e) {
+            LOGGER.error("Error updating update-delay!", e);
         }
     }
 
@@ -99,6 +106,7 @@ public class UpdateTask {
         }
 
         if (AbstractModInitializer.getConnection() == null){
+            nextUpdateDelay = 1000;
             try {
                 ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
 
@@ -155,6 +163,7 @@ public class UpdateTask {
                     LOGGER.error("Error while connecting to the online map.", e);
                 }
                 AbstractModInitializer.connected = false;
+                nextUpdateDelay = 1000;
                 return;
             }
         }
@@ -191,10 +200,6 @@ public class UpdateTask {
         }
 
         AbstractModInitializer.connected = true;
-
-        if (config.general.updateDelay != AbstractModInitializer.timerDelay){
-            AbstractModInitializer.setUpdateDelay(config.general.updateDelay);
-        }
     }
 
     private void Reset() {
@@ -207,5 +212,6 @@ public class UpdateTask {
         cantGetPlayerPositionsErrorWasShown = false;
         cantGetMarkerPositionsErrorWasShown = false;
         linkBrokenErrorWasShown = false;
+        nextUpdateDelay = 1000;
     }
 }

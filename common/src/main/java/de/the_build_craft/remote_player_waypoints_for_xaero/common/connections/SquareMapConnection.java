@@ -26,6 +26,7 @@ import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHand
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.configurations.SquareMapConfiguration;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.SquareMapMarkerUpdate;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.SquareMapPlayerUpdate;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates.SquareMapWorldSettings;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.*;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Utils;
 
@@ -42,11 +43,12 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 28.08.2025
+ * @version 30.08.2025
  */
 public class SquareMapConnection extends MapConnection {
     private String markerStringTemplate = "";
     private String markerIconLinkTemplate = "";
+    private String worldSettingsLinkTemplate = "";
     public SquareMapConnection(ModConfig.ServerEntry serverEntry, UpdateTask updateTask) throws IOException {
         try {
             generateLink(serverEntry, true);
@@ -91,6 +93,7 @@ public class SquareMapConnection extends MapConnection {
         markerIconLinkTemplate = baseURL + "/images/icon/registered/{icon}.png";
 
         onlineMapConfigLink = baseURL + "/tiles/settings.json";
+        worldSettingsLinkTemplate = baseURL + "/tiles/{world}/settings.json";
 
         // Test the url
         this.getPlayerPositions();
@@ -98,6 +101,23 @@ public class SquareMapConnection extends MapConnection {
         AbstractModInitializer.LOGGER.info("new link: " + queryURL);
         if (config.general.debugMode){
             Utils.sendToClientChat("new link: " + queryURL);
+        }
+
+        setUpdateDelay();
+    }
+
+    private void setUpdateDelay() {
+        try {
+            SquareMapConfiguration squareMapConfiguration = HTTP.makeJSONHTTPRequest(URI.create(onlineMapConfigLink).toURL(), SquareMapConfiguration.class);
+            float updateDelay = 1;
+            for (SquareMapConfiguration.World world : squareMapConfiguration.worlds) {
+                SquareMapWorldSettings squareMapWorldSettings = HTTP.makeJSONHTTPRequest(URI.create(worldSettingsLinkTemplate.replace("{world}", world.name)).toURL(), SquareMapWorldSettings.class);
+                updateDelay = Math.max(updateDelay, squareMapWorldSettings.player_tracker.update_interval);
+            }
+            UpdateTask.nextUpdateDelay = Math.max(UpdateTask.nextUpdateDelay, (int) Math.ceil(updateDelay * 1000));
+        } catch (Exception e) {
+            AbstractModInitializer.LOGGER.error("Error getting update Delay! Using the Default of 1000 ms for SquareMap.", e);
+            UpdateTask.nextUpdateDelay = Math.max(UpdateTask.nextUpdateDelay, 1000);
         }
     }
 

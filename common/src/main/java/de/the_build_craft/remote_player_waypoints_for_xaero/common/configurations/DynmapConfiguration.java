@@ -24,9 +24,10 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.common.configuratio
  * JSON object from dynmap API. Used to read the first world name.
  *
  * @author Leander Knüttel
- * @version 14.06.2024
+ * @version 30.08.2025
  */
 public class DynmapConfiguration {
+    public float updaterate = 2000;
     public World[] worlds;
     public static class World{
         public String name;

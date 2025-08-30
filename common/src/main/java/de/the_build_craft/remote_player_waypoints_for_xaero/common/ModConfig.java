@@ -32,7 +32,7 @@ import java.util.List;
 
 /**
  * @author Leander Knüttel
- * @version 29.08.2025
+ * @version 30.08.2025
  */
 @Config(name = "remote_player_waypoints_for_xaero")
 #if MC_VER < MC_1_20_6
@@ -81,10 +81,6 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
     @Config(name = "general")
     public static class General implements ConfigData {
         public boolean enabled = true;
-
-        @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 2000, max = 10000)
-        public int updateDelay = 2000;
 
         @ConfigEntry.Gui.Tooltip
         public List<ServerEntry> serverEntries = new ArrayList<>();

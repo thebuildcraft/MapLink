@@ -42,7 +42,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 29.08.2025
+ * @version 30.08.2025
  */
 public class Pl3xMapConnection extends MapConnection{
     private String markerLayerStringTemplate = "";
@@ -107,6 +107,29 @@ public class Pl3xMapConnection extends MapConnection{
         AbstractModInitializer.LOGGER.info("new link: " + queryURL);
         if (config.general.debugMode){
             Utils.sendToClientChat("new link: " + queryURL);
+        }
+
+        setUpdateDelay();
+    }
+
+    private void setUpdateDelay() {
+        try {
+            Type apiResponseType = new TypeToken<Pl3xMapMarkerLayerConfig[]>() {}.getType();
+            Pl3xMapPlayerUpdate update = HTTP.makeJSONHTTPRequest(queryURL, Pl3xMapPlayerUpdate.class);
+            float updateDelay = 1;
+            for (Pl3xMapPlayerUpdate.WorldSetting ws : update.worldSettings) {
+                Pl3xMapMarkerLayerConfig[] mls = HTTP.makeJSONHTTPRequest(URI.create(markerLayerStringTemplate
+                        .replace("{world}", ws.name.replaceAll(":", "-"))).toURL(), apiResponseType);
+                for (Pl3xMapMarkerLayerConfig ml : mls) {
+                    if (Objects.equals(ml.key, "pl3xmap_players")) {
+                        updateDelay = Math.max(updateDelay, ml.updateInterval);
+                    }
+                }
+            }
+            UpdateTask.nextUpdateDelay = Math.max(UpdateTask.nextUpdateDelay, (int) Math.ceil(updateDelay * 1000));
+        } catch (Exception e) {
+            AbstractModInitializer.LOGGER.error("Error getting update Delay! Using the Default of 1000 ms for Pl3xMap.", e);
+            UpdateTask.nextUpdateDelay = Math.max(UpdateTask.nextUpdateDelay, 1000);
         }
     }
 

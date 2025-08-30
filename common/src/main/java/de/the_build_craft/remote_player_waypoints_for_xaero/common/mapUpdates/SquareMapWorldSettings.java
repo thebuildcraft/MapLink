@@ -2,7 +2,7 @@
  *    This file is part of the Remote player waypoints for Xaero's Map mod
  *    licensed under the GNU GPL v3 License.
  *
- *    Copyright (C) 2024 - 2025  Leander Knüttel and contributors
+ *    Copyright (C) 2025  Leander Knüttel and contributors
  *
  *    This program is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -24,7 +24,10 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates;
  * @author Leander Knüttel
  * @version 30.08.2025
  */
-public class Pl3xMapMarkerLayerConfig {
-    public String key;
-    public float updateInterval = 1;
+public class SquareMapWorldSettings {
+    public static class PlayerTracker {
+        public float update_interval = 1;
+    }
+
+    public PlayerTracker player_tracker;
 }

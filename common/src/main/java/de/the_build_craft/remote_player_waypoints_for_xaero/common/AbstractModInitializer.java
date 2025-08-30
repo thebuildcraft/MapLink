@@ -53,7 +53,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 30.08.2025
  */
 public abstract class AbstractModInitializer
 {
@@ -65,7 +65,7 @@ public abstract class AbstractModInitializer
 	public LoaderType loaderType;
 
 	// Update tasks
-	public static int timerDelay;
+	public static int timerDelay = 1000;
 	private static UpdateTask slowUpdateTask;
 	private static FastUpdateTask fastUpdateTask;
 	private static ScheduledFuture<?> scheduledSlowUpdateTask;
@@ -254,11 +254,13 @@ public abstract class AbstractModInitializer
 	 * @param ms Time in seconds
 	 */
 	public static void setUpdateDelay(int ms) {
+		ms = Math.min(3000, Math.max(ms, 1000));
+		if (ms == timerDelay || scheduledSlowUpdateTask == null) return;
 		timerDelay = ms;
-		if (scheduledSlowUpdateTask == null) return;
-		scheduledSlowUpdateTask.cancel(false);
+		scheduledSlowUpdateTask.cancel(true);
 		scheduledSlowUpdateTask = scheduler.scheduleAtFixedRate(slowUpdateTask::run, 0, timerDelay, TimeUnit.MILLISECONDS);
 		LOGGER.info("Remote update delay has been set to " + ms + " ms");
+		if (config.general.debugMode) Utils.sendToClientChat("Remote update delay has been set to " + ms + " ms");
 	}
 
 	/**

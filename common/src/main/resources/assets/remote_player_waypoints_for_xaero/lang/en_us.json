@@ -8,8 +8,6 @@
   "text.autoconfig.remote_player_waypoints_for_xaero.category.worldmap": "WorldMap",
 
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.enabled": "Enable Mod",
-  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.updateDelay": "Update Delay",
-  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.updateDelay.@Tooltip": "in ms",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.serverEntries": "Server Entries",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.serverEntries.@Tooltip": "Add your servers here.\nClick on the (+) on the left.",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.defaultY": "Default Y",

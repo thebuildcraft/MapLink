@@ -42,7 +42,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 25.08.2025
+ * @version 30.08.2025
  */
 public class BlueMapConnection extends MapConnection {
     List<Integer> lastWorldIndices = new ArrayList<>(Collections.singletonList(0));
@@ -107,6 +107,9 @@ public class BlueMapConnection extends MapConnection {
                 Utils.sendToClientChat("new link: " + url);
             }
         }
+
+        //Bluemap updates players every second
+        UpdateTask.nextUpdateDelay = 1000;
     }
 
     @Override
