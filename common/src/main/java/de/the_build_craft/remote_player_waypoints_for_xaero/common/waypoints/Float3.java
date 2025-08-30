@@ -22,7 +22,7 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
 /**
  * @author Leander Knüttel
- * @version 29.08.2025
+ * @version 30.08.2025
  */
 public class Float3 {
     public final float x;
@@ -44,6 +44,11 @@ public class Float3 {
     @Override
     public String toString() {
         return x + " " + y + " " + z;
+    }
+
+    public boolean roughlyEqual(Float3 float3) {
+        final float e = 0.01f;
+        return (Math.abs(x - float3.x) < e) && (Math.abs(y - float3.y) < e) && (Math.abs(z - float3.z) < e);
     }
 
     public Int3 roundToInt3() {

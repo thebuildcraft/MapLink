@@ -39,13 +39,14 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
 /**
  * @author Leander Knüttel
  * @author MeerBiene
- * @version 25.08.2025
+ * @version 30.08.2025
  */
 @Mixin(PlayerTabOverlay.class)
 public class PlayerListHudMixin {
 
     @Unique
-    private static String remote_player_waypoints_for_xaero$formatDuration(long durationInMs) {
+    private static String remote_player_waypoints_for_xaero$getFormatedDuration(String playerName) {
+        long durationInMs = System.currentTimeMillis() - AbstractModInitializer.lastPlayerActivityTimeMap.get(playerName);
         int durationInMin = (int)(durationInMs / 60_000);
         int hours = (int) Math.floor(durationInMin / 60.0);
         int minutes = durationInMin % 60;
@@ -60,27 +61,32 @@ public class PlayerListHudMixin {
     }
 
     @Inject(method = "getNameForDisplay", at = @At("RETURN"), cancellable = true)
-    private void injected(PlayerInfo entry, CallbackInfoReturnable<Component> cir){
+    private void injected(PlayerInfo entry, CallbackInfoReturnable<Component> cir) {
         if (!(config.general.enabled
                 && AbstractModInitializer.connected
                 && config.general.showAfkInTabList)) {
             return;
         }
 
-        String playerNameString = entry.getProfile().getName();
+        String playerName = entry.getProfile().getName();
         MutableComponent newText = cir.getReturnValue().copy();
 
-        if (AbstractModInitializer.AfkDic.containsKey(playerNameString)) {
-            if (AbstractModInitializer.AfkDic.get(playerNameString)) {
-                if (config.general.showAfkTimeInTabList){
-                    cir.setReturnValue(newText.append(Text.literal("  [AFK: " + remote_player_waypoints_for_xaero$formatDuration(AbstractModInitializer.AfkTimeDic.get(playerNameString)) + "]").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(config.general.AfkColor)))));
+        if (AbstractModInitializer.AfkMap.containsKey(playerName)) {
+            if (AbstractModInitializer.AfkMap.get(playerName)) {
+                if (config.general.showAfkTimeInTabList) {
+                    cir.setReturnValue(newText.append(Text.literal("  [AFK: "
+                                    + (AbstractModInitializer.playerOverAfkTimeMap.get(playerName) ? "> " : "")
+                                    + remote_player_waypoints_for_xaero$getFormatedDuration(playerName) + "]")
+                            .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(config.general.AfkColor)))));
                 }
-                else{
-                    cir.setReturnValue(newText.append(Text.literal("  [AFK]").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(config.general.AfkColor)))));
+                else {
+                    cir.setReturnValue(newText.append(Text.literal("  [AFK]")
+                            .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(config.general.AfkColor)))));
                 }
             }
         } else {
-            cir.setReturnValue(newText.append(Text.literal("  [???]").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(config.general.unknownAfkStateColor)))));
+            cir.setReturnValue(newText.append(Text.literal("  [???]")
+                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(config.general.unknownAfkStateColor)))));
         }
     }
 }

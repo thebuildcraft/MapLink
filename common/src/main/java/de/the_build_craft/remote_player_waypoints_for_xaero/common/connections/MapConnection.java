@@ -42,20 +42,19 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 25.08.2025
+ * @version 30.08.2025
  */
 public abstract class MapConnection {
     public URL queryURL;
     public final Minecraft mc;
     public String currentDimension = "";
     public String onlineMapConfigLink;
-    long lastUpdateTimeMs;
     public boolean foundPlayer;
     public boolean partOfLiveAtlas;
+    private boolean firstPlayerUpdate = true;
 
     public MapConnection() {
         this.mc = Minecraft.getInstance();
-        lastUpdateTimeMs = System.currentTimeMillis();
     }
 
     public void setCurrentDimension(String currentDimension) {
@@ -91,7 +90,7 @@ public abstract class MapConnection {
 
     public abstract HashMap<String, PlayerPosition> getPlayerPositions() throws IOException;
 
-    public HashMap<String, PlayerPosition> HandlePlayerPositions(PlayerPosition[] playerPositions){
+    public HashMap<String, PlayerPosition> HandlePlayerPositions(PlayerPosition[] playerPositions) {
         HashMap<String, PlayerPosition> newPlayerPositions = new HashMap<>();
         if (mc.player == null) {
             return newPlayerPositions;
@@ -113,42 +112,45 @@ public abstract class MapConnection {
             Utils.sendToClientChat("---");
         }
         for (PlayerPosition p : playerPositions) {
-            UpdateAfkInfo(p);
+            UpdateAfkInfo(p, clientName);
 
             if (config.general.debugMode || (Objects.equals(p.world, currentDimension) && !Objects.equals(p.name, clientName))) {
                 newPlayerPositions.put(p.name, p);
             }
         }
-        lastUpdateTimeMs = System.currentTimeMillis();
+
+        firstPlayerUpdate = false;
 
         return newPlayerPositions;
     }
 
-    public void UpdateAfkInfo(PlayerPosition playerPosition){
-        if (AbstractModInitializer.lastPlayerDataDic.containsKey(playerPosition.name)) {
-            if (AbstractModInitializer.lastPlayerDataDic.get(playerPosition.name).CompareCords(playerPosition)) {
-                if (AbstractModInitializer.AfkTimeDic.containsKey(playerPosition.name)) {
-                    AbstractModInitializer.AfkTimeDic.put(playerPosition.name, AbstractModInitializer.AfkTimeDic.get(playerPosition.name) + (System.currentTimeMillis() - lastUpdateTimeMs));
-                } else {
-                    AbstractModInitializer.AfkTimeDic.put(playerPosition.name, (System.currentTimeMillis() - lastUpdateTimeMs));
-                }
+    public void UpdateAfkInfo(PlayerPosition playerPosition, String clientName) {
+        if (AbstractModInitializer.lastPlayerPosMap.containsKey(playerPosition.name)) {
+            if (AbstractModInitializer.lastPlayerPosMap.get(playerPosition.name).roughlyEqual(playerPosition.pos)) {
                 if (config.general.debugMode && config.general.chatLogInDebugMode) {
-                    Utils.sendToClientChat(playerPosition.name + "  afk_time: " + AbstractModInitializer.AfkTimeDic.get(playerPosition.name) / 1000);
+                    Utils.sendToClientChat(playerPosition.name + "  afk_time: "
+                            + (System.currentTimeMillis() - AbstractModInitializer.lastPlayerActivityTimeMap.get(playerPosition.name)) / 1000);
                 }
-                if (AbstractModInitializer.AfkTimeDic.get(playerPosition.name) / 1000 >= config.general.timeUntilAfk) {
-                    AbstractModInitializer.AfkDic.put(playerPosition.name, true);
+                if ((System.currentTimeMillis() - AbstractModInitializer.lastPlayerActivityTimeMap.get(playerPosition.name)) / 1000
+                        >= config.general.timeUntilAfk) {
+                    AbstractModInitializer.AfkMap.put(playerPosition.name, true);
                 }
             } else {
-                AbstractModInitializer.AfkTimeDic.put(playerPosition.name, 0L);
-                AbstractModInitializer.AfkDic.put(playerPosition.name, false);
+                AbstractModInitializer.AfkMap.put(playerPosition.name, false);
+                AbstractModInitializer.lastPlayerActivityTimeMap.put(playerPosition.name, System.currentTimeMillis());
+                AbstractModInitializer.lastPlayerPosMap.put(playerPosition.name, playerPosition.pos);
+                AbstractModInitializer.playerOverAfkTimeMap.put(playerPosition.name, false);
             }
+        } else {
+            AbstractModInitializer.lastPlayerActivityTimeMap.put(playerPosition.name, System.currentTimeMillis());
+            AbstractModInitializer.lastPlayerPosMap.put(playerPosition.name, playerPosition.pos);
+            AbstractModInitializer.playerOverAfkTimeMap.put(playerPosition.name, firstPlayerUpdate && !playerPosition.name.equals(clientName));
         }
-        AbstractModInitializer.lastPlayerDataDic.put(playerPosition.name, playerPosition);
     }
 
     public abstract void getWaypointPositions() throws IOException;
 
-    public void OpenOnlineMapConfig(){
+    public void OpenOnlineMapConfig() {
         #if MC_VER < MC_1_21_5
         Utils.sendToClientChat(Text.literal(onlineMapConfigLink).withStyle(Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, onlineMapConfigLink))));
         #else

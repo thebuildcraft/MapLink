@@ -29,7 +29,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.XaeroClientMapHandler;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.connections.MapConnection;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.PlayerPosition;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Float3;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
@@ -40,10 +40,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
+import java.util.concurrent.*;
 
 import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.*;
 
@@ -76,9 +74,10 @@ public abstract class AbstractModInitializer
 	public static boolean connected = false;
 
 	// AFK detection
-	public static HashMap<String, Boolean> AfkDic = new HashMap<>();
-	public static HashMap<String, Long> AfkTimeDic = new HashMap<>();
-	public static HashMap<String, PlayerPosition> lastPlayerDataDic = new HashMap<>();
+	public static final Map<String, Boolean> AfkMap = new ConcurrentHashMap<>();
+	public static final Map<String, Long> lastPlayerActivityTimeMap = new ConcurrentHashMap<>();
+	public static final Map<String, Float3> lastPlayerPosMap = new HashMap<>();
+	public static final Map<String, Boolean> playerOverAfkTimeMap = new ConcurrentHashMap<>();
 
 	public static boolean xaeroMapInstalled = false;
 	public static boolean overwriteCurrentDimension = false;
@@ -112,7 +111,6 @@ public abstract class AbstractModInitializer
 
 		slowUpdateTask = new UpdateTask();
 		fastUpdateTask = new FastUpdateTask();
-		timerDelay = config.general.updateDelay;
 		scheduledFastUpdateTask = scheduler.scheduleAtFixedRate(fastUpdateTask::run, 0, 100, TimeUnit.MILLISECONDS);
 		scheduledSlowUpdateTask = scheduler.scheduleAtFixedRate(slowUpdateTask::run, 0, timerDelay, TimeUnit.MILLISECONDS);
 
@@ -178,8 +176,8 @@ public abstract class AbstractModInitializer
 								.executes(context -> {
                                     String playerName = StringArgumentType.getString(context, "player");
                                     int time = IntegerArgumentType.getInteger(context, "time");
-									AbstractModInitializer.AfkTimeDic.put(playerName, time * 1000L);
-									AbstractModInitializer.AfkDic.put(playerName, time > 0);
+									AbstractModInitializer.lastPlayerActivityTimeMap.put(playerName, System.currentTimeMillis() - time * 1000L);
+									AbstractModInitializer.AfkMap.put(playerName, time > config.general.timeUntilAfk);
 									Utils.sendToClientChat("Set AFK time for " + playerName + " to " + time);
 									return 1;
 								}))));

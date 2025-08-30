@@ -27,7 +27,7 @@ import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHand
  * A marker's name and position
  *
  * @author Leander Knüttel
- * @version 29.08.2025
+ * @version 30.08.2025
  */
 public class Position {
     public final String name;
@@ -47,10 +47,6 @@ public class Position {
         this.pos = new Float3(x, y,z);
         this.id = ClientMapHandler.waypointPrefix + id;
         this.layer = layer;
-    }
-
-    public boolean CompareCords(Position otherPosition){
-        return (this.pos.x == otherPosition.pos.x) && (this.pos.y == otherPosition.pos.y) && (this.pos.z == otherPosition.pos.z);
     }
 
     static String getDisplayName(String name){
