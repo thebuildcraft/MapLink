@@ -29,7 +29,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.XaeroClientMapHandler;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.connections.MapConnection;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Float3;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Double3;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
@@ -51,7 +51,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 30.08.2025
+ * @version 31.08.2025
  */
 public abstract class AbstractModInitializer
 {
@@ -76,7 +76,7 @@ public abstract class AbstractModInitializer
 	// AFK detection
 	public static final Map<String, Boolean> AfkMap = new ConcurrentHashMap<>();
 	public static final Map<String, Long> lastPlayerActivityTimeMap = new ConcurrentHashMap<>();
-	public static final Map<String, Float3> lastPlayerPosMap = new HashMap<>();
+	public static final Map<String, Double3> lastPlayerPosMap = new HashMap<>();
 	public static final Map<String, Boolean> playerOverAfkTimeMap = new ConcurrentHashMap<>();
 
 	public static boolean xaeroMapInstalled = false;

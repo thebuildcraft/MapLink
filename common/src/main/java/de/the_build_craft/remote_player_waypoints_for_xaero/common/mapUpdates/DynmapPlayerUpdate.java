@@ -27,15 +27,15 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates;
  * @author ewpratten
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 26.06.2025
+ * @version 31.08.2025
  */
 public class DynmapPlayerUpdate {
     public static class Player {
         public String account;
         public String world;
-        public float x;
-        public float y;
-        public float z;
+        public double x;
+        public double y;
+        public double z;
     }
 
     public Player[] players = new Player[0];

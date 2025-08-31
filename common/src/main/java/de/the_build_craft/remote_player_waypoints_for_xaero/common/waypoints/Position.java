@@ -27,24 +27,24 @@ import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHand
  * A marker's name and position
  *
  * @author Leander Knüttel
- * @version 30.08.2025
+ * @version 31.08.2025
  */
 public class Position {
     public final String name;
-    public final Float3 pos;
+    public final Double3 pos;
     public final String id;
     public final String layer;
 
     public Position(String name, int x, int y, int z, String id, String layer) {
         this.name = getDisplayName(name);
-        this.pos = new Float3(x + 0.5f, y, z + 0.5f);
+        this.pos = new Double3(x + 0.5f, y, z + 0.5f);
         this.id = ClientMapHandler.waypointPrefix +id;
         this.layer = layer;
     }
 
-    public Position(String name, float x, float y, float z, String id, String layer) {
+    public Position(String name, double x, double y, double z, String id, String layer) {
         this.name = getDisplayName(name);
-        this.pos = new Float3(x, y,z);
+        this.pos = new Double3(x, y,z);
         this.id = ClientMapHandler.waypointPrefix + id;
         this.layer = layer;
     }

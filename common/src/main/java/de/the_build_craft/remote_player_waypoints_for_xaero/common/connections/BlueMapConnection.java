@@ -172,7 +172,7 @@ public class BlueMapConnection extends MapConnection {
 
                 for (Map.Entry<String, BlueMapMarkerSet.Marker> markerEntry : markerSetEntry.getValue().markers.entrySet()) {
                     BlueMapMarkerSet.Marker marker = markerEntry.getValue();
-                    Float3 pos = marker.position;
+                    Double3 pos = marker.position;
                     if (Objects.equals(marker.type, "poi") || Objects.equals(marker.type, "html")) {
                         if (!serverEntry.includeMarkerLayer(markerSetEntry.getKey())) continue;
                         Position position = new Position(marker.label, pos.x, pos.y, pos.z, i + markerSetEntry.getKey() + markerEntry.getKey(), markerSetEntry.getKey());

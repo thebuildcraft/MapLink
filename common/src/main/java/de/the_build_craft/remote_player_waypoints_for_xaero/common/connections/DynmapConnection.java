@@ -43,7 +43,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
  * @author ewpratten
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 30.08.2025
+ * @version 31.08.2025
  */
 public class DynmapConnection extends MapConnection {
     private String markerStringTemplate = "";
@@ -230,7 +230,7 @@ public class DynmapConnection extends MapConnection {
         PlayerPosition[] positions = new PlayerPosition[update.players.length];
         for (int i = 0; i < update.players.length; i++){
             DynmapPlayerUpdate.Player player = update.players[i];
-            PlayerPosition playerPosition = new PlayerPosition(player.account, Math.round(player.x), Math.round(player.y), Math.round(player.z), player.world);
+            PlayerPosition playerPosition = new PlayerPosition(player.account, (int) Math.round(player.x), (int) Math.round(player.y), (int) Math.round(player.z), player.world);
             positions[i] = playerPosition;
             ClientMapHandler.registerPlayerPosition(playerPosition, markerStringTemplate.replace("_markers_/marker_{world}.json", "faces/32x32/" + player.account + ".png"));
         }
@@ -315,18 +315,18 @@ public class DynmapConnection extends MapConnection {
                 for (Map.Entry<String, DynmapMarkerUpdate.Set.Area> areaEntry : set.getValue().areas.entrySet()) {
                     DynmapMarkerUpdate.Set.Area a = areaEntry.getValue();
                     if (a.x.length < 2 || a.z.length < 2 || a.x.length != a.z.length) continue;
-                    Float3[] points;
+                    Double3[] points;
                     if (a.x.length > 2) {
-                        points = new Float3[a.x.length];
+                        points = new Double3[a.x.length];
                         for (int i = 0; i < a.x.length; i++) {
-                            points[i] = new Float3(a.x[i], 0, a.z[i]);
+                            points[i] = new Double3(a.x[i], 0, a.z[i]);
                         }
                     } else {
-                        points = new Float3[]{
-                                new Float3(a.x[0], 0, a.z[0]),
-                                new Float3(a.x[0], 0, a.z[1]),
-                                new Float3(a.x[1], 0, a.z[1]),
-                                new Float3(a.x[1], 0, a.z[0]),
+                        points = new Double3[]{
+                                new Double3(a.x[0], 0, a.z[0]),
+                                new Double3(a.x[0], 0, a.z[1]),
+                                new Double3(a.x[1], 0, a.z[1]),
+                                new Double3(a.x[1], 0, a.z[0]),
                         };
                     }
                     areaMarkers.add(new AreaMarker(a.label, 0f, 0f, 0f, points,
@@ -343,12 +343,12 @@ public class DynmapConnection extends MapConnection {
         ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers, true);
     }
 
-    Float3[] convertEllipseToPolygon(DynmapMarkerUpdate.Set.Circle circle) {
+    Double3[] convertEllipseToPolygon(DynmapMarkerUpdate.Set.Circle circle) {
         int N = 40;
-        Float3[] points = new Float3[N];
+        Double3[] points = new Double3[N];
         for (int i = 0; i < N; i++) {
             double a = (Math.PI * 2 / N) * i;
-            points[i] = new Float3(circle.x + circle.xr * Math.sin(a), circle.y, circle.z + circle.zr * Math.cos(a));
+            points[i] = new Double3(circle.x + circle.xr * Math.sin(a), circle.y, circle.z + circle.zr * Math.cos(a));
         }
         return points;
     }

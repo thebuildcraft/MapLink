@@ -21,7 +21,7 @@
 package de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates;
 
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Color;
-import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Float3;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Double3;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,14 +29,14 @@ import java.util.Map;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 25.08.2025
+ * @version 31.08.2025
  */
 public class BlueMapMarkerSet {
     public static class Marker {
         public String type;
         public String label;
-        public Float3 position;
-        public Float3[] shape = new Float3[0];
+        public Double3 position;
+        public Double3[] shape = new Double3[0];
         public Color lineColor;
         public Color fillColor;
         public String icon = "";

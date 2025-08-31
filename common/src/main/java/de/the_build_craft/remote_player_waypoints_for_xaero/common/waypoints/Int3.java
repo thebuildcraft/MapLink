@@ -22,7 +22,7 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
 /**
  * @author Leander Knüttel
- * @version 29.08.2025
+ * @version 31.08.2025
  */
 public class Int3 {
     public final int x;
@@ -40,8 +40,8 @@ public class Int3 {
         return x + " " + y + " " + z;
     }
 
-    public Float3 toFloat3() {
-        return new Float3(x, y, z);
+    public Double3 toDouble3() {
+        return new Double3(x, y, z);
     }
 
     public Int3 toChunkCords() {

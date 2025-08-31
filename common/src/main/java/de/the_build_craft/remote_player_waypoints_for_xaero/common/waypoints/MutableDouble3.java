@@ -22,29 +22,29 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
 /**
  * @author Leander Knüttel
- * @version 29.08.2025
+ * @version 31.08.2025
  */
-public class MutableFloat3 {
-    public float x;
-    public float y;
-    public float z;
+public class MutableDouble3 {
+    public double x;
+    public double y;
+    public double z;
 
-    public MutableFloat3() {
+    public MutableDouble3() {
     }
 
-    public MutableFloat3(Float3 float3) {
-        this.x = float3.x;
-        this.y = float3.y;
-        this.z = float3.z;
+    public MutableDouble3(Double3 double3) {
+        this.x = double3.x;
+        this.y = double3.y;
+        this.z = double3.z;
     }
 
-    public void updateFrom(Float3 float3) {
-        this.x = float3.x;
-        this.y = float3.y;
-        this.z = float3.z;
+    public void updateFrom(Double3 double3) {
+        this.x = double3.x;
+        this.y = double3.y;
+        this.z = double3.z;
     }
 
-    public Float3 toFloat3() {
-        return new Float3(x, y, z);
+    public Double3 toDouble3() {
+        return new Double3(x, y, z);
     }
 }
