@@ -25,6 +25,7 @@ import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHand
 import de.the_build_craft.remote_player_waypoints_for_xaero.neoforge.RemotePlayerTrackerReader;
 import de.the_build_craft.remote_player_waypoints_for_xaero.neoforge.RemotePlayerTrackerSystem;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -33,8 +34,9 @@ import xaero.common.mods.SupportMods;
 
 /**
  * @author Leander Knüttel
- * @version 29.08.2025
+ * @version 31.08.2025
  */
+@Pseudo
 @Mixin(SupportMods.class)
 public class SupportModsMixin {
     @Inject(method = "<init>", at = @At("TAIL"))

@@ -15,9 +15,11 @@
         "neoforge.mods.xaerominimap.WaypointWorldRendererMixin",
         "neoforge.mods.xaerominimap.WaypointsGuiRendererMixin",
         "neoforge.mods.xaerominimap.SupportModsMixin",
+        "neoforge.mods.xaerominimap.PlayerTrackerMinimapElementRendererMixin",
         "neoforge.mods.xaeroworldmap.HighlighterRegistryMixin",
         "neoforge.mods.xaeroworldmap.WaypointRendererMixin",
-        "neoforge.mods.xaeroworldmap.SupportModMixin"
+        "neoforge.mods.xaeroworldmap.SupportModMixin",
+        "neoforge.mods.xaeroworldmap.PlayerTrackerMapElementRendererMixin"
     ],
     "server": [
     ],

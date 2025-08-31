@@ -295,7 +295,7 @@ public abstract class ClientMapHandler {
 
                 if (waypointState.renderOnHud || waypointState.renderOnMiniMap || waypointState.renderOnWorldMap) {
                     currentPlayerIds.add(playerPosition.id);
-                    addOrUpdatePlayerWaypoint(playerPosition, waypointState);
+                    if (!config.general.showPlayerWaypointsAsTrackedPlayers) addOrUpdatePlayerWaypoint(playerPosition, waypointState);
                 }
             }
 

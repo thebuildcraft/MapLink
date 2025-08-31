@@ -27,7 +27,6 @@ import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.*;
 import de.the_build_craft.remote_player_waypoints_for_xaero.mixins.common.mods.xaeroworldmap.WorldMapWaypointAccessor;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.world.phys.Vec3;
 import xaero.common.settings.ModSettings;
 #if MC_VER != MC_1_17_1
 import xaero.hud.minimap.waypoint.WaypointColor;
@@ -50,7 +49,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.FastUp
 
 /**
  * @author Leander Knüttel
- * @version 29.08.2025
+ * @version 31.08.2025
  */
 public class XaeroClientMapHandler extends ClientMapHandler {
     public static final Long2ObjectMap<ChunkHighlight> chunkHighlightMap = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
@@ -88,44 +87,24 @@ public class XaeroClientMapHandler extends ClientMapHandler {
         super.handlePlayerWaypoints();
         // Update the player positions obtained from the online Map with GameProfile data from the actual logged-in players
         // This is required for the player tracker system
-        if(config.general.enablePlayerTrackerSystem && mc.cameraEntity != null && mc.getConnection() != null) {
-            Vec3 camPosition = mc.cameraEntity.position();
-
+        if(config.general.enablePlayerWaypoints && config.general.showPlayerWaypointsAsTrackedPlayers && mc.getConnection() != null) {
             currentHudAndMinimapPlayerTrackerUUIDs.clear();
             currentWorldmapPlayerTrackerUUIDs.clear();
 
             for (PlayerInfo playerInfo : mc.getConnection().getOnlinePlayers()) {
                 PlayerPosition playerPosition = playerPositions.get(playerInfo.getProfile().getName());
-                if (playerPosition == null) continue;
-
-                boolean isFriend = config.friends.friendList.contains(playerPosition.name);
-
-                if (config.friends.onlyShowFriendsPlayerTracker && !isFriend) continue;
+                if (playerPosition == null || !currentPlayerIds.contains(playerPosition.id)) continue;
 
                 WaypointState waypointState = getWaypointState(playerPosition.id);
-
-                boolean showOnHudAndMinimap = !(waypointState.renderOnHud || waypointState.renderOnMiniMap);
-                boolean showOnWorldmap = !(waypointState.renderOnWorldMap);
-
-                if (!(config.friends.alwaysShowFriendsPlayerTracker && isFriend)) {
-                    double d = camPosition.distanceTo(new Vec3(playerPosition.pos.x, playerPosition.pos.y, playerPosition.pos.z));
-                    if (d > config.general.maxPlayerTrackerHudAndMinimapDistance) {
-                        showOnHudAndMinimap = false;
-                    }
-                    if (d > config.general.maxPlayerTrackerWorldmapDistance) {
-                        showOnWorldmap = false;
-                    }
-                }
-
                 playerPosition.gameProfile = playerInfo.getProfile();
 
-                if (showOnHudAndMinimap) {
-                    hudAndMinimapPlayerTrackerPositions.computeIfAbsent(playerInfo.getProfile().getId(), uuid -> new MutablePlayerPosition(playerPosition))
+                if (waypointState.renderOnHud || waypointState.renderOnMiniMap) {
+                    hudAndMinimapPlayerTrackerPositions.computeIfAbsent(playerInfo.getProfile().getId(), uuid -> new MutablePlayerPosition(playerPosition, waypointState))
                             .pos.updateFrom(playerPosition.pos);
                     currentHudAndMinimapPlayerTrackerUUIDs.add(playerInfo.getProfile().getId());
                 }
-                if (showOnWorldmap) {
-                    worldmapPlayerTrackerPositions.computeIfAbsent(playerInfo.getProfile().getId(), uuid -> new MutablePlayerPosition(playerPosition))
+                if (waypointState.renderOnWorldMap) {
+                    worldmapPlayerTrackerPositions.computeIfAbsent(playerInfo.getProfile().getId(), uuid -> new MutablePlayerPosition(playerPosition, waypointState))
                             .pos.updateFrom(playerPosition.pos);
                     currentWorldmapPlayerTrackerUUIDs.add(playerInfo.getProfile().getId());
                 }
@@ -181,7 +160,12 @@ public class XaeroClientMapHandler extends ClientMapHandler {
         while (iterator.hasNext()) {
             Map.Entry<String, W> entry = iterator.next();
             WaypointState waypointState = ClientMapHandler.getWaypointState(entry.getKey());
-            if (waypointState == null || removeIf.test(waypointState) || !idHasToBeIn.contains(entry.getKey())) iterator.remove();
+            if (waypointState == null
+                    || (waypointState.isPlayer && config.general.showPlayerWaypointsAsTrackedPlayers)
+                    || removeIf.test(waypointState)
+                    || !idHasToBeIn.contains(entry.getKey())) {
+                iterator.remove();
+            }
         }
     }
 

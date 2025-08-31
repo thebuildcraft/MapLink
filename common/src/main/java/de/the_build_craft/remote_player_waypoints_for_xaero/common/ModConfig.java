@@ -97,6 +97,9 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         @ConfigEntry.Gui.PrefixText
         public boolean enablePlayerWaypoints = true;
 
+        @ConfigEntry.Gui.Tooltip()
+        public boolean showPlayerWaypointsAsTrackedPlayers = true;
+
         public boolean enablePlayerIconWaypoints = true;
 
         @ConfigEntry.Gui.Tooltip()
@@ -105,17 +108,6 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         @ConfigEntry.Gui.Tooltip()
         @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
         public WaypointColor playerWaypointColor = WaypointColor.Black;
-
-        @ConfigEntry.Gui.Tooltip()
-        public boolean enablePlayerTrackerSystem = false;
-
-        @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 100000)
-        public int maxPlayerTrackerHudAndMinimapDistance = 100000;
-
-        @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 100000)
-        public int maxPlayerTrackerWorldmapDistance = 100000;
 
         //AFK options
         @ConfigEntry.Gui.PrefixText
@@ -212,13 +204,9 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         public boolean onlyShowFriendsIconWaypoints = false;
 
-        public boolean onlyShowFriendsPlayerTracker = false;
-
         public boolean alwaysShowFriendsWaypoints = true;
 
         public boolean alwaysShowFriendsIconWaypoints = true;
-
-        public boolean alwaysShowFriendsPlayerTracker = true;
 
         public boolean overwriteFriendWaypointColor = false;
 
@@ -239,7 +227,9 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         public boolean hidePlayersInRange = false;
 
-        public boolean hidePlayersVisible = true;
+        public boolean hidePlayersVisible = false;
+
+        public boolean showTrackerDistance = true;
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
@@ -316,12 +306,14 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
     @Config(name = "minimap")
     public static class MiniMapModule implements ConfigData {
+        @ConfigEntry.Gui.Tooltip()
         @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
         public ConditionalActiveMode showPlayerWaypoints = ConditionalActiveMode.ALWAYS;
 
         @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
         public ConditionalActiveMode showMarkerWaypoints = ConditionalActiveMode.ALWAYS;
 
+        @ConfigEntry.Gui.Tooltip()
         public boolean hidePlayersInRange = false;
 
         @ConfigEntry.Gui.Tooltip()
@@ -405,15 +397,19 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
     @Config(name = "worldmap")
     public static class WorldMapModule implements ConfigData {
+        @ConfigEntry.Gui.Tooltip()
         @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
         public ConditionalActiveMode showPlayerWaypoints = ConditionalActiveMode.ALWAYS;
 
         @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
         public ConditionalActiveMode showMarkerWaypoints = ConditionalActiveMode.ALWAYS;
 
+        @ConfigEntry.Gui.Tooltip()
         public boolean hidePlayersInRange = false;
 
         public boolean waypointIconBackground = false;
+
+        public boolean showTrackerDistance = true;
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()

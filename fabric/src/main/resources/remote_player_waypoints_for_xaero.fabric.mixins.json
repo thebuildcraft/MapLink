@@ -15,9 +15,11 @@
         "fabric.mods.xaerominimap.WaypointWorldRendererMixin",
         "fabric.mods.xaerominimap.WaypointsGuiRendererMixin",
         "fabric.mods.xaerominimap.SupportModsMixin",
+        "fabric.mods.xaerominimap.PlayerTrackerMinimapElementRendererMixin",
         "fabric.mods.xaeroworldmap.HighlighterRegistryMixin",
         "fabric.mods.xaeroworldmap.WaypointRendererMixin",
-        "fabric.mods.xaeroworldmap.SupportModMixin"
+        "fabric.mods.xaeroworldmap.SupportModMixin",
+        "fabric.mods.xaeroworldmap.PlayerTrackerMapElementRendererMixin"
     ],
     "server": [
     ],

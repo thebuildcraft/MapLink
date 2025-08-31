@@ -20,18 +20,29 @@
 
 package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.ClientMapHandler;
+
 import java.util.UUID;
 
 /**
  * @author Leander Knüttel
- * @version 29.08.2025
+ * @version 31.08.2025
  */
 public class MutablePlayerPosition {
+    private final String id;
     public final UUID uuid;
     public final MutableFloat3 pos;
+    private WaypointState waypointState;
 
-    public MutablePlayerPosition(PlayerPosition playerPosition) {
+    public MutablePlayerPosition(PlayerPosition playerPosition, WaypointState waypointState) {
+        this.id = playerPosition.id;
         this.uuid = playerPosition.gameProfile.getId();
         this.pos = new MutableFloat3(playerPosition.pos);
+        this.waypointState = waypointState;
+    }
+
+    public WaypointState getWaypointState() {
+        if (waypointState.isOld) waypointState = ClientMapHandler.getWaypointState(id);
+        return waypointState;
     }
 }

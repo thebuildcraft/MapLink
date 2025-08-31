@@ -20,21 +20,29 @@
 
 package de.the_build_craft.remote_player_waypoints_for_xaero.fabric;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.mojang.authlib.GameProfile;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.MutablePlayerPosition;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.phys.Vec3;
+import xaero.common.HudMod;
 import xaero.hud.minimap.player.tracker.system.IRenderedPlayerTracker;
 import xaero.map.radar.tracker.system.IPlayerTrackerSystem;
 
+import java.text.DecimalFormat;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
 /**
  * @author Leander Knüttel
- * @version 29.08.2025
+ * @version 31.08.2025
  */
 public class RemotePlayerTrackerSystem implements IRenderedPlayerTracker<MutablePlayerPosition>, IPlayerTrackerSystem<MutablePlayerPosition> {
     private final RemotePlayerTrackerReader reader;
     private final Map<UUID, MutablePlayerPosition> map;
+    private static final DecimalFormat precision0 = new DecimalFormat("0");
+    private static final DecimalFormat precision1 = new DecimalFormat("0.0");
 
     public RemotePlayerTrackerSystem(RemotePlayerTrackerReader reader, Map<UUID, MutablePlayerPosition> map) {
         this.reader = reader;
@@ -49,5 +57,20 @@ public class RemotePlayerTrackerSystem implements IRenderedPlayerTracker<Mutable
     @Override
     public Iterator<MutablePlayerPosition> getTrackedPlayerIterator() {
         return map.values().iterator();
+    }
+
+    public static String injectDistanceText(GameProfile instance, Operation<String> original, Vec3 pos) {
+        if (Minecraft.getInstance().cameraEntity == null) return original.call(instance);
+        #if MC_VER >= MC_1_17_1
+        Vec3 cameraPos = Minecraft.getInstance().cameraEntity.getEyePosition();
+        #else
+        Vec3 cameraPos = Minecraft.getInstance().cameraEntity.getEyePosition(1);
+        #endif
+        double distance = cameraPos.distanceTo(pos);
+        int autoConvertToKmThreshold = HudMod.INSTANCE.getSettings().autoConvertWaypointDistanceToKmThreshold;
+        String distanceText = (autoConvertToKmThreshold != -1 && distance >= autoConvertToKmThreshold)
+                ? precision1.format(distance / 1000) + "km"
+                : precision0.format(distance) + "m";
+        return distanceText + " | " + original.call(instance);
     }
 }
