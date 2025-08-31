@@ -20,6 +20,7 @@
 
 package de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers;
 
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.AbstractModInitializer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
@@ -31,11 +32,15 @@ import java.util.function.Supplier;
 
 /**
  * @author Leander Knüttel
- * @version 22.05.2024
+ * @version 31.08.2025
  */
 public class Utils {
     public static void sendToClientChat(Component text){
-        Minecraft.getInstance().gui.getChat().addMessage(text);
+        if (Minecraft.getInstance().level == null) {
+            AbstractModInitializer.LOGGER.warn("Caught client chat message outside the game:\n{}", text.getString());
+        } else {
+            Minecraft.getInstance().gui.getChat().addMessage(text);
+        }
     }
 
     public static void sendToClientChat(String text){
@@ -43,7 +48,7 @@ public class Utils {
     }
 
     public static void sendErrorToClientChat(Component text){
-        Minecraft.getInstance().gui.getChat().addMessage(text.copy().withStyle(Style.EMPTY.withColor(ChatFormatting.RED)));
+        sendToClientChat(text.copy().withStyle(Style.EMPTY.withColor(ChatFormatting.RED)));
     }
 
     public static void sendErrorToClientChat(String text){
