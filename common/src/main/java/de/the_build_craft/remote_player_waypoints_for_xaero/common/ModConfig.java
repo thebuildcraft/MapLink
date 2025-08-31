@@ -32,7 +32,7 @@ import java.util.List;
 
 /**
  * @author Leander Knüttel
- * @version 30.08.2025
+ * @version 31.08.2025
  */
 @Config(name = "remote_player_waypoints_for_xaero")
 #if MC_VER < MC_1_20_6
@@ -91,7 +91,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @ConfigEntry.Gui.Tooltip()
         @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
-        public ConditionalActiveMode minimapWaypointsRenderBelow = ConditionalActiveMode.NEVER;
+        public ConditionalActiveMode minimapWaypointsRenderBelow = ConditionalActiveMode.WHEN_PLAYER_LIST_SHOWN;
 
         //Player options
         @ConfigEntry.Gui.PrefixText
@@ -260,7 +260,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 50)
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minPlayerDistance = 10;
 
         @ConfigEntry.Gui.Tooltip()
@@ -273,7 +273,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 50)
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minPlayerIconDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
@@ -286,7 +286,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 50)
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minMarkerDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
@@ -299,7 +299,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 50)
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minMarkerIconDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
@@ -349,7 +349,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 50)
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minPlayerDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
@@ -362,7 +362,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 50)
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minPlayerIconDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
@@ -375,7 +375,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 50)
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minMarkerDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
@@ -388,7 +388,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 50)
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minMarkerIconDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
@@ -434,7 +434,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 50)
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minPlayerDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
@@ -447,7 +447,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 50)
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minPlayerIconDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
@@ -460,7 +460,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 50)
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minMarkerDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
@@ -473,7 +473,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 50)
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minMarkerIconDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
@@ -520,7 +520,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         public ServerEntry() {
             this("",
                     "",
-                    MapType.Dynmap,
+                    MapType.Bluemap,
                     MarkerVisibilityMode.Auto,
                     new ArrayList<>(),
                     MarkerVisibilityMode.Auto,
@@ -572,11 +572,11 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         }
 
         public enum MapType {
-            Dynmap,
-            Squaremap,
             Bluemap,
+            Dynmap,
+            LiveAtlas,
             Pl3xMap,
-            LiveAtlas;
+            Squaremap;
 
             MapType() {
             }
