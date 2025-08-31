@@ -236,14 +236,13 @@ public abstract class ClientMapHandler {
 
                 double d = cameraPos.distanceTo(new Vec3(playerPosition.pos.x, playerPosition.pos.y, playerPosition.pos.z));
 
-                if (alwaysShowFriends && isFriend) {
-                    waypointState.renderOnHud = true;
-                    waypointState.renderOnMiniMap = true;
-                    waypointState.renderOnWorldMap = true;
-                } else {
-                    waypointState.renderOnHud = onHud < maxOnHud && d >= minHudD && d <= maxHudD;
-                    waypointState.renderOnMiniMap = onMiniMap < maxOnMiniMap && d >= minMiniD && d <= maxMiniD;
-                    waypointState.renderOnWorldMap = onWorldMap < maxOnWorldMap && d >= minWorldD && d <= maxWorldD;
+                waypointState.renderOnHud = config.hud.showPlayerWaypoints != ModConfig.ConditionalActiveMode.NEVER;
+                waypointState.renderOnMiniMap = config.minimap.showPlayerWaypoints != ModConfig.ConditionalActiveMode.NEVER;
+                waypointState.renderOnWorldMap = config.worldmap.showPlayerWaypoints != ModConfig.ConditionalActiveMode.NEVER;
+                if (!(alwaysShowFriends && isFriend)) {
+                    waypointState.renderOnHud &= onHud < maxOnHud && d >= minHudD && d <= maxHudD;
+                    waypointState.renderOnMiniMap &= onMiniMap < maxOnMiniMap && d >= minMiniD && d <= maxMiniD;
+                    waypointState.renderOnWorldMap &= onWorldMap < maxOnWorldMap && d >= minWorldD && d <= maxWorldD;
                     if (waypointState.renderOnHud) onHud++;
                     if (waypointState.renderOnMiniMap) onMiniMap++;
                     if (waypointState.renderOnWorldMap) onWorldMap++;
@@ -377,9 +376,12 @@ public abstract class ClientMapHandler {
                 WaypointState waypointState = idToWaypointState.get(markerPosition.id);
                 double d = mc.cameraEntity.position().distanceTo(new Vec3(markerPosition.pos.x, markerPosition.pos.y, markerPosition.pos.z));
 
-                waypointState.renderOnHud = onHud < maxOnHud && d >= minHudD && d <= maxHudD;
-                waypointState.renderOnMiniMap = onMiniMap < maxOnMiniMap && d >= minMiniD && d <= maxMiniD;
-                waypointState.renderOnWorldMap = onWorldMap < maxOnWorldMap && d >= minWorldD && d <= maxWorldD;
+                waypointState.renderOnHud = config.hud.showMarkerWaypoints != ModConfig.ConditionalActiveMode.NEVER
+                        && onHud < maxOnHud && d >= minHudD && d <= maxHudD;
+                waypointState.renderOnMiniMap = config.minimap.showMarkerWaypoints != ModConfig.ConditionalActiveMode.NEVER
+                        && onMiniMap < maxOnMiniMap && d >= minMiniD && d <= maxMiniD;
+                waypointState.renderOnWorldMap = config.worldmap.showMarkerWaypoints != ModConfig.ConditionalActiveMode.NEVER
+                        && onWorldMap < maxOnWorldMap && d >= minWorldD && d <= maxWorldD;
                 if (waypointState.renderOnHud) onHud++;
                 if (waypointState.renderOnMiniMap) onMiniMap++;
                 if (waypointState.renderOnWorldMap) onWorldMap++;
