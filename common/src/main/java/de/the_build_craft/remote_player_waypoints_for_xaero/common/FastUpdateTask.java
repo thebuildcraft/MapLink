@@ -39,7 +39,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
 
 /**
  * @author Leander Knüttel
- * @version 28.08.2025
+ * @version 31.08.2025
  */
 public class FastUpdateTask {
     private final Minecraft mc;
@@ -74,6 +74,13 @@ public class FastUpdateTask {
         }
 
         playerPositions.clear();
+
+        if (!AbstractModInitializer.connected) {
+            //Don't use client-side data if not connected to an OnlineMap to comply with Modrinth's content rules!
+            ClientMapHandler.getInstance().handlePlayerWaypoints();
+            return;
+        }
+
         playerPositions.putAll(onlinePlayerPositions);
 
         #if MC_VER >= MC_1_21_6
@@ -88,13 +95,16 @@ public class FastUpdateTask {
                         vec3iWaypoint.id().left().ifPresent(uuid -> {
                             if (uuidPlayerMap.containsKey(uuid)) {
                                 String name = uuidPlayerMap.get(uuid);
-                                PlayerPosition playerPosition = new PlayerPosition(name,
-                                        vec3iWaypoint.vector.getX(),
-                                        vec3iWaypoint.vector.getY(),
-                                        vec3iWaypoint.vector.getZ(),
-                                        "");
-                                ClientMapHandler.registerTempPlayerPosition(playerPosition);
-                                playerPositions.put(name, playerPosition);
+                                //Only show players that are visible on the OnlineMap to comply with Modrinth's content rules!
+                                if (onlinePlayerPositions.containsKey(name)) {
+                                    PlayerPosition playerPosition = new PlayerPosition(name,
+                                            vec3iWaypoint.vector.getX(),
+                                            vec3iWaypoint.vector.getY(),
+                                            vec3iWaypoint.vector.getZ(),
+                                            "");
+                                    ClientMapHandler.registerTempPlayerPosition(playerPosition);
+                                    playerPositions.put(name, playerPosition);
+                                }
                             }
                         });
                     }
@@ -102,10 +112,12 @@ public class FastUpdateTask {
         #endif
 
         for (AbstractClientPlayer player : mc.level.players()) {
-            if (player instanceof RemotePlayer) {
+            String playerName = player.getGameProfile().getName();
+            //Only show players that are visible on the OnlineMap to comply with Modrinth's content rules!
+            if (player instanceof RemotePlayer && onlinePlayerPositions.containsKey(playerName)) {
                 PlayerPosition playerPosition = new PlayerPosition(player);
                 ClientMapHandler.registerTempPlayerPosition(playerPosition);
-                playerPositions.put(player.getGameProfile().getName(), playerPosition);
+                playerPositions.put(playerName, playerPosition);
             }
         }
 
