@@ -22,13 +22,14 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.common;
 
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ServerData;
 
 import java.util.Locale;
 import java.util.Objects;
 
 /**
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 31.08.2025
  */
 public abstract class CommonModConfig {
     public static ModConfig config;
@@ -58,7 +59,9 @@ public abstract class CommonModConfig {
     }
 
     public static ModConfig.ServerEntry getCurrentServerEntry() {
-        String serverIP = Objects.requireNonNull(Minecraft.getInstance().getCurrentServer()).ip.toLowerCase(Locale.ROOT);
+        ServerData serverData = Minecraft.getInstance().getCurrentServer();
+        if (serverData == null) return null;
+        String serverIP = serverData.ip.toLowerCase(Locale.ROOT);
         for (ModConfig.ServerEntry server : config.general.serverEntries){
             if (Objects.equals(serverIP, server.ip.toLowerCase(Locale.ROOT))){
                 return server;

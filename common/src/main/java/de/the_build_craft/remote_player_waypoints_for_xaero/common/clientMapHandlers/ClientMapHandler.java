@@ -50,7 +50,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.FastUp
 
 /**
  * @author Leander Knüttel
- * @version 29.08.2025
+ * @version 31.08.2025
  */
 public abstract class ClientMapHandler {
     public static final String waypointPrefix = "onlinemapsync_";
@@ -177,6 +177,7 @@ public abstract class ClientMapHandler {
     }
 
     public void handlePlayerWaypoints() {
+        if (mc.cameraEntity == null || mc.level == null) return;
         if (config.general.enablePlayerWaypoints) {
             // Keep track of which waypoints were previously shown
             // to remove any that are not to be shown anymore
@@ -332,7 +333,9 @@ public abstract class ClientMapHandler {
     abstract void updatePlayerWaypointColors();
 
     public void handleMarkerWaypoints(List<Position> markerPositions) {
-        if (config.general.enableMarkerWaypoints) {
+        if (mc.cameraEntity == null) return;
+        ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
+        if (config.general.enableMarkerWaypoints && serverEntry != null) {
             // Keep track of which waypoints were previously shown
             // to remove any that are not to be shown anymore
             currentMarkerIds.clear();
@@ -369,7 +372,6 @@ public abstract class ClientMapHandler {
 
             Vec3 cameraPos = mc.cameraEntity.position();
             markerPositions.sort(Comparator.comparing(p -> cameraPos.distanceToSqr(p.pos.x, p.pos.y, p.pos.z)));
-            ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
 
             for (Position markerPosition : markerPositions) {
                 WaypointState waypointState = idToWaypointState.get(markerPosition.id);
