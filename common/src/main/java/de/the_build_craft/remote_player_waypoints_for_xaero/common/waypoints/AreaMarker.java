@@ -24,35 +24,35 @@ import java.util.Arrays;
 
 /**
  * @author Leander Knüttel
- * @version 31.08.2025
+ * @version 01.09.2025
  */
 public class AreaMarker extends Position {
     public final Int3[][] polygons;
     public final Color lineColor;
     public final Color fillColor;
 
-    public AreaMarker(String name, double x, double y, double z, Double3[] polygons, Color lineColor, Color fillColor, String id, String layer) {
+    public AreaMarker(String name, double x, double y, double z, Double3[] polygons, Color lineColor, Color fillColor, String id, MarkerLayer layer) {
         super(name, x, y, z, id, layer);
         this.polygons = new Int3[][]{Arrays.stream(polygons).map(Double3::roundToInt3).toArray(Int3[]::new)};
         this.lineColor = lineColor;
         this.fillColor = fillColor;
     }
 
-    public AreaMarker(String name, int x, int y, int z, Int3[] polygons, Color lineColor, Color fillColor, String id, String layer) {
+    public AreaMarker(String name, int x, int y, int z, Int3[] polygons, Color lineColor, Color fillColor, String id, MarkerLayer layer) {
         super(name, x, y, z, id, layer);
         this.polygons = new Int3[][]{polygons};
         this.lineColor = lineColor;
         this.fillColor = fillColor;
     }
 
-    public AreaMarker(String name, double x, double y, double z, Double3[][] polygons, Color lineColor, Color fillColor, String id, String layer) {
+    public AreaMarker(String name, double x, double y, double z, Double3[][] polygons, Color lineColor, Color fillColor, String id, MarkerLayer layer) {
         super(name, x, y, z, id, layer);
         this.polygons = Arrays.stream(polygons).map(a -> Arrays.stream(a).map(Double3::roundToInt3).toArray(Int3[]::new)).toArray(Int3[][]::new);
         this.lineColor = lineColor;
         this.fillColor = fillColor;
     }
 
-    public AreaMarker(String name, int x, int y, int z, Int3[][] polygons, Color lineColor, Color fillColor, String id, String layer) {
+    public AreaMarker(String name, int x, int y, int z, Int3[][] polygons, Color lineColor, Color fillColor, String id, MarkerLayer layer) {
         super(name, x, y, z, id, layer);
         this.polygons = polygons;
         this.lineColor = lineColor;

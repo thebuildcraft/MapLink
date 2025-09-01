@@ -34,15 +34,15 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.*;
 
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 30.08.2025
+ * @version 01.09.2025
  */
 public abstract class MapConnection {
     public URL queryURL;
@@ -158,5 +158,5 @@ public abstract class MapConnection {
         #endif
     }
 
-    public abstract HashSet<String> getMarkerLayers();
+    public abstract Set<String> getMarkerLayers();
 }

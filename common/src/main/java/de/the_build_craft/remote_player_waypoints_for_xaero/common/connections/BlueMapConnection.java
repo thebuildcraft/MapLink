@@ -42,7 +42,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 31.08.2025
+ * @version 01.09.2025
  */
 public class BlueMapConnection extends MapConnection {
     List<Integer> lastWorldIndices = new ArrayList<>(Collections.singletonList(0));
@@ -113,7 +113,7 @@ public class BlueMapConnection extends MapConnection {
     }
 
     @Override
-    public HashSet<String> getMarkerLayers() {
+    public Set<String> getMarkerLayers() {
         Type apiResponseType = new TypeToken<Map<String, BlueMapMarkerSet>>() {}.getType();
         HashSet<String> layers = new HashSet<>();
         for (URL url : markerUrls) {
@@ -175,12 +175,12 @@ public class BlueMapConnection extends MapConnection {
                     Double3 pos = marker.position;
                     if (Objects.equals(marker.type, "poi") || Objects.equals(marker.type, "html")) {
                         if (!serverEntry.includeMarkerLayer(markerSetEntry.getKey())) continue;
-                        Position position = new Position(marker.label, pos.x, pos.y, pos.z, i + markerSetEntry.getKey() + markerEntry.getKey(), markerSetEntry.getKey());
+                        Position position = new Position(marker.label, pos.x, pos.y, pos.z, i + markerSetEntry.getKey() + markerEntry.getKey(), new MarkerLayer(markerSetEntry.getKey(), markerSetEntry.getValue().label));
                         positions.add(position);
                         ClientMapHandler.registerPosition(position, marker.icon.startsWith("http") ? marker.icon : (marker.icon.equals("assets/poi.svg") ? null : markerIconLinkTemplate.replace("{icon}", marker.icon)));
                     } else if (Objects.equals(marker.type, "shape") || Objects.equals(marker.type, "extrude")) {
                         if (!serverEntry.includeAreaMarkerLayer(markerSetEntry.getKey())) continue;
-                        areaMarkers.add(new AreaMarker(marker.label, pos.x, pos.y, pos.z, marker.shape, marker.lineColor, marker.fillColor, markerSetEntry.getKey() + markerEntry.getKey(), markerSetEntry.getKey()));
+                        areaMarkers.add(new AreaMarker(marker.label, pos.x, pos.y, pos.z, marker.shape, marker.lineColor, marker.fillColor, markerSetEntry.getKey() + markerEntry.getKey(), new MarkerLayer(markerSetEntry.getKey(), markerSetEntry.getValue().label)));
                     }
                 }
             }

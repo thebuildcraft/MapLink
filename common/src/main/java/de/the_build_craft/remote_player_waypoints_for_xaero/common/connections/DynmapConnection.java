@@ -43,7 +43,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
  * @author ewpratten
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 31.08.2025
+ * @version 01.09.2025
  */
 public class DynmapConnection extends MapConnection {
     private String markerStringTemplate = "";
@@ -305,7 +305,7 @@ public class DynmapConnection extends MapConnection {
             if (serverEntry.includeMarkerLayer(set.getKey())) {
                 for (Map.Entry<String, DynmapMarkerUpdate.Set.Marker> markerEntry : set.getValue().markers.entrySet()) {
                     DynmapMarkerUpdate.Set.Marker m = markerEntry.getValue();
-                    Position position = new Position(m.label, m.x, m.y, m.z, dimension + set.getKey() + markerEntry.getKey(), set.getKey());
+                    Position position = new Position(m.label, m.x, m.y, m.z, dimension + set.getKey() + markerEntry.getKey(), new MarkerLayer(set.getKey(), set.getValue().label));
                     positions.add(position);
                     ClientMapHandler.registerPosition(position,
                             (!config.general.showDefaultMarkerIcons && m.icon.equals("default")) ? null : markerStringTemplate.replace("marker_{world}.json", m.icon + ".png"));
@@ -330,12 +330,12 @@ public class DynmapConnection extends MapConnection {
                         };
                     }
                     areaMarkers.add(new AreaMarker(a.label, 0f, 0f, 0f, points,
-                            new Color(a.color, a.opacity), new Color(a.fillcolor, a.fillopacity), set.getKey() + areaEntry.getKey(), set.getKey()));
+                            new Color(a.color, a.opacity), new Color(a.fillcolor, a.fillopacity), set.getKey() + areaEntry.getKey(), new MarkerLayer(set.getKey(), set.getValue().label)));
                 }
                 for (Map.Entry<String, DynmapMarkerUpdate.Set.Circle> circleEntry : set.getValue().circles.entrySet()) {
                     DynmapMarkerUpdate.Set.Circle c = circleEntry.getValue();
                     areaMarkers.add(new AreaMarker(c.label, c.x, c.y, c.z, convertEllipseToPolygon(c),
-                            new Color(c.color, c.opacity), new Color(c.fillcolor, c.fillopacity), set.getKey() + circleEntry.getKey(), set.getKey()));
+                            new Color(c.color, c.opacity), new Color(c.fillcolor, c.fillopacity), set.getKey() + circleEntry.getKey(), new MarkerLayer(set.getKey(), set.getValue().label)));
                 }
             }
         }

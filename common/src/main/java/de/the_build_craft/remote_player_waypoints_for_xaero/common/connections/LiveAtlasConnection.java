@@ -27,10 +27,7 @@ import de.the_build_craft.remote_player_waypoints_for_xaero.common.wrappers.Util
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,7 +35,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
 
 /**
  * @author Leander Knüttel
- * @version 28.08.2025
+ * @version 01.09.2025
  */
 public class LiveAtlasConnection extends MapConnection {
     public static final Pattern dynmapRegexPattern = Pattern.compile("\\n +dynmap: \\{\\n(.*\\n)*?.*}\\n");
@@ -151,7 +148,7 @@ public class LiveAtlasConnection extends MapConnection {
     }
 
     @Override
-    public HashSet<String> getMarkerLayers() {
+    public Set<String> getMarkerLayers() {
         HashSet<String> layers = new HashSet<>();
         for (MapConnection connection : mapConnections) {
             layers.addAll(connection.getMarkerLayers());

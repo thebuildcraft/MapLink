@@ -29,24 +29,24 @@ import net.minecraft.client.player.AbstractClientPlayer;
  *
  * @author ewpratten
  * @author Leander Knüttel
- * @version 31.08.2025
+ * @version 01.09.2025
  */
 public class PlayerPosition extends Position {
     public GameProfile gameProfile;
     public final String world;
 
     public PlayerPosition(String name, int x, int y, int z, String world) {
-        super(name, x, y, z, name, "players");
+        super(name, x, y, z, name, MarkerLayer.PlayerLayer);
         this.world = world;
     }
 
     public PlayerPosition(String name, double x, double y, double z, String world) {
-        super(name, x, y, z, name, "players");
+        super(name, x, y, z, name, MarkerLayer.PlayerLayer);
         this.world = world;
     }
 
     public PlayerPosition(AbstractClientPlayer player) {
-        super(player.getGameProfile().getName(), player.getX(), player.getY(), player.getZ(), player.getGameProfile().getName(), "players");
+        super(player.getGameProfile().getName(), player.getX(), player.getY(), player.getZ(), player.getGameProfile().getName(), MarkerLayer.PlayerLayer);
         this.world = "";
         this.gameProfile = player.getGameProfile();
     }

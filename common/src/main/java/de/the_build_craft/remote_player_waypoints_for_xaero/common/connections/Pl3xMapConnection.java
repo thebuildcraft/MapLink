@@ -36,13 +36,14 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.*;
 
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 31.08.2025
+ * @version 01.09.2025
  */
 public class Pl3xMapConnection extends MapConnection{
     private String markerLayerStringTemplate = "";
@@ -201,20 +202,20 @@ public class Pl3xMapConnection extends MapConnection{
         areaMarkers.clear();
 
         if (version == 0) {
-            for (String layer : getMarkerLayers(false)){
+            for (MarkerLayer layer : getMarkerLayers(false)){
                 Type apiResponseType = new TypeToken<Pl3xMapMarkerUpdate[]>() {}.getType();
                 URL reqUrl = URI.create(markerStringTemplate.replace("{world}", currentDimension.replaceAll(":", "-"))
-                        .replace("{layerName}", layer)).toURL();
+                        .replace("{layerName}", layer.id)).toURL();
                 Pl3xMapMarkerUpdate[] markers = HTTP.makeJSONHTTPRequest(reqUrl, apiResponseType);
 
                 for (Pl3xMapMarkerUpdate marker : markers){
-                    if (Objects.equals(marker.type, "icon") && serverEntry.includeMarkerLayer(layer)) {
-                        Position position = new Position(marker.options.tooltip.content, marker.data.point.x, config.general.defaultY, marker.data.point.z, currentDimension + layer + marker.data.key, layer);
+                    if (Objects.equals(marker.type, "icon") && serverEntry.includeMarkerLayer(layer.id)) {
+                        Position position = new Position(marker.options.tooltip.content, marker.data.point.x, config.general.defaultY, marker.data.point.z, currentDimension + layer.id + marker.data.key, layer);
                         ClientMapHandler.registerPosition(position,
                                 (!config.general.showDefaultMarkerIcons && marker.data.image.equals("marker-icon")) ? null : markerIconLinkTemplate.replace("{icon}", marker.data.image));
                         positions.add(position);
                     }
-                    if (!(serverEntry.includeAreaMarkerLayer(layer) && areaTypes.containsKey(marker.type))) continue;
+                    if (!(serverEntry.includeAreaMarkerLayer(layer.id) && areaTypes.containsKey(marker.type))) continue;
                     Int3[][] polygons = areaTypes.get(marker.type).apply(marker);
                     areaMarkers.add(new AreaMarker(marker.options.tooltip.content,
                             0,
@@ -223,7 +224,7 @@ public class Pl3xMapConnection extends MapConnection{
                             polygons,
                             (marker.options.stroke != null && marker.options.stroke.enabled) ? new Color(marker.options.stroke.color) : new Color(),
                             (marker.options.fill != null && marker.options.fill.enabled) ? new Color(marker.options.fill.color) : new Color(),
-                            currentDimension + layer + marker.data.key,
+                            currentDimension + layer.id + marker.data.key,
                             layer));
                 }
             }
@@ -236,13 +237,13 @@ public class Pl3xMapConnection extends MapConnection{
                 if (!Objects.equals(layer.id, "pl3xmap_players")) {
                     for (SquareMapMarkerUpdate.Marker marker : layer.markers) {
                         if (Objects.equals(marker.type, "icon")  && serverEntry.includeMarkerLayer(layer.id)) {
-                            Position position = new Position(marker.tooltip, marker.point.x, config.general.defaultY, marker.point.z, currentDimension + layer.id + marker.tooltip + marker.point.x + marker.point.z, layer.id);
+                            Position position = new Position(marker.tooltip, marker.point.x, config.general.defaultY, marker.point.z, currentDimension + layer.id + marker.tooltip + marker.point.x + marker.point.z, new MarkerLayer(layer.id, layer.name));
                             ClientMapHandler.registerPosition(position, marker.icon.equals("marker-icon") ? null : markerIconLinkTemplate.replace("{icon}", marker.icon));
                             positions.add(position);
                         }
                         else if (Objects.equals(marker.type, "polygon") && serverEntry.includeAreaMarkerLayer(layer.id)) {
                             areaMarkers.add(new AreaMarker(marker.tooltip, 0, 0, 0, Arrays.stream(marker.points).flatMap(Arrays::stream).toArray(Int3[][]::new),
-                                    new Color(marker.color, 1f), new Color(marker.fillColor, marker.opacity), layer.id + marker.tooltip + Arrays.deepHashCode(marker.points), layer.id));
+                                    new Color(marker.color, 1f), new Color(marker.fillColor, marker.opacity), layer.id + marker.tooltip + Arrays.deepHashCode(marker.points), new MarkerLayer(layer.id, layer.name)));
                         }
                     }
                 }
@@ -263,24 +264,24 @@ public class Pl3xMapConnection extends MapConnection{
     }
 
     @Override
-    public HashSet<String> getMarkerLayers() {
-        return getMarkerLayers(true);
+    public Set<String> getMarkerLayers() {
+        return getMarkerLayers(true).stream().map(m -> m.id).collect(Collectors.toSet());
     }
 
-    private HashSet<String> getMarkerLayers(boolean all) {
+    private Set<MarkerLayer> getMarkerLayers(boolean all) {
         try {
             if (version == 0) {
                 Type apiResponseType = new TypeToken<Pl3xMapMarkerLayerConfig[]>() {}.getType();
 
                 if (all) {
                     Pl3xMapPlayerUpdate update = HTTP.makeJSONHTTPRequest(queryURL, Pl3xMapPlayerUpdate.class);
-                    HashSet<String> layerSet = new HashSet<>();
+                    Set<MarkerLayer> layerSet = new HashSet<>();
                     for (Pl3xMapPlayerUpdate.WorldSetting ws : update.worldSettings) {
                         Pl3xMapMarkerLayerConfig[] mls = HTTP.makeJSONHTTPRequest(URI.create(markerLayerStringTemplate
                                 .replace("{world}", ws.name.replaceAll(":", "-"))).toURL(), apiResponseType);
                         for (Pl3xMapMarkerLayerConfig ml : mls) {
                             if (!Objects.equals(ml.key, "pl3xmap_players")) {
-                                layerSet.add(ml.key);
+                                layerSet.add(new MarkerLayer(ml.key, ml.label));
                             }
                         }
                     }
@@ -290,11 +291,11 @@ public class Pl3xMapConnection extends MapConnection{
                 URL reqUrl = URI.create(markerLayerStringTemplate.replace("{world}", currentDimension.replaceAll(":", "-"))).toURL();
                 Pl3xMapMarkerLayerConfig[] markerLayers = HTTP.makeJSONHTTPRequest(reqUrl, apiResponseType);
 
-                HashSet<String> layers = new HashSet<>();
+                Set<MarkerLayer> layers = new HashSet<>();
 
                 for (Pl3xMapMarkerLayerConfig layer : markerLayers){
                     if (!Objects.equals(layer.key, "pl3xmap_players")) {
-                        layers.add(layer.key);
+                        layers.add(new MarkerLayer(layer.key, layer.label));
                     }
                 }
 
@@ -305,12 +306,12 @@ public class Pl3xMapConnection extends MapConnection{
 
                 if (all) {
                     Pl3xMapConfiguration configuration = HTTP.makeJSONHTTPRequest(URI.create(onlineMapConfigLink).toURL(), Pl3xMapConfiguration.class);
-                    HashSet<String> layerSet = new HashSet<>();
+                    Set<MarkerLayer> layerSet = new HashSet<>();
                     for (Pl3xMapConfiguration.World ws : configuration.worlds) {
                         SquareMapMarkerUpdate[] mls = HTTP.makeJSONHTTPRequest(URI.create(markerLayerStringTemplate.replace("{world}", ws.name.replaceAll(":", "-"))).toURL(), apiResponseType);
                         for (SquareMapMarkerUpdate ml : mls) {
                             if (!Objects.equals(ml.id, "pl3xmap_players")) {
-                                layerSet.add(ml.id);
+                                layerSet.add(new MarkerLayer(ml.id, ml.name));
                             }
                         }
                     }
@@ -320,11 +321,11 @@ public class Pl3xMapConnection extends MapConnection{
                 URL reqUrl = URI.create(markerLayerStringTemplate.replace("{world}", currentDimension.replaceAll(":", "-"))).toURL();
                 SquareMapMarkerUpdate[] markerLayers = HTTP.makeJSONHTTPRequest(reqUrl, apiResponseType);
 
-                HashSet<String> layers = new HashSet<>();
+                Set<MarkerLayer> layers = new HashSet<>();
 
                 for (SquareMapMarkerUpdate layer : markerLayers){
                     if (!Objects.equals(layer.id, "pl3xmap_players")) {
-                        layers.add(layer.id);
+                        layers.add(new MarkerLayer(layer.id, layer.name));
                     }
                 }
 

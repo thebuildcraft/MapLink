@@ -2,7 +2,7 @@
  *    This file is part of the Remote player waypoints for Xaero's Map mod
  *    licensed under the GNU GPL v3 License.
  *
- *    Copyright (C) 2024 - 2025  Leander Knüttel and contributors
+ *    Copyright (C) 2025  Leander Knüttel and contributors
  *
  *    This program is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -18,14 +18,33 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package de.the_build_craft.remote_player_waypoints_for_xaero.common.mapUpdates;
+package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
+
+import java.util.Objects;
 
 /**
  * @author Leander Knüttel
  * @version 01.09.2025
  */
-public class Pl3xMapMarkerLayerConfig {
-    public String key;
-    public String label;
-    public float updateInterval = 1;
+public class MarkerLayer {
+    public final String id;
+    public final String name;
+
+    public static final MarkerLayer PlayerLayer = new MarkerLayer("players", "Players");
+
+    public MarkerLayer(String id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof MarkerLayer that)) return false;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
 }

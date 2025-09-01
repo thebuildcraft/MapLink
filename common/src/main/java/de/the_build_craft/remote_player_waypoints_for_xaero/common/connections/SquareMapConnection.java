@@ -43,7 +43,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 30.08.2025
+ * @version 01.09.2025
  */
 public class SquareMapConnection extends MapConnection {
     private String markerStringTemplate = "";
@@ -140,7 +140,7 @@ public class SquareMapConnection extends MapConnection {
     }
 
     @Override
-    public HashSet<String> getMarkerLayers() {
+    public Set<String> getMarkerLayers() {
         try {
             Type apiResponseType = new TypeToken<SquareMapMarkerUpdate[]>() {}.getType();
 
@@ -205,13 +205,13 @@ public class SquareMapConnection extends MapConnection {
         for (SquareMapMarkerUpdate markerLayer : markersLayers){
             for (SquareMapMarkerUpdate.Marker marker : markerLayer.markers){
                 if (Objects.equals(marker.type, "icon") && serverEntry.includeMarkerLayer(markerLayer.id)) {
-                    Position position = new Position(marker.tooltip, marker.point.x, config.general.defaultY, marker.point.z, currentDimension + markerLayer.id + marker.tooltip + marker.point.x + marker.point.z, markerLayer.id);
+                    Position position = new Position(marker.tooltip, marker.point.x, config.general.defaultY, marker.point.z, currentDimension + markerLayer.id + marker.tooltip + marker.point.x + marker.point.z, new MarkerLayer(markerLayer.id, markerLayer.name));
                     positions.add(position);
                     ClientMapHandler.registerPosition(position, markerIconLinkTemplate.replace("{icon}", marker.icon));
                 }
                 else if (Objects.equals(marker.type, "polygon") && serverEntry.includeAreaMarkerLayer(markerLayer.id)) {
                     areaMarkers.add(new AreaMarker(marker.tooltip, 0, 0, 0, Arrays.stream(marker.points).flatMap(Arrays::stream).toArray(Int3[][]::new),
-                            new Color(marker.color, 1f), new Color(marker.fillColor, marker.opacity), markerLayer.id + marker.tooltip + Arrays.deepHashCode(marker.points), markerLayer.id));
+                            new Color(marker.color, 1f), new Color(marker.fillColor, marker.opacity), markerLayer.id + marker.tooltip + Arrays.deepHashCode(marker.points), new MarkerLayer(markerLayer.id, markerLayer.name)));
                 }
             }
         }

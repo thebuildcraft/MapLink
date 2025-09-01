@@ -50,7 +50,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.FastUp
 
 /**
  * @author Leander Knüttel
- * @version 31.08.2025
+ * @version 01.09.2025
  */
 public abstract class ClientMapHandler {
     public static final String waypointPrefix = "onlinemapsync_";
@@ -388,7 +388,7 @@ public abstract class ClientMapHandler {
 
                 if (!(waypointState.renderOnHud || waypointState.renderOnMiniMap || waypointState.renderOnWorldMap)) continue;
 
-                if (enableMarkerIcons && waypointState.hasIcon && serverEntry.includeIconMarkerLayer(markerPosition.layer)) {
+                if (enableMarkerIcons && waypointState.hasIcon && serverEntry.includeIconMarkerLayer(markerPosition.layer.id)) {
                     waypointState.renderIconOnHud = iconsOnHud < maxIconsOnHud && d >= minIconHudD && d <= maxIconHudD;
                     waypointState.renderIconOnMiniMap = iconsOnMiniMap < maxIconsOnMiniMap && d >= minIconMiniD && d <= maxIconMiniD;
                     waypointState.renderIconOnWorldMap = iconsOnWorldMap < maxIconsOnWorldMap && d >= minIconWorldD && d <= maxIconWorldD;
