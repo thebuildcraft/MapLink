@@ -32,7 +32,7 @@ import java.util.List;
 
 /**
  * @author Leander Knüttel
- * @version 31.08.2025
+ * @version 05.09.2025
  */
 @Config(name = "remote_player_waypoints_for_xaero")
 #if MC_VER < MC_1_20_6
@@ -251,7 +251,11 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
         @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
-        public int minPlayerDistance = 10;
+        public int minVisiblePlayerDistance = 30;
+
+        @ConfigEntry.Gui.Tooltip()
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+        public int minNotVisiblePlayerDistance = 10;
 
         @ConfigEntry.Gui.Tooltip()
         @ConfigEntry.BoundedDiscrete(min = 100, max = 100000)

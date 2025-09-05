@@ -50,7 +50,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.FastUp
 
 /**
  * @author Leander Knüttel
- * @version 01.09.2025
+ * @version 05.09.2025
  */
 public abstract class ClientMapHandler {
     public static final String waypointPrefix = "onlinemapsync_";
@@ -186,7 +186,6 @@ public abstract class ClientMapHandler {
             Map<String, AbstractClientPlayer> playerClientEntityMap = mc.level.players().stream().collect(
                     Collectors.toMap(a -> a.getGameProfile().getName(), a -> a));
 
-            int minHudD = config.hud.minPlayerDistance;
             int maxHudD = config.hud.maxPlayerDistance;
             int minMiniD = config.minimap.minPlayerDistance;
             int maxMiniD = config.minimap.maxPlayerDistance;
@@ -234,11 +233,35 @@ public abstract class ClientMapHandler {
                 boolean isFriend = config.friends.friendList.contains(playerName);
                 if (onlyShowFriends && !isFriend) continue;
 
-                double d = cameraPos.distanceTo(new Vec3(playerPosition.pos.x, playerPosition.pos.y, playerPosition.pos.z));
-
                 waypointState.renderOnHud = config.hud.showPlayerWaypoints != ModConfig.ConditionalActiveMode.NEVER;
                 waypointState.renderOnMiniMap = config.minimap.showPlayerWaypoints != ModConfig.ConditionalActiveMode.NEVER;
                 waypointState.renderOnWorldMap = config.worldmap.showPlayerWaypoints != ModConfig.ConditionalActiveMode.NEVER;
+
+                // Check if this player is within the server's player entity tracking range
+                int minHudD = config.hud.minNotVisiblePlayerDistance;
+                if (playerClientEntityMap.containsKey(playerName)) {
+                    if (config.hud.hidePlayersInRange) waypointState.renderOnHud = false;
+                    if (config.minimap.hidePlayersInRange) waypointState.renderOnMiniMap = false;
+                    if (config.worldmap.hidePlayersInRange) waypointState.renderOnWorldMap = false;
+
+                    if (waypointState.renderOnHud) {
+                        #if MC_VER >= MC_1_17_1
+                        ClipContext clipContext = new ClipContext(mc.cameraEntity.getEyePosition(),
+                        #else
+                        ClipContext clipContext = new ClipContext(mc.cameraEntity.getEyePosition(1),
+                        #endif
+                                playerClientEntityMap.get(playerName).position().add(0, 1, 0),
+                                ClipContext.Block.VISUAL, ClipContext.Fluid.ANY, mc.cameraEntity);
+                        // If this player is visible, don't show waypoint on Hud (depending on the config settings)
+                        if (mc.level.clip(clipContext).getType() != HitResult.Type.BLOCK) {
+                            if (config.hud.hidePlayersVisible) waypointState.renderOnHud = false;
+                            minHudD = config.hud.minVisiblePlayerDistance;
+                        }
+                    }
+                }
+
+                double d = cameraPos.distanceTo(new Vec3(playerPosition.pos.x, playerPosition.pos.y, playerPosition.pos.z));
+
                 if (!(alwaysShowFriends && isFriend)) {
                     waypointState.renderOnHud &= onHud < maxOnHud && d >= minHudD && d <= maxHudD;
                     waypointState.renderOnMiniMap &= onMiniMap < maxOnMiniMap && d >= minMiniD && d <= maxMiniD;
@@ -270,27 +293,6 @@ public abstract class ClientMapHandler {
                     if (waypointState.renderIconOnHud) iconsOnHud++;
                     if (waypointState.renderIconOnMiniMap) iconsOnMiniMap++;
                     if (waypointState.renderIconOnWorldMap) iconsOnWorldMap++;
-                }
-
-                // Check if this player is within the server's player entity tracking range
-                if (playerClientEntityMap.containsKey(playerName)) {
-                    if (config.hud.hidePlayersInRange) waypointState.renderOnHud = false;
-                    if (config.minimap.hidePlayersInRange) waypointState.renderOnMiniMap = false;
-                    if (config.worldmap.hidePlayersInRange) waypointState.renderOnWorldMap = false;
-
-                    if (waypointState.renderOnHud && config.hud.hidePlayersVisible) {
-                        #if MC_VER >= MC_1_17_1
-                        ClipContext clipContext = new ClipContext(mc.cameraEntity.getEyePosition(),
-                        #else
-                        ClipContext clipContext = new ClipContext(mc.cameraEntity.getEyePosition(1),
-                        #endif
-                            playerClientEntityMap.get(playerName).position().add(0, 1, 0),
-                            ClipContext.Block.VISUAL, ClipContext.Fluid.ANY, mc.cameraEntity);
-                        // If this player is visible, don't show waypoint on Hud
-                        if (mc.level.clip(clipContext).getType() != HitResult.Type.BLOCK) {
-                            waypointState.renderOnHud = false;
-                        }
-                    }
                 }
 
                 if (waypointState.renderOnHud || waypointState.renderOnMiniMap || waypointState.renderOnWorldMap) {
