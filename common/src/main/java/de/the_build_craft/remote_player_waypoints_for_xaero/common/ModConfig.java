@@ -100,6 +100,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         @ConfigEntry.Gui.Tooltip()
         public boolean showPlayerWaypointsAsTrackedPlayers = true;
 
+        @ConfigEntry.Gui.Tooltip()
         public boolean enablePlayerIconWaypoints = true;
 
         @ConfigEntry.Gui.Tooltip()
@@ -204,8 +205,10 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         public boolean onlyShowFriendsIconWaypoints = false;
 
+        @ConfigEntry.Gui.Tooltip()
         public boolean alwaysShowFriendsWaypoints = true;
 
+        @ConfigEntry.Gui.Tooltip()
         public boolean alwaysShowFriendsIconWaypoints = true;
 
         public boolean overwriteFriendWaypointColor = false;

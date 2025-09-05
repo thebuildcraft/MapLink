@@ -20,10 +20,11 @@
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.showPlayerWaypointsAsTrackedPlayers": "Display Players as \"Tracked Players\"",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.showPlayerWaypointsAsTrackedPlayers.@Tooltip": "Uses xaeros's build-in player trackers instead of waypoints.\nThe scaling options from this mod don't apply to them.\nGo into the xaero settings to configure player trackers\nand if and how they are rendered as radar entities.",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.enablePlayerIconWaypoints": "Enable Head Icons on Player Waypoints",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.enablePlayerIconWaypoints.@Tooltip": "Doesn't effect Trackers!",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.useMcHeadsPlayerNameIcons": "Use Player Head Icons from MCHeads",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.useMcHeadsPlayerNameIcons.@Tooltip": "Use this ONLY IF the online map doesn't provide (correct) player-head-icons!\nFor this setting to apply you need to:\nDisconnect. Wait a few seconds. Reconnect.",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.playerWaypointColor": "Player Waypoint Color",
-  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.playerWaypointColor.@Tooltip": "Only for those without a head icon.",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.playerWaypointColor.@Tooltip": "Only for Player Waypoints without a head icon.\nDoesn't effect Trackers!",
 
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.showAfkInTabList": "Show AFK Status in Tab List",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.showAfkInTabList.@Tooltip": "AFK detection is only based on movement.",
@@ -115,9 +116,11 @@
   "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.friendList": "Friend-List",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.friendList.@Tooltip": "Add your friends' names here.\nClick on the (+) on the left.",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.onlyShowFriendsWaypoints": "Only Show Player Waypoints / Trackers of Friends",
-  "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.onlyShowFriendsIconWaypoints": "Only Show Player Head Icons of Friends",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.onlyShowFriendsIconWaypoints": "Only Show Player Head Waypoint Icons of Friends",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.alwaysShowFriendsWaypoints": "Always Show Player Waypoints / Trackers of Friends",
-  "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.alwaysShowFriendsIconWaypoints": "Always Show Player Head Icons of Friends",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.alwaysShowFriendsWaypoints.@Tooltip": "Only bypasses distance and max-count checks!",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.alwaysShowFriendsIconWaypoints": "Always Show Player Head Waypoint Icons of Friends",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.alwaysShowFriendsIconWaypoints.@Tooltip": "Only bypasses distance and max-count checks!",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.overwriteFriendWaypointColor": "Overwrite Waypoint Color of Friends",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.friendWaypointColor": "Friend Waypoint Color",
 
@@ -129,7 +132,7 @@
   "text.autoconfig.remote_player_waypoints_for_xaero.option.hud.showTrackerDistance": "Show Distance on Player Trackers",
 
   "text.autoconfig.remote_player_waypoints_for_xaero.option.hud.playerTextScale": "Scale for Player Waypoints Without Icon",
-  "text.autoconfig.remote_player_waypoints_for_xaero.option.hud.playerTextScale.@PrefixText": "Scale Options",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.hud.playerTextScale.@PrefixText": "Waypoint Scale Options",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.hud.playerTextScale.@Tooltip": "in %",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.hud.playerIconScale": "Scale for Player Waypoints With Icon",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.hud.playerIconScale.@Tooltip": "in %",
@@ -149,7 +152,7 @@
   "text.autoconfig.remote_player_waypoints_for_xaero.option.hud.maxPlayerWaypoints.@Tooltip": "Closer ones are prioritized.",
 
   "text.autoconfig.remote_player_waypoints_for_xaero.option.hud.minPlayerIconDistance": "Min Player Icon Distance",
-  "text.autoconfig.remote_player_waypoints_for_xaero.option.hud.minPlayerIconDistance.@PrefixText": "Player Icons",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.hud.minPlayerIconDistance.@PrefixText": "Player Waypoint Icons",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.hud.minPlayerIconDistance.@Tooltip": "in m",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.hud.maxPlayerIconDistance": "Max Player Icon Distance",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.hud.maxPlayerIconDistance.@Tooltip": "in m",
@@ -165,7 +168,7 @@
   "text.autoconfig.remote_player_waypoints_for_xaero.option.hud.maxMarkerWaypoints.@Tooltip": "Closer ones are prioritized.",
 
   "text.autoconfig.remote_player_waypoints_for_xaero.option.hud.minMarkerIconDistance": "Min Marker Icon Distance",
-  "text.autoconfig.remote_player_waypoints_for_xaero.option.hud.minMarkerIconDistance.@PrefixText": "Marker Icons",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.hud.minMarkerIconDistance.@PrefixText": "Marker Waypoint Icons",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.hud.minMarkerIconDistance.@Tooltip": "in m",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.hud.maxMarkerIconDistance": "Max Marker Icon Distance",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.hud.maxMarkerIconDistance.@Tooltip": "in m",
@@ -184,7 +187,7 @@
   "text.autoconfig.remote_player_waypoints_for_xaero.option.minimap.outOfBoundsMarkerWaypoints.@Tooltip": "\"out of Bounds\" means over the edge of the MiniMap",
 
   "text.autoconfig.remote_player_waypoints_for_xaero.option.minimap.playerTextScale": "Scale for Player Waypoints Without Icon",
-  "text.autoconfig.remote_player_waypoints_for_xaero.option.minimap.playerTextScale.@PrefixText": "Scale Options",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.minimap.playerTextScale.@PrefixText": "Waypoint Scale Options",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.minimap.playerTextScale.@Tooltip": "in %",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.minimap.playerIconScale": "Scale for Player Waypoints With Icon",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.minimap.playerIconScale.@Tooltip": "in %",
@@ -202,7 +205,7 @@
   "text.autoconfig.remote_player_waypoints_for_xaero.option.minimap.maxPlayerWaypoints.@Tooltip": "Closer ones are prioritized.",
 
   "text.autoconfig.remote_player_waypoints_for_xaero.option.minimap.minPlayerIconDistance": "Min Player Icon Distance",
-  "text.autoconfig.remote_player_waypoints_for_xaero.option.minimap.minPlayerIconDistance.@PrefixText": "Player Icons",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.minimap.minPlayerIconDistance.@PrefixText": "Player Waypoint Icons",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.minimap.minPlayerIconDistance.@Tooltip": "in m",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.minimap.maxPlayerIconDistance": "Max Player Icon Distance",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.minimap.maxPlayerIconDistance.@Tooltip": "in m",
@@ -218,7 +221,7 @@
   "text.autoconfig.remote_player_waypoints_for_xaero.option.minimap.maxMarkerWaypoints.@Tooltip": "Closer ones are prioritized.",
 
   "text.autoconfig.remote_player_waypoints_for_xaero.option.minimap.minMarkerIconDistance": "Min Marker Icon Distance",
-  "text.autoconfig.remote_player_waypoints_for_xaero.option.minimap.minMarkerIconDistance.@PrefixText": "Marker Icons",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.minimap.minMarkerIconDistance.@PrefixText": "Marker Waypoint Icons",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.minimap.minMarkerIconDistance.@Tooltip": "in m",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.minimap.maxMarkerIconDistance": "Max Marker Icon Distance",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.minimap.maxMarkerIconDistance.@Tooltip": "in m",
@@ -235,7 +238,7 @@
   "text.autoconfig.remote_player_waypoints_for_xaero.option.worldmap.showTrackerDistance": "Show Distance on Player Trackers",
 
   "text.autoconfig.remote_player_waypoints_for_xaero.option.worldmap.playerTextScale": "Scale for Player Waypoints Without Icon",
-  "text.autoconfig.remote_player_waypoints_for_xaero.option.worldmap.playerTextScale.@PrefixText": "Scale Options",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.worldmap.playerTextScale.@PrefixText": "Waypoint Scale Options",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.worldmap.playerTextScale.@Tooltip": "in %",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.worldmap.playerIconScale": "Scale for Player Waypoints With Icon",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.worldmap.playerIconScale.@Tooltip": "in %",
@@ -253,7 +256,7 @@
   "text.autoconfig.remote_player_waypoints_for_xaero.option.worldmap.maxPlayerWaypoints.@Tooltip": "Closer ones are prioritized.",
 
   "text.autoconfig.remote_player_waypoints_for_xaero.option.worldmap.minPlayerIconDistance": "Min Player Icon Distance",
-  "text.autoconfig.remote_player_waypoints_for_xaero.option.worldmap.minPlayerIconDistance.@PrefixText": "Player Icons",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.worldmap.minPlayerIconDistance.@PrefixText": "Player Waypoint Icons",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.worldmap.minPlayerIconDistance.@Tooltip": "in m",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.worldmap.maxPlayerIconDistance": "Max Player Icon Distance",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.worldmap.maxPlayerIconDistance.@Tooltip": "in m",
@@ -269,7 +272,7 @@
   "text.autoconfig.remote_player_waypoints_for_xaero.option.worldmap.maxMarkerWaypoints.@Tooltip": "Closer ones are prioritized.",
 
   "text.autoconfig.remote_player_waypoints_for_xaero.option.worldmap.minMarkerIconDistance": "Min Marker Icon Distance",
-  "text.autoconfig.remote_player_waypoints_for_xaero.option.worldmap.minMarkerIconDistance.@PrefixText": "Marker Icons",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.worldmap.minMarkerIconDistance.@PrefixText": "Marker Waypoint Icons",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.worldmap.minMarkerIconDistance.@Tooltip": "in m",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.worldmap.maxMarkerIconDistance": "Max Marker Icon Distance",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.worldmap.maxMarkerIconDistance.@Tooltip": "in m",
