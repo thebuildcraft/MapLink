@@ -240,7 +240,8 @@ public class XaeroClientMapHandler extends ClientMapHandler {
         updateWorldMapWaypointColors(idToWorldMapMarker, w -> config.general.markerWaypointColor.ordinal());
     }
 
-    int lastAreaMarkerHash;
+    private int lastAreaMarkerHash;
+    private boolean hasAreaMarkers = true;
 
     @Override
     public void handleAreaMarkers(List<AreaMarker> markerPositions, boolean refresh) {
@@ -263,6 +264,7 @@ public class XaeroClientMapHandler extends ClientMapHandler {
     }
 
     private void createChunkHighlightAt(AreaMarker areaMarker, long chunkKey) {
+        hasAreaMarkers = true;
         ChunkHighlight chunkHighlight = chunkHighlightMap.get(chunkKey);
         if (chunkHighlight != null) {
             chunkHighlight.combine(areaMarker);
@@ -275,9 +277,13 @@ public class XaeroClientMapHandler extends ClientMapHandler {
     @Override
     public void removeAllAreaMarkers(boolean clearXaeroHash) {
         chunkHighlightHash = (chunkHighlightHash + 1) % 10000;
+        hasAreaMarkers = hasAreaMarkers || !chunkHighlightMap.isEmpty() || !regionsWithChunkHighlights.isEmpty();
         chunkHighlightMap.clear();
         regionsWithChunkHighlights.clear();
-        if (clearXaeroHash && mapHighlightClearer != null) mapHighlightClearer.clearHashCache();
+        if (clearXaeroHash && hasAreaMarkers && mapHighlightClearer != null) {
+            mapHighlightClearer.clearHashCache();
+            hasAreaMarkers = false;
+        }
     }
 
     //Thanks to https://www.mathematik.uni-marburg.de/~thormae/lectures/graphics1/code_v2/RasterPoly/index.html
