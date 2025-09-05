@@ -22,9 +22,11 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
 /**
  * @author Leander Knüttel
- * @version 31.08.2025
+ * @version 05.09.2025
  */
 public class Double3 {
+    public static final Double3 ZERO = new Double3(0, 0, 0);
+
     public final double x;
     public final double y;
     public final double z;
@@ -59,5 +61,17 @@ public class Double3 {
 
     public Double3 add(Double3 double3) {
         return new Double3(x + double3.x, y + double3.y, z + double3.z);
+    }
+
+    public Double3 sub(Double3 double3) {
+        return new Double3(x - double3.x, y - double3.y, z - double3.z);
+    }
+
+    public double dot(Double3 double3) {
+        return x * double3.x + y * double3.y + z * double3.z;
+    }
+
+    public double len() {
+        return Math.sqrt(x * x + y * y + z * z);
     }
 }

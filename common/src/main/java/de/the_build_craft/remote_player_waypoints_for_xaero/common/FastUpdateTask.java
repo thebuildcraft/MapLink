@@ -21,30 +21,34 @@
 package de.the_build_craft.remote_player_waypoints_for_xaero.common;
 
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.ClientMapHandler;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.Double3;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints.PlayerPosition;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.RemotePlayer;
 #if MC_VER >= MC_1_21_6
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.waypoints.TrackedWaypoint;
-import java.util.UUID;
-import java.util.stream.Collectors;
 #endif
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.*;
 
 /**
  * @author Leander Knüttel
- * @version 31.08.2025
+ * @version 05.09.2025
  */
 public class FastUpdateTask {
     private final Minecraft mc;
     public static final Map<String, PlayerPosition> playerPositions = new ConcurrentHashMap<>();
     private final Map<String, PlayerPosition> onlinePlayerPositions = new ConcurrentHashMap<>();
+    private Set<String> currentLocalPlayerNames = new HashSet<>();
+    private final Map<String, Integer> skipOnlineUpdates = new ConcurrentHashMap<>();
+    private final Map<String, Double3> lastLocalVector = new ConcurrentHashMap<>();
+    private final Map<String, PlayerPosition> lastLocalPosition = new HashMap<>();
     private static FastUpdateTask instance;
 
     public FastUpdateTask() {
@@ -81,52 +85,99 @@ public class FastUpdateTask {
             return;
         }
 
-        playerPositions.putAll(onlinePlayerPositions);
+        Set<String> prevLocalPlayerNames = currentLocalPlayerNames;
+        currentLocalPlayerNames = new HashSet<>(prevLocalPlayerNames.size());
 
-        #if MC_VER >= MC_1_21_6
-        Map<UUID, String> uuidPlayerMap = mc.getConnection().getOnlinePlayers().stream()
-                .collect(Collectors.toMap(playerInfo -> playerInfo.getProfile().getId(),
-                        playerInfo -> playerInfo.getProfile().getName()));
+        synchronized (onlinePlayerPositions) {
+            playerPositions.putAll(onlinePlayerPositions);
 
-        mc.player.connection.getWaypointManager().forEachWaypoint(mc.cameraEntity,
-                trackedWaypoint -> {
-                    if (trackedWaypoint.type == TrackedWaypoint.Type.VEC3I) {
-                        TrackedWaypoint.Vec3iWaypoint vec3iWaypoint = (TrackedWaypoint.Vec3iWaypoint) trackedWaypoint;
-                        vec3iWaypoint.id().left().ifPresent(uuid -> {
-                            if (uuidPlayerMap.containsKey(uuid)) {
-                                String name = uuidPlayerMap.get(uuid);
-                                //Only show players that are visible on the OnlineMap to comply with Modrinth's content rules!
-                                if (onlinePlayerPositions.containsKey(name)) {
-                                    PlayerPosition playerPosition = new PlayerPosition(name,
-                                            vec3iWaypoint.vector.getX(),
-                                            vec3iWaypoint.vector.getY(),
-                                            vec3iWaypoint.vector.getZ(),
-                                            "");
-                                    ClientMapHandler.registerTempPlayerPosition(playerPosition);
-                                    playerPositions.put(name, playerPosition);
+            #if MC_VER >= MC_1_21_6
+            Map<UUID, String> uuidPlayerMap = mc.getConnection().getOnlinePlayers().stream()
+                    .collect(Collectors.toMap(playerInfo -> playerInfo.getProfile().getId(),
+                            playerInfo -> playerInfo.getProfile().getName()));
+
+            Vec3 cameraPos = mc.cameraEntity.getEyePosition();
+
+            mc.player.connection.getWaypointManager().forEachWaypoint(mc.cameraEntity,
+                    trackedWaypoint -> {
+                        if (trackedWaypoint.type == TrackedWaypoint.Type.VEC3I) {
+                            TrackedWaypoint.Vec3iWaypoint vec3iWaypoint = (TrackedWaypoint.Vec3iWaypoint) trackedWaypoint;
+                            vec3iWaypoint.id().left().ifPresent(uuid -> {
+                                if (uuidPlayerMap.containsKey(uuid)) {
+                                    String name = uuidPlayerMap.get(uuid);
+                                    //Only show players that are visible on the OnlineMap to comply with Modrinth's content rules!
+                                    if (onlinePlayerPositions.containsKey(name)
+                                            //useless outside 200m range!
+                                            && cameraPos.distanceToSqr(vec3iWaypoint.vector.getX(), vec3iWaypoint.vector.getY(), vec3iWaypoint.vector.getZ()) < 200 * 200) {
+                                        PlayerPosition playerPosition = new PlayerPosition(name,
+                                                vec3iWaypoint.vector.getX(),
+                                                vec3iWaypoint.vector.getY(),
+                                                vec3iWaypoint.vector.getZ(),
+                                                "");
+                                        updateFromLocalPosition(playerPosition);
+                                    }
                                 }
-                            }
-                        });
-                    }
-                });
-        #endif
+                            });
+                        }
+                    });
+            #endif
 
-        for (AbstractClientPlayer player : mc.level.players()) {
-            String playerName = player.getGameProfile().getName();
-            //Only show players that are visible on the OnlineMap to comply with Modrinth's content rules!
-            if (player instanceof RemotePlayer && onlinePlayerPositions.containsKey(playerName)) {
-                PlayerPosition playerPosition = new PlayerPosition(player);
-                ClientMapHandler.registerTempPlayerPosition(playerPosition);
-                playerPositions.put(playerName, playerPosition);
+            for (AbstractClientPlayer player : mc.level.players()) {
+                String name = player.getGameProfile().getName();
+                //Only show players that are visible on the OnlineMap to comply with Modrinth's content rules!
+                if (player instanceof RemotePlayer && onlinePlayerPositions.containsKey(name)) {
+                    updateFromLocalPosition(new PlayerPosition(player));
+                }
+            }
+
+            for (String playerName : prevLocalPlayerNames) {
+                if (!currentLocalPlayerNames.contains(playerName)) {
+                    skipOnlineUpdates.put(playerName, 2);
+                }
             }
         }
 
         ClientMapHandler.getInstance().handlePlayerWaypoints();
     }
 
+    private void updateFromLocalPosition(PlayerPosition playerPosition) {
+        ClientMapHandler.registerTempPlayerPosition(playerPosition);
+        Double3 lastPos = lastLocalPosition.getOrDefault(playerPosition.name, playerPosition).pos;
+        if (!lastPos.roughlyEqual(playerPosition.pos)) {
+            lastLocalVector.put(playerPosition.name, playerPosition.pos.sub(lastPos));
+        }
+        lastLocalPosition.put(playerPosition.name, playerPosition);
+        playerPositions.put(playerPosition.name, playerPosition);
+        currentLocalPlayerNames.add(playerPosition.name);
+        skipOnlineUpdates.remove(playerPosition.name);
+        onlinePlayerPositions.put(playerPosition.name, playerPosition);
+    }
+
     public void updateFromOnlineMap(HashMap<String, PlayerPosition> onlinePlayerPositions) {
-        this.onlinePlayerPositions.clear();
-        this.onlinePlayerPositions.putAll(onlinePlayerPositions);
+        synchronized (this.onlinePlayerPositions) {
+            for (PlayerPosition playerPosition : onlinePlayerPositions.values()) {
+                if (skipOnlineUpdates.containsKey(playerPosition.name)) {
+                    double dot = playerPosition.pos.sub(lastLocalPosition.get(playerPosition.name).pos)
+                            .dot(lastLocalVector.getOrDefault(playerPosition.name, Double3.ZERO));
+                    if (dot >= 0) {
+                        skipOnlineUpdates.remove(playerPosition.name);
+                        this.onlinePlayerPositions.put(playerPosition.name, playerPosition);
+                        continue;
+                    }
+                    int skipCount = skipOnlineUpdates.get(playerPosition.name);
+                    if (skipCount <= 0) {
+                        skipOnlineUpdates.remove(playerPosition.name);
+                        this.onlinePlayerPositions.put(playerPosition.name, playerPosition);
+                        continue;
+                    }
+                    skipOnlineUpdates.put(playerPosition.name, skipCount - 1);
+                } else {
+                    this.onlinePlayerPositions.put(playerPosition.name, playerPosition);
+                }
+            }
+            this.onlinePlayerPositions.entrySet().removeIf(e -> !onlinePlayerPositions.containsKey(e.getKey()));
+            this.skipOnlineUpdates.entrySet().removeIf(e -> !onlinePlayerPositions.containsKey(e.getKey()));
+        }
     }
 
     public void clearAllPlayerPositions() {
