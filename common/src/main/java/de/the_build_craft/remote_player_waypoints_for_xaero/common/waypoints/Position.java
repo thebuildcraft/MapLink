@@ -23,13 +23,16 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.ClientMapHandler;
 
+import java.util.regex.Pattern;
+
 /**
  * A marker's name and position
  *
  * @author Leander Knüttel
- * @version 01.09.2025
+ * @version 05.09.2025
  */
 public class Position {
+    private static final Pattern nameRegexPattern = Pattern.compile("<.+?>|\\R|\\n");
     public final String name;
     public final Double3 pos;
     public final String id;
@@ -51,6 +54,6 @@ public class Position {
 
     static String getDisplayName(String name){
         return org.apache.commons.lang3.StringEscapeUtils
-                .unescapeHtml4(name.replaceAll("<.+?>|\\R|\\n", "").trim());
+                .unescapeHtml4(nameRegexPattern.matcher(name).replaceAll("").trim());
     }
 }
