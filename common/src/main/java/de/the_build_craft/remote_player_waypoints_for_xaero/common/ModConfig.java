@@ -101,6 +101,10 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         public boolean showPlayerWaypointsAsTrackedPlayers = true;
 
         @ConfigEntry.Gui.Tooltip()
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+        public int interpolationTime = 100;
+
+        @ConfigEntry.Gui.Tooltip()
         public boolean enablePlayerIconWaypoints = true;
 
         @ConfigEntry.Gui.Tooltip()

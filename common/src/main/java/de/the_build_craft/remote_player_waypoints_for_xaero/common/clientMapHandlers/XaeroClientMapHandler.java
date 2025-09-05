@@ -49,7 +49,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.FastUp
 
 /**
  * @author Leander Knüttel
- * @version 31.08.2025
+ * @version 05.09.2025
  */
 public class XaeroClientMapHandler extends ClientMapHandler {
     public static final Long2ObjectMap<ChunkHighlight> chunkHighlightMap = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
@@ -100,12 +100,12 @@ public class XaeroClientMapHandler extends ClientMapHandler {
 
                 if (waypointState.renderOnHud || waypointState.renderOnMiniMap) {
                     hudAndMinimapPlayerTrackerPositions.computeIfAbsent(playerInfo.getProfile().getId(), uuid -> new MutablePlayerPosition(playerPosition, waypointState))
-                            .pos.updateFrom(playerPosition.pos);
+                            .updateFrom(playerPosition.pos);
                     currentHudAndMinimapPlayerTrackerUUIDs.add(playerInfo.getProfile().getId());
                 }
                 if (waypointState.renderOnWorldMap) {
                     worldmapPlayerTrackerPositions.computeIfAbsent(playerInfo.getProfile().getId(), uuid -> new MutablePlayerPosition(playerPosition, waypointState))
-                            .pos.updateFrom(playerPosition.pos);
+                            .updateFrom(playerPosition.pos);
                     currentWorldmapPlayerTrackerUUIDs.add(playerInfo.getProfile().getId());
                 }
             }

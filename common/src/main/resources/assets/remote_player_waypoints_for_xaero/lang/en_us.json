@@ -19,6 +19,8 @@
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.enablePlayerWaypoints.@PrefixText": "Player Options",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.showPlayerWaypointsAsTrackedPlayers": "Display Players as \"Tracked Players\"",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.showPlayerWaypointsAsTrackedPlayers.@Tooltip": "Uses xaeros's build-in player trackers instead of waypoints.\nThe scaling options from this mod don't apply to them.\nGo into the xaero settings to configure player trackers\nand if and how they are rendered as radar entities.",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.interpolationTime": "Player Tracker Position Interpolation Time",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.general.interpolationTime.@Tooltip": "Makes movement of player tracker smoother.\n0 disables the interpolation",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.enablePlayerIconWaypoints": "Enable Head Icons on Player Waypoints",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.enablePlayerIconWaypoints.@Tooltip": "Doesn't effect Trackers!",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.general.useMcHeadsPlayerNameIcons": "Use Player Head Icons from MCHeads",

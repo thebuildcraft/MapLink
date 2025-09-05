@@ -22,7 +22,7 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
 /**
  * @author Leander Knüttel
- * @version 31.08.2025
+ * @version 05.09.2025
  */
 public class MutableDouble3 {
     public double x;
@@ -42,6 +42,12 @@ public class MutableDouble3 {
         this.x = double3.x;
         this.y = double3.y;
         this.z = double3.z;
+    }
+
+    public void updateFrom(MutableDouble3 mutableDouble3) {
+        this.x = mutableDouble3.x;
+        this.y = mutableDouble3.y;
+        this.z = mutableDouble3.z;
     }
 
     public Double3 toDouble3() {

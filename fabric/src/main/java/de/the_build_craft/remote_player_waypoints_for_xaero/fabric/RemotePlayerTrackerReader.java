@@ -30,7 +30,7 @@ import java.util.UUID;
 
 /**
  * @author Leander Knüttel
- * @version 29.08.2025
+ * @version 05.09.2025
  */
 public class RemotePlayerTrackerReader implements ITrackedPlayerReader<MutablePlayerPosition>, xaero.map.radar.tracker.system.ITrackedPlayerReader<MutablePlayerPosition> {
     @Override
@@ -40,17 +40,17 @@ public class RemotePlayerTrackerReader implements ITrackedPlayerReader<MutablePl
 
     @Override
     public double getX(MutablePlayerPosition playerPosition) {
-        return playerPosition.pos.x;
+        return playerPosition.getLerpedX();
     }
 
     @Override
     public double getY(MutablePlayerPosition playerPosition) {
-        return playerPosition.pos.y;
+        return playerPosition.getLerpedY();
     }
 
     @Override
     public double getZ(MutablePlayerPosition playerPosition) {
-        return playerPosition.pos.z;
+        return playerPosition.getLerpedZ();
     }
 
     @Override
