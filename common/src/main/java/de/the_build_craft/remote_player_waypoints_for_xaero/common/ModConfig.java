@@ -89,7 +89,6 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         public List<ServerEntry> serverEntries = new ArrayList<>();
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = -100, max = 400)
         public int defaultY = 64;
 
         @ConfigEntry.Gui.Tooltip()
@@ -123,7 +122,6 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         public boolean showAfkInTabList = true;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 60, max = 600)
         public int timeUntilAfk = 120;
 
         @ConfigEntry.Gui.Tooltip()
@@ -266,58 +264,45 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minVisiblePlayerDistance = 30;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minNotVisiblePlayerDistance = 10;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 100, max = 100000)
         public int maxPlayerDistance = 100000;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 1000)
         public int maxPlayerWaypoints = 40;
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minPlayerIconDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 100, max = 100000)
         public int maxPlayerIconDistance = 100000;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 1000)
         public int maxPlayerIconWaypoints = 40;
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minMarkerDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 100, max = 100000)
         public int maxMarkerDistance = 100000;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 1000)
         public int maxMarkerWaypoints = 40;
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minMarkerIconDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 100, max = 100000)
         public int maxMarkerIconDistance = 100000;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 1000)
         public int maxMarkerIconWaypoints = 40;
 
         public HudModule() {
@@ -361,54 +346,42 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minPlayerDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 100, max = 100000)
         public int maxPlayerDistance = 100000;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 1000)
         public int maxPlayerWaypoints = 40;
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minPlayerIconDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 100, max = 100000)
         public int maxPlayerIconDistance = 100000;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 1000)
         public int maxPlayerIconWaypoints = 40;
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minMarkerDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 100, max = 100000)
         public int maxMarkerDistance = 100000;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 1000)
         public int maxMarkerWaypoints = 40;
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minMarkerIconDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 100, max = 100000)
         public int maxMarkerIconDistance = 100000;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 1000)
         public int maxMarkerIconWaypoints = 40;
 
         public MiniMapModule() {
@@ -450,54 +423,42 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minPlayerDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 100, max = 1000000)
         public int maxPlayerDistance = 1000000;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 1000)
         public int maxPlayerWaypoints = 1000;
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minPlayerIconDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 100, max = 1000000)
         public int maxPlayerIconDistance = 1000000;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 1000)
         public int maxPlayerIconWaypoints = 1000;
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minMarkerDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 100, max = 1000000)
         public int maxMarkerDistance = 1000000;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 10000)
         public int maxMarkerWaypoints = 10000;
 
         @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int minMarkerIconDistance = 0;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 100, max = 1000000)
         public int maxMarkerIconDistance = 1000000;
 
         @ConfigEntry.Gui.Tooltip()
-        @ConfigEntry.BoundedDiscrete(min = 0, max = 10000)
         public int maxMarkerIconWaypoints = 10000;
 
         public WorldMapModule() {
