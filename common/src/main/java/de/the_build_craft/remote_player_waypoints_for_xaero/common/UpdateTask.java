@@ -43,7 +43,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
  * @author eatmyvenom
  * @author TheMrEngMan
  * @author Leander Knüttel
- * @version 30.08.2025
+ * @version 06.09.2025
  */
 public class UpdateTask {
     private final Minecraft mc;
@@ -99,7 +99,6 @@ public class UpdateTask {
         String serverIP = mc.getCurrentServer().ip.toLowerCase(Locale.ROOT);
 
         if (!Objects.equals(currentServerIP, serverIP)){
-            if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().removeAllAreaMarkers(true);
             currentServerIP = serverIP;
             Reset();
             LOGGER.info("Server ip has changed!");

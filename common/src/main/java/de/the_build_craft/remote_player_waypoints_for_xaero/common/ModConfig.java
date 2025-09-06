@@ -29,10 +29,13 @@ import net.minecraft.client.Minecraft;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.config;
 
 /**
  * @author Leander Knüttel
- * @version 05.09.2025
+ * @version 06.09.2025
  */
 @Config(name = "remote_player_waypoints_for_xaero")
 #if MC_VER < MC_1_20_6
@@ -181,6 +184,9 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         @ConfigEntry.BoundedDiscrete(min = 1, max = 256)
         public int blocksPerChunkThreshold = 128;
 
+        @ConfigEntry.Gui.Tooltip
+        public int maxChunkArea = 500_000;
+
         //auto handled options
         @ConfigEntry.Gui.PrefixText
         public List<String> ignoredServers = new ArrayList<>();
@@ -195,6 +201,9 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @ConfigEntry.Gui.Excluded
         public boolean ignoreCertificatesUseAtYourOwnRisk = false;
+
+        @ConfigEntry.Gui.Excluded
+        public int configVersionDoNotEdit = 2;
 
         public General() {
         }
@@ -503,6 +512,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         public String link;
 
+        @ConfigEntry.Gui.PrefixText
         @ConfigEntry.Gui.Tooltip()
         @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
         public MarkerVisibilityMode markerVisibilityMode;
@@ -512,6 +522,14 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @ConfigEntry.Gui.Tooltip()
         @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
+        public SimpleMarkerVisibilityMode individualMarkerMode;
+
+        @ConfigEntry.Gui.Tooltip()
+        public List<String> markers;
+
+        @ConfigEntry.Gui.PrefixText
+        @ConfigEntry.Gui.Tooltip()
+        @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
         public MarkerVisibilityMode areaMarkerVisibilityMode;
 
         @ConfigEntry.Gui.Tooltip()
@@ -519,10 +537,25 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @ConfigEntry.Gui.Tooltip()
         @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
+        public SimpleMarkerVisibilityMode individualAreaMarkerMode;
+
+        @ConfigEntry.Gui.Tooltip()
+        public List<String> areaMarkers;
+
+        @ConfigEntry.Gui.PrefixText
+        @ConfigEntry.Gui.Tooltip()
+        @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
         public MarkerVisibilityMode iconMarkerVisibilityMode;
 
         @ConfigEntry.Gui.Tooltip()
         public List<String> iconMarkerLayers;
+
+        @ConfigEntry.Gui.Tooltip()
+        @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
+        public SimpleMarkerVisibilityMode individualIconMode;
+
+        @ConfigEntry.Gui.Tooltip()
+        public List<String> icons;
 
         public ServerEntry() {
             this("",
@@ -530,9 +563,15 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
                     MapType.Bluemap,
                     MarkerVisibilityMode.Auto,
                     new ArrayList<>(),
-                    MarkerVisibilityMode.Auto,
+                    SimpleMarkerVisibilityMode.BlackList,
                     new ArrayList<>(),
                     MarkerVisibilityMode.Auto,
+                    new ArrayList<>(),
+                    SimpleMarkerVisibilityMode.BlackList,
+                    new ArrayList<>(),
+                    MarkerVisibilityMode.Auto,
+                    new ArrayList<>(),
+                    SimpleMarkerVisibilityMode.BlackList,
                     new ArrayList<>());
         }
 
@@ -541,19 +580,31 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
                            MapType maptype,
                            MarkerVisibilityMode markerVisibilityMode,
                            List<String> markerLayers,
+                           SimpleMarkerVisibilityMode individualMarkerMode,
+                           List<String> markers,
                            MarkerVisibilityMode areaMarkerVisibilityMode,
                            List<String> areaMarkerLayers,
+                           SimpleMarkerVisibilityMode individualAreaMarkerMode,
+                           List<String> areaMarkers,
                            MarkerVisibilityMode iconMarkerVisibilityMode,
-                           List<String> iconMarkerLayers) {
+                           List<String> iconMarkerLayers,
+                           SimpleMarkerVisibilityMode individualIconMode,
+                           List<String> icons) {
             this.ip = ip;
             this.link = link;
             this.maptype = maptype;
             this.markerVisibilityMode = markerVisibilityMode;
             this.markerLayers = markerLayers;
+            this.individualMarkerMode = individualMarkerMode;
+            this.markers = markers;
             this.areaMarkerVisibilityMode = areaMarkerVisibilityMode;
             this.areaMarkerLayers = areaMarkerLayers;
+            this.individualAreaMarkerMode = individualAreaMarkerMode;
+            this.areaMarkers = areaMarkers;
             this.iconMarkerVisibilityMode = iconMarkerVisibilityMode;
             this.iconMarkerLayers = iconMarkerLayers;
+            this.individualIconMode = individualIconMode;
+            this.icons = icons;
         }
 
         public void setMarkerLayers(List<String> layers) {
@@ -600,6 +651,14 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
             }
         }
 
+        public enum SimpleMarkerVisibilityMode {
+            BlackList,
+            WhiteList;
+
+            SimpleMarkerVisibilityMode() {
+            }
+        }
+
         public boolean includeMarkerLayer(String layer) {
             return includeLayer(markerVisibilityMode, markerLayers, layer);
         }
@@ -626,6 +685,44 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
                 default:
                     throw new IllegalArgumentException();
             }
+        }
+
+        public boolean includeMarker(String name) {
+            return include(individualMarkerMode, markers, name);
+        }
+
+        public boolean includeAreaMarker(String name) {
+            return include(individualAreaMarkerMode, areaMarkers, name);
+        }
+
+        public boolean includeIcon(String name) {
+            return include(individualIconMode, icons, name);
+        }
+
+        private boolean include(SimpleMarkerVisibilityMode visibilityMode, List<String> words, String name) {
+            if (visibilityMode == SimpleMarkerVisibilityMode.BlackList) {
+                for (String word : words) {
+                    if (name.contains(word)) return false;
+                }
+                return true;
+            } else {
+                for (String word : words) {
+                    if (name.contains(word)) return true;
+                }
+                return false;
+            }
+        }
+
+        public int getMarkerVisibilityHash() {
+            return Objects.hash(config.general.enableMarkerWaypoints, markerVisibilityMode, markerLayers,
+                    individualMarkerMode, markers);
+        }
+
+        public int getAreaMarkerVisibilityHash() {
+            return Objects.hash(config.general.enableAreaMarkerOverlay, areaMarkerVisibilityMode, areaMarkerLayers,
+                    config.general.blocksPerChunkThreshold, config.general.areaFillAlphaMul, config.general.areaFillAlphaMin, config.general.areaFillAlphaMax,
+                    config.general.areaLineAlphaMul, config.general.areaLineAlphaMin, config.general.areaLineAlphaMax,
+                    config.general.maxChunkArea, individualAreaMarkerMode, areaMarkers);
         }
     }
 

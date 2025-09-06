@@ -20,19 +20,24 @@
 
 package de.the_build_craft.remote_player_waypoints_for_xaero.common.waypoints;
 
+import net.minecraft.util.Mth;
+
+import java.util.List;
 import java.util.Objects;
 
 /**
  * @author Leander Knüttel
- * @version 28.08.2025
+ * @version 06.09.2025
  */
 public class Color {
-    public int r;
-    public int g;
-    public int b;
-    public float a;
+    public final int r;
+    public final int g;
+    public final int b;
+    public final float a;
 
-    public Color() {}
+    public Color() {
+        this(0, 0, 0, 0);
+    }
 
     public Color(int r, int g, int b, float a) {
         this.r = r;
@@ -69,25 +74,24 @@ public class Color {
         return (r & 255) << 8 | (g & 255) << 16 | (b & 255) << 24 | ((int)(a * 255) & 255);
     }
 
-    public Color combineToThis(Color color) {
-        r = ((r + color.r) / 2) & 255;
-        g = ((g + color.g) / 2) & 255;
-        b = ((b + color.b) / 2) & 255;
-        a = Math.max(a, color.a);
-        return this;
-    }
-
-    public Color combineToNew(Color color) {
-        return clone().combineToThis(color);
-    }
-
-    public Color changeAlphaInThis(float alphaMul, float alphaMin, float alphaMax) {
-        a = Math.min(alphaMax, Math.max(alphaMin, a * alphaMul));
-        return this;
-    }
-
-    public Color changeAlphaToNew(float alphaMul, float alphaMin, float alphaMax) {
-        return clone().changeAlphaInThis(alphaMul, alphaMin, alphaMax);
+    public static Color combineColors(List<Color> colors, float alphaMul, float alphaMin, float alphaMax) {
+        float alphaSum = 0;
+        float currAlphaMax = 0;
+        for (Color c : colors) {
+            alphaSum += c.a;
+            currAlphaMax = Math.max(currAlphaMax, c.a);
+        }
+        float r = 0;
+        float g = 0;
+        float b = 0;
+        for (Color c : colors) {
+            float factor = c.a / alphaSum;
+            r += c.r * factor;
+            g += c.g * factor;
+            b += c.b * factor;
+        }
+        float a = Mth.clamp(currAlphaMax * alphaMul, alphaMin, alphaMax);
+        return new Color(Math.round(r), Math.round(g), Math.round(b), a);
     }
 
     @Override

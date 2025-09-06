@@ -43,7 +43,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
  * @author ewpratten
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 01.09.2025
+ * @version 06.09.2025
  */
 public class DynmapConnection extends MapConnection {
     private String markerStringTemplate = "";
@@ -283,14 +283,13 @@ public class DynmapConnection extends MapConnection {
             ClientMapHandler.getInstance().removeAllAreaMarkers(true);
             return;
         }
-        int newMarkerHash = getMarkerVisibilityHash();
-        int newAreaMarkerHash = getAreaMarkerVisibilityHash();
+        int newMarkerHash = serverEntry.getMarkerVisibilityHash();
+        int newAreaMarkerHash = serverEntry.getAreaMarkerVisibilityHash();
         if (lastMarkerDimension.equals(dimension)
                 && newMarkerHash == lastMarkerHash
                 && newAreaMarkerHash == lastAreaMarkerHash
         ) {
             ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
-            ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers, false);
             return;
         }
         lastMarkerDimension = dimension;
@@ -305,6 +304,7 @@ public class DynmapConnection extends MapConnection {
             if (serverEntry.includeMarkerLayer(set.getKey())) {
                 for (Map.Entry<String, DynmapMarkerUpdate.Set.Marker> markerEntry : set.getValue().markers.entrySet()) {
                     DynmapMarkerUpdate.Set.Marker m = markerEntry.getValue();
+                    if (!serverEntry.includeMarker(m.label)) continue;
                     Position position = new Position(m.label, m.x, m.y, m.z, dimension + set.getKey() + markerEntry.getKey(), new MarkerLayer(set.getKey(), set.getValue().label));
                     positions.add(position);
                     ClientMapHandler.registerPosition(position,
@@ -314,7 +314,7 @@ public class DynmapConnection extends MapConnection {
             if (serverEntry.includeAreaMarkerLayer(set.getKey())) {
                 for (Map.Entry<String, DynmapMarkerUpdate.Set.Area> areaEntry : set.getValue().areas.entrySet()) {
                     DynmapMarkerUpdate.Set.Area a = areaEntry.getValue();
-                    if (a.x.length < 2 || a.z.length < 2 || a.x.length != a.z.length) continue;
+                    if (!serverEntry.includeAreaMarker(a.label) || a.x.length < 2 || a.z.length < 2 || a.x.length != a.z.length) continue;
                     Double3[] points;
                     if (a.x.length > 2) {
                         points = new Double3[a.x.length];
@@ -330,17 +330,18 @@ public class DynmapConnection extends MapConnection {
                         };
                     }
                     areaMarkers.add(new AreaMarker(a.label, 0f, 0f, 0f, points,
-                            new Color(a.color, a.opacity), new Color(a.fillcolor, a.fillopacity), set.getKey() + areaEntry.getKey(), new MarkerLayer(set.getKey(), set.getValue().label)));
+                            new Color(a.color, a.opacity), new Color(a.fillcolor, a.fillopacity), dimension + set.getKey() + areaEntry.getKey(), new MarkerLayer(set.getKey(), set.getValue().label)));
                 }
                 for (Map.Entry<String, DynmapMarkerUpdate.Set.Circle> circleEntry : set.getValue().circles.entrySet()) {
                     DynmapMarkerUpdate.Set.Circle c = circleEntry.getValue();
+                    if (!serverEntry.includeAreaMarker(c.label)) continue;
                     areaMarkers.add(new AreaMarker(c.label, c.x, c.y, c.z, convertEllipseToPolygon(c),
-                            new Color(c.color, c.opacity), new Color(c.fillcolor, c.fillopacity), set.getKey() + circleEntry.getKey(), new MarkerLayer(set.getKey(), set.getValue().label)));
+                            new Color(c.color, c.opacity), new Color(c.fillcolor, c.fillopacity), dimension + set.getKey() + circleEntry.getKey(), new MarkerLayer(set.getKey(), set.getValue().label)));
                 }
             }
         }
         ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
-        ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers, true);
+        ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers);
     }
 
     Double3[] convertEllipseToPolygon(DynmapMarkerUpdate.Set.Circle circle) {

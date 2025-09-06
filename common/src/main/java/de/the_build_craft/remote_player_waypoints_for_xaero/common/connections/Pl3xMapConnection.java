@@ -43,7 +43,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 01.09.2025
+ * @version 06.09.2025
  */
 public class Pl3xMapConnection extends MapConnection{
     private String markerLayerStringTemplate = "";
@@ -185,13 +185,12 @@ public class Pl3xMapConnection extends MapConnection{
             ClientMapHandler.getInstance().removeAllMarkerWaypoints();
             return;
         }
-        int newMarkerHash = getMarkerVisibilityHash();
-        int newAreaMarkerHash = getAreaMarkerVisibilityHash();
+        int newMarkerHash = serverEntry.getMarkerVisibilityHash();
+        int newAreaMarkerHash = serverEntry.getAreaMarkerVisibilityHash();
         if (lastMarkerDimension.equals(currentDimension)
                 && newAreaMarkerHash == lastAreaMarkerHash
                 && newMarkerHash == lastMarkerHash) {
             ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
-            ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers, false);
             return;
         }
         lastMarkerDimension = currentDimension;
@@ -209,13 +208,13 @@ public class Pl3xMapConnection extends MapConnection{
                 Pl3xMapMarkerUpdate[] markers = HTTP.makeJSONHTTPRequest(reqUrl, apiResponseType);
 
                 for (Pl3xMapMarkerUpdate marker : markers){
-                    if (Objects.equals(marker.type, "icon") && serverEntry.includeMarkerLayer(layer.id)) {
+                    if (Objects.equals(marker.type, "icon") && serverEntry.includeMarkerLayer(layer.id) && serverEntry.includeMarker(marker.options.tooltip.content)) {
                         Position position = new Position(marker.options.tooltip.content, marker.data.point.x, config.general.defaultY, marker.data.point.z, currentDimension + layer.id + marker.data.key, layer);
                         ClientMapHandler.registerPosition(position,
                                 (!config.general.showDefaultMarkerIcons && marker.data.image.equals("marker-icon")) ? null : markerIconLinkTemplate.replace("{icon}", marker.data.image));
                         positions.add(position);
                     }
-                    if (!(serverEntry.includeAreaMarkerLayer(layer.id) && areaTypes.containsKey(marker.type))) continue;
+                    if (!(serverEntry.includeAreaMarkerLayer(layer.id) && areaTypes.containsKey(marker.type) && serverEntry.includeAreaMarker(marker.options.tooltip.content))) continue;
                     Int3[][] polygons = areaTypes.get(marker.type).apply(marker);
                     areaMarkers.add(new AreaMarker(marker.options.tooltip.content,
                             0,
@@ -236,21 +235,21 @@ public class Pl3xMapConnection extends MapConnection{
             for (SquareMapMarkerUpdate layer : markerLayers){
                 if (!Objects.equals(layer.id, "pl3xmap_players")) {
                     for (SquareMapMarkerUpdate.Marker marker : layer.markers) {
-                        if (Objects.equals(marker.type, "icon")  && serverEntry.includeMarkerLayer(layer.id)) {
+                        if (Objects.equals(marker.type, "icon") && serverEntry.includeMarkerLayer(layer.id) && serverEntry.includeMarker(marker.tooltip)) {
                             Position position = new Position(marker.tooltip, marker.point.x, config.general.defaultY, marker.point.z, currentDimension + layer.id + marker.tooltip + marker.point.x + marker.point.z, new MarkerLayer(layer.id, layer.name));
                             ClientMapHandler.registerPosition(position, marker.icon.equals("marker-icon") ? null : markerIconLinkTemplate.replace("{icon}", marker.icon));
                             positions.add(position);
                         }
-                        else if (Objects.equals(marker.type, "polygon") && serverEntry.includeAreaMarkerLayer(layer.id)) {
+                        else if (Objects.equals(marker.type, "polygon") && serverEntry.includeAreaMarkerLayer(layer.id) && serverEntry.includeAreaMarker(marker.tooltip)) {
                             areaMarkers.add(new AreaMarker(marker.tooltip, 0, 0, 0, Arrays.stream(marker.points).flatMap(Arrays::stream).toArray(Int3[][]::new),
-                                    new Color(marker.color, 1f), new Color(marker.fillColor, marker.opacity), layer.id + marker.tooltip + Arrays.deepHashCode(marker.points), new MarkerLayer(layer.id, layer.name)));
+                                    new Color(marker.color, 1f), new Color(marker.fillColor, marker.opacity), currentDimension + layer.id + marker.tooltip + Arrays.deepHashCode(marker.points), new MarkerLayer(layer.id, layer.name)));
                         }
                     }
                 }
             }
         }
         ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
-        ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers, true);
+        ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers);
     }
 
     Int3[] convertCircleToPolygon(Int3 center, float radius) {

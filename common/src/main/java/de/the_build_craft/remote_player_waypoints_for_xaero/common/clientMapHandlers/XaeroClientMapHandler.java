@@ -49,12 +49,13 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.FastUp
 
 /**
  * @author Leander Knüttel
- * @version 05.09.2025
+ * @version 06.09.2025
  */
 public class XaeroClientMapHandler extends ClientMapHandler {
-    public static final Long2ObjectMap<ChunkHighlight> chunkHighlightMap = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
+    public static final Long2ObjectMap<Set<AreaMarker>> chunkHighlightMap = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
     public static final LongSet regionsWithChunkHighlights = LongSets.synchronize(new LongOpenHashSet());
     public static int chunkHighlightHash;
+    public static boolean currentlyRasterising;
     public static MapHighlightClearer mapHighlightClearer;
 
     private static final Map<String, XaeroIcon> iconLinkToXaeroIcon = new HashMap<>();
@@ -240,47 +241,57 @@ public class XaeroClientMapHandler extends ClientMapHandler {
         updateWorldMapWaypointColors(idToWorldMapMarker, w -> config.general.markerWaypointColor.ordinal());
     }
 
-    private int lastAreaMarkerHash;
     private boolean hasAreaMarkers = true;
+    private Thread currentRasterThread;
 
     @Override
-    public void handleAreaMarkers(List<AreaMarker> markerPositions, boolean refresh) {
-        int newAreaMarkerHash = getAreaMarkerVisibilityHash();
-        if (lastAreaMarkerHash != newAreaMarkerHash) {
-            refresh = true;
+    public void handleAreaMarkers(List<AreaMarker> markerPositions) {
+        currentlyRasterising = false;
+        if (currentRasterThread != null) {
+            try {
+                currentRasterThread.join();
+            } catch (InterruptedException ignored) {}
+            currentRasterThread = null;
         }
-        lastAreaMarkerHash = newAreaMarkerHash;
-        if (!refresh) return;
+
         removeAllAreaMarkers(false);
+
         if (config.general.enableAreaMarkerOverlay) {
-            for (Map.Entry<AreaMarker, List<Long>> cords : markerPositions.parallelStream()
-                    .collect(Collectors.toMap(a -> a, this::rasterizeAreaMarker)).entrySet()) {
-                for (long cord : cords.getValue()) {
-                    createChunkHighlightAt(cords.getKey(), cord);
+            currentlyRasterising = true;
+            currentRasterThread = new Thread(() -> {
+                for (Map.Entry<AreaMarker, List<Long>> cords : markerPositions.parallelStream()
+                        .collect(Collectors.toMap(a -> a, this::rasterizeAreaMarker)).entrySet()) {
+                    for (long cord : cords.getValue()) {
+                        if (!currentlyRasterising) return;
+                        createChunkHighlightAt(cords.getKey(), cord);
+                    }
                 }
-            }
+                if (!currentlyRasterising) return;
+                chunkHighlightHash = (chunkHighlightHash + 1) % 10000;
+                if (mapHighlightClearer != null) mapHighlightClearer.clearHashCache();
+                currentlyRasterising = false;
+            });
+            currentRasterThread.start();
+        } else {
+            chunkHighlightHash = (chunkHighlightHash + 1) % 10000;
+            if (mapHighlightClearer != null) mapHighlightClearer.clearHashCache();
         }
-        if (mapHighlightClearer != null) mapHighlightClearer.clearHashCache();
     }
 
     private void createChunkHighlightAt(AreaMarker areaMarker, long chunkKey) {
         hasAreaMarkers = true;
-        ChunkHighlight chunkHighlight = chunkHighlightMap.get(chunkKey);
-        if (chunkHighlight != null) {
-            chunkHighlight.combine(areaMarker);
-        } else {
-            chunkHighlightMap.put(chunkKey, new ChunkHighlight(areaMarker));
-        }
+        chunkHighlightMap.computeIfAbsent(chunkKey, key -> new HashSet<>()).add(areaMarker);
         regionsWithChunkHighlights.add(MathUtils.shiftRightIntsInLong(chunkKey, 5));
     }
 
     @Override
     public void removeAllAreaMarkers(boolean clearXaeroHash) {
-        chunkHighlightHash = (chunkHighlightHash + 1) % 10000;
         hasAreaMarkers = hasAreaMarkers || !chunkHighlightMap.isEmpty() || !regionsWithChunkHighlights.isEmpty();
         chunkHighlightMap.clear();
         regionsWithChunkHighlights.clear();
+        currentlyRasterising = false;
         if (clearXaeroHash && hasAreaMarkers && mapHighlightClearer != null) {
+            chunkHighlightHash = (chunkHighlightHash + 1) % 10000;
             mapHighlightClearer.clearHashCache();
             hasAreaMarkers = false;
         }
@@ -324,8 +335,7 @@ public class XaeroClientMapHandler extends ClientMapHandler {
                 globalZMax >>= 4;
 
                 area += (1 + globalXMax - globalXMin) * (1 + globalZMax - globalZMin);
-                if (area > 500_000) {
-                    LOGGER.warn("polygon to large: " + areaMarker.name);
+                if (area > config.general.maxChunkArea) {
                     return new ArrayList<>();
                 }
 
@@ -352,6 +362,7 @@ public class XaeroClientMapHandler extends ClientMapHandler {
             List<Integer> intersections = new ArrayList<>();
 
             while (!edges.isEmpty() || !activeEdges.isEmpty()) {
+                if (!currentlyRasterising) return new ArrayList<>();
                 Iterator<Edge> edgeIterator = edges.iterator();
                 Edge edge;
                 while (edgeIterator.hasNext() && (edge = edgeIterator.next()).zMin == z) {
@@ -371,6 +382,7 @@ public class XaeroClientMapHandler extends ClientMapHandler {
                         int xMax = intersections.get(i+1);
 
                         for (int x = xMin; x <= xMax; x++) {
+                            if (!currentlyRasterising) return new ArrayList<>();
                             long key = MathUtils.combineIntsToLong(x >> 4, z >> 4);
                             result.put(key, result.get(key) + 1);
                         }

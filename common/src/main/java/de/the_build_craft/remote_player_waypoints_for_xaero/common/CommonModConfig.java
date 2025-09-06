@@ -29,7 +29,7 @@ import java.util.Objects;
 
 /**
  * @author Leander Knüttel
- * @version 31.08.2025
+ * @version 06.09.2025
  */
 public abstract class CommonModConfig {
     public static ModConfig config;
@@ -72,19 +72,5 @@ public abstract class CommonModConfig {
 
     public static int getWaypointLayerOrder() {
         return config.general.minimapWaypointsRenderBelow.isActive() ? -1 : 100;
-    }
-
-    public static int getMarkerVisibilityHash() {
-        ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
-        if (serverEntry == null) return 0;
-        return Objects.hash(config.general.enableMarkerWaypoints, serverEntry.markerVisibilityMode, serverEntry.markerLayers);
-    }
-
-    public static int getAreaMarkerVisibilityHash() {
-        ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
-        if (serverEntry == null) return 0;
-        return Objects.hash(config.general.enableAreaMarkerOverlay, serverEntry.areaMarkerVisibilityMode, serverEntry.areaMarkerLayers,
-                config.general.blocksPerChunkThreshold, config.general.areaFillAlphaMul, config.general.areaFillAlphaMin, config.general.areaFillAlphaMax,
-                config.general.areaLineAlphaMul, config.general.areaLineAlphaMin, config.general.areaLineAlphaMax);
     }
 }
