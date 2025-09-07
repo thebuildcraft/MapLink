@@ -50,7 +50,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.FastUp
 
 /**
  * @author Leander Knüttel
- * @version 06.09.2025
+ * @version 07.09.2025
  */
 public abstract class ClientMapHandler {
     public static final String waypointPrefix = "onlinemapsync_";
@@ -262,7 +262,9 @@ public abstract class ClientMapHandler {
 
                 double d = cameraPos.distanceTo(new Vec3(playerPosition.pos.x, playerPosition.pos.y, playerPosition.pos.z));
 
-                if (!(alwaysShowFriends && isFriend)) {
+                if (alwaysShowFriends && isFriend) {
+                    waypointState.renderOnHud &= d >= minHudD;
+                } else {
                     waypointState.renderOnHud &= onHud < maxOnHud && d >= minHudD && d <= maxHudD;
                     waypointState.renderOnMiniMap &= onMiniMap < maxOnMiniMap && d >= minMiniD && d <= maxMiniD;
                     waypointState.renderOnWorldMap &= onWorldMap < maxOnWorldMap && d >= minWorldD && d <= maxWorldD;

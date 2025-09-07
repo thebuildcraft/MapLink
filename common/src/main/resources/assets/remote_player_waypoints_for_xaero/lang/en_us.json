@@ -140,7 +140,7 @@
   "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.onlyShowFriendsWaypoints": "Only Show Player Waypoints / Trackers of Friends",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.onlyShowFriendsIconWaypoints": "Only Show Player Head Waypoint Icons of Friends",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.alwaysShowFriendsWaypoints": "Always Show Player Waypoints / Trackers of Friends",
-  "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.alwaysShowFriendsWaypoints.@Tooltip": "Only bypasses distance and max-count checks!",
+  "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.alwaysShowFriendsWaypoints.@Tooltip": "Only bypasses max-distance and max-count checks!",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.alwaysShowFriendsIconWaypoints": "Always Show Player Head Waypoint Icons of Friends",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.alwaysShowFriendsIconWaypoints.@Tooltip": "Only bypasses distance and max-count checks!",
   "text.autoconfig.remote_player_waypoints_for_xaero.option.friends.overwriteFriendWaypointColor": "Overwrite Waypoint Color of Friends",
