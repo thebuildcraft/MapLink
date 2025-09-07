@@ -22,6 +22,7 @@ package de.the_build_craft.remote_player_waypoints_for_xaero.mixins.common.mods.
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig;
 import de.the_build_craft.remote_player_waypoints_for_xaero.common.clientMapHandlers.XaeroClientMapHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -36,9 +37,11 @@ import xaero.hud.minimap.waypoint.render.world.WaypointWorldRenderContext;
 
 import java.util.List;
 
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.config;
+
 /**
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 07.09.2025
  */
 @Pseudo
 @Mixin(AbstractWaypointRenderProvider.class)
@@ -46,11 +49,11 @@ public abstract class AbstractWaypointRenderProviderMixin {
     @WrapOperation(method = "begin*", at = @At(value = "INVOKE", target = "Lxaero/hud/minimap/waypoint/WaypointCollector;collect(Ljava/util/List;)V"))
     private void begin(WaypointCollector instance, List<Waypoint> destination, Operation<Void> original, MinimapElementRenderLocation location, AbstractWaypointRenderContext context) {
         if (context instanceof WaypointWorldRenderContext) {
-            destination.addAll(XaeroClientMapHandler.idToHudPlayer.values());
-            destination.addAll(XaeroClientMapHandler.idToHudMarker.values());
+            if (config.hud.showPlayerWaypoints.isActive()) destination.addAll(XaeroClientMapHandler.idToHudPlayer.values());
+            if (config.hud.showMarkerWaypoints.isActive()) destination.addAll(XaeroClientMapHandler.idToHudMarker.values());
         } else if (context instanceof WaypointMapRenderContext) {
-            destination.addAll(XaeroClientMapHandler.idToMiniMapPlayer.values());
-            destination.addAll(XaeroClientMapHandler.idToMiniMapMarker.values());
+            if (config.minimap.showPlayerWaypoints.isActive()) destination.addAll(XaeroClientMapHandler.idToMiniMapPlayer.values());
+            if (config.minimap.showMarkerWaypoints.isActive()) destination.addAll(XaeroClientMapHandler.idToMiniMapMarker.values());
         }
         original.call(instance, destination);
     }

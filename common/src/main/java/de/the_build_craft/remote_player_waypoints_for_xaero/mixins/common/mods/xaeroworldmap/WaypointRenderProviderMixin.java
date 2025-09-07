@@ -33,11 +33,14 @@ import xaero.map.mods.gui.WaypointRenderContext;
 import xaero.map.mods.gui.WaypointRenderProvider;
 import xaero.map.mods.gui.Waypoint;
 
+import java.util.Collections;
 import java.util.Iterator;
+
+import static de.the_build_craft.remote_player_waypoints_for_xaero.common.CommonModConfig.config;
 
 /**
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 07.09.2025
  */
 @Pseudo
 @Mixin(WaypointRenderProvider.class)
@@ -53,8 +56,10 @@ public class WaypointRenderProviderMixin {
 
     @Inject(method = "begin*", at = @At("HEAD"))
     private void begin(ElementRenderLocation location, WaypointRenderContext context, CallbackInfo ci) {
-        remote_player_waypoints_for_xaero$playerIterator = XaeroClientMapHandler.idToWorldMapPlayer.values().iterator();
-        remote_player_waypoints_for_xaero$markerIterator = XaeroClientMapHandler.idToWorldMapMarker.values().iterator();
+        remote_player_waypoints_for_xaero$playerIterator = config.worldmap.showPlayerWaypoints.isActive() ?
+                XaeroClientMapHandler.idToWorldMapPlayer.values().iterator() : Collections.emptyIterator();
+        remote_player_waypoints_for_xaero$markerIterator = config.worldmap.showMarkerWaypoints.isActive() ?
+                XaeroClientMapHandler.idToWorldMapMarker.values().iterator() : Collections.emptyIterator();
     }
 
     @Inject(method = "hasNext*", at = @At("RETURN"), cancellable = true)

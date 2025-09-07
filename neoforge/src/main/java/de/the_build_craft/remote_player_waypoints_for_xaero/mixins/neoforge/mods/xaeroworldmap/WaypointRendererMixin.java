@@ -63,7 +63,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
 
 /**
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 07.09.2025
  */
 @Pseudo
 @Mixin(WaypointRenderer.class)
@@ -152,8 +152,8 @@ public class WaypointRendererMixin {
 
     #if MC_VER >= MC_1_21_6
     @Inject(method = "renderElementShadow(Lxaero/map/mods/gui/Waypoint;ZFDDLxaero/map/element/render/ElementRenderInfo;Lxaero/map/element/MapElementGraphics;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lxaero/map/graphics/renderer/multitexture/MultiTextureRenderTypeRendererProvider;)V",
-    #elif MC_VER >= MC_1_20_1
-    @Inject(method = "renderElementShadow(Lxaero/map/mods/gui/Waypoint;ZFDDLxaero/map/element/render/ElementRenderInfo;Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lxaero/map/graphics/renderer/multitexture/MultiTextureRenderTypeRendererProvider;)V",
+            #elif MC_VER >= MC_1_20_1
+            @Inject(method = "renderElementShadow(Lxaero/map/mods/gui/Waypoint;ZFDDLxaero/map/element/render/ElementRenderInfo;Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lxaero/map/graphics/renderer/multitexture/MultiTextureRenderTypeRendererProvider;)V",
             #else
             @Inject(method = "renderElementShadow(Lxaero/map/mods/gui/Waypoint;ZFDDLxaero/map/element/render/ElementRenderInfo;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lxaero/map/graphics/renderer/multitexture/MultiTextureRenderTypeRendererProvider;)V",
             #endif
@@ -181,52 +181,6 @@ public class WaypointRendererMixin {
                     || (!waypointState.isPlayer && !config.worldmap.showMarkerWaypoints.isActive())
                     || (waypointState.renderIconOnWorldMap && !hovered && !config.worldmap.waypointIconBackground)) {
                 ci.cancel();
-            }
-        }
-    }
-
-    #if MC_VER >= MC_1_21_6
-    @Inject(method = "renderElement(Lxaero/map/mods/gui/Waypoint;ZDFDDLxaero/map/element/render/ElementRenderInfo;Lxaero/map/element/MapElementGraphics;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lxaero/map/graphics/renderer/multitexture/MultiTextureRenderTypeRendererProvider;)Z",
-            at = @At(value = "HEAD"), cancellable = true)
-    private void cancel(Waypoint w,
-                        boolean hovered,
-                        double optionalDepth,
-                        float optionalScale,
-                        double partialX,
-                        double partialY,
-                        ElementRenderInfo renderInfo,
-                        MapElementGraphics guiGraphics,
-    #elif MC_VER >= MC_1_20_1
-    @Inject(method = "renderElement(Lxaero/map/mods/gui/Waypoint;ZDFDDLxaero/map/element/render/ElementRenderInfo;Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lxaero/map/graphics/renderer/multitexture/MultiTextureRenderTypeRendererProvider;)Z",
-            at = @At(value = "HEAD"), cancellable = true)
-    private void cancel(Waypoint w,
-                        boolean hovered,
-                        double optionalDepth,
-                        float optionalScale,
-                        double partialX,
-                        double partialY,
-                        ElementRenderInfo renderInfo,
-                        GuiGraphics guiGraphics,
-    #else
-    @Inject(method = "renderElement(Lxaero/map/mods/gui/Waypoint;ZDFDDLxaero/map/element/render/ElementRenderInfo;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lxaero/map/graphics/renderer/multitexture/MultiTextureRenderTypeRendererProvider;)Z",
-            at = @At(value = "HEAD"), cancellable = true)
-    private void cancel(Waypoint w,
-                        boolean hovered,
-                        double optionalDepth,
-                        float optionalScale,
-                        double partialX,
-                        double partialY,
-                        ElementRenderInfo renderInfo,
-                        PoseStack poseStack,
-    #endif
-                        MultiBufferSource.BufferSource vanillaBufferSource,
-                        MultiTextureRenderTypeRendererProvider rendererProvider,
-                        CallbackInfoReturnable<Boolean> cir) {
-        if (w instanceof CustomWorldMapWaypoint) {
-            WaypointState waypointState = ((CustomWorldMapWaypoint) w).getWaypointState();
-            if ((waypointState.isPlayer && !config.worldmap.showPlayerWaypoints.isActive())
-                    || (!waypointState.isPlayer && !config.worldmap.showMarkerWaypoints.isActive())) {
-                cir.setReturnValue(false);
             }
         }
     }

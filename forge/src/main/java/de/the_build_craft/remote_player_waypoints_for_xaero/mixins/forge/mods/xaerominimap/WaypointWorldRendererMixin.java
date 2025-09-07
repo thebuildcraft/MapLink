@@ -54,7 +54,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
 
 /**
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 07.09.2025
  */
 @Pseudo
 @Mixin(WaypointWorldRenderer.class)
@@ -140,33 +140,6 @@ public class WaypointWorldRendererMixin {
             }
         } else {
             return original;
-        }
-    }
-
-    @Inject(method = "renderElement*", at = @At("HEAD"), cancellable = true)
-    private void cancel(Waypoint w,
-                        boolean highlighted,
-                        boolean outOfBounds,
-                        double optionalDepth,
-                        float optionalScale,
-                        double partialX,
-                        double partialY,
-                        MinimapElementRenderInfo renderInfo,
-                        #if MC_VER >= MC_1_21_6
-                        MinimapElementGraphics guiGraphics,
-                        #elif MC_VER >= MC_1_20_1
-                        GuiGraphics guiGraphics,
-                        #else
-                        PoseStack poseStack,
-                        #endif
-                        MultiBufferSource.BufferSource vanillaBufferSource,
-                        CallbackInfoReturnable<Boolean> cir) {
-        if (w instanceof TempWaypoint) {
-            WaypointState waypointState = ((TempWaypoint) w).getWaypointState();
-            if ((waypointState.isPlayer && !config.hud.showPlayerWaypoints.isActive())
-                    || (!waypointState.isPlayer && !config.hud.showMarkerWaypoints.isActive())) {
-                cir.setReturnValue(false);
-            }
         }
     }
 

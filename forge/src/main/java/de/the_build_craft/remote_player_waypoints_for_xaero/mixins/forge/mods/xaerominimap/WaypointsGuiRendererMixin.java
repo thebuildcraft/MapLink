@@ -59,7 +59,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
 /**
  * @author TheMrEngMan
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 07.09.2025
  */
 
 @Pseudo
@@ -275,9 +275,7 @@ public class WaypointsGuiRendererMixin {
                         CallbackInfoReturnable<Boolean> cir) {
         if (w instanceof TempWaypoint) {
             WaypointState waypointState = ((TempWaypoint) w).getWaypointState();
-            if ((waypointState.isPlayer && !config.minimap.showPlayerWaypoints.isActive())
-                    || (!waypointState.isPlayer && !config.minimap.showMarkerWaypoints.isActive())
-                    || (outOfBounds && waypointState.isPlayer && !config.minimap.outOfBoundsPlayerWaypoints)
+            if ((outOfBounds && waypointState.isPlayer && !config.minimap.outOfBoundsPlayerWaypoints)
                     || (outOfBounds && !waypointState.isPlayer && !config.minimap.outOfBoundsMarkerWaypoints)) {
                 cir.setReturnValue(false);
             }
