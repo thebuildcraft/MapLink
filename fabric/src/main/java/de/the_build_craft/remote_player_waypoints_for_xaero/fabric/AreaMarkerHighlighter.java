@@ -49,7 +49,7 @@ import static de.the_build_craft.remote_player_waypoints_for_xaero.common.Common
 
 /**
  * @author Leander Knüttel
- * @version 06.09.2025
+ * @version 07.09.2025
  */
 public class AreaMarkerHighlighter extends ChunkHighlighter implements MapHighlightClearer {
     public AreaMarkerHighlighter() {
@@ -80,15 +80,15 @@ public class AreaMarkerHighlighter extends ChunkHighlighter implements MapHighli
         if (areaMarkerSet == null) return null;
 
         Set<AreaMarker> top = XaeroClientMapHandler.chunkHighlightMap
-                .getOrDefault(MathUtils.combineIntsToLong(chunkX, chunkZ - 1), Set.of());
+                .getOrDefault(MathUtils.combineIntsToLong(chunkX, chunkZ - 1), Collections.emptySet());
         Set<AreaMarker> bottom = XaeroClientMapHandler.chunkHighlightMap
-                .getOrDefault(MathUtils.combineIntsToLong(chunkX, chunkZ + 1), Set.of());
+                .getOrDefault(MathUtils.combineIntsToLong(chunkX, chunkZ + 1), Collections.emptySet());
         Set<AreaMarker> left = XaeroClientMapHandler.chunkHighlightMap
-                .getOrDefault(MathUtils.combineIntsToLong(chunkX - 1, chunkZ), Set.of());
+                .getOrDefault(MathUtils.combineIntsToLong(chunkX - 1, chunkZ), Collections.emptySet());
         Set<AreaMarker> right = XaeroClientMapHandler.chunkHighlightMap
-                .getOrDefault(MathUtils.combineIntsToLong(chunkX + 1, chunkZ), Set.of());
+                .getOrDefault(MathUtils.combineIntsToLong(chunkX + 1, chunkZ), Collections.emptySet());
 
-        return List.of(areaMarkerSet, top, right, bottom, left);
+        return Arrays.asList(areaMarkerSet, top, right, bottom, left);
     }
 
     @Override

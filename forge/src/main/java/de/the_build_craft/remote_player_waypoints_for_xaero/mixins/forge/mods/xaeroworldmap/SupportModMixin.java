@@ -34,13 +34,17 @@ import xaero.map.mods.SupportMods;
 
 /**
  * @author Leander Knüttel
- * @version 31.08.2025
+ * @version 07.09.2025
  */
 @Pseudo
 @Mixin(SupportMods.class)
 public class SupportModMixin {
-    @Inject(method =  "load", at = @At("TAIL"))
+    @Inject(method = "load", at = @At("TAIL"))
+    #if MC_VER >= MC_1_18_2
+    private void load(CallbackInfo ci) {
+    #else
     private static void load(CallbackInfo ci) {
+    #endif
         try {
             WorldMap.playerTrackerSystemManager.register(AbstractModInitializer.MOD_ID, new RemotePlayerTrackerSystem(
                     new RemotePlayerTrackerReader(), XaeroClientMapHandler.worldmapPlayerTrackerPositions));
