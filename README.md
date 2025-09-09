@@ -1,4 +1,4 @@
-<div style="text-align:center">
+<div align="center">
 
 ![Map Link](docs/assets/ModBanner.png)
 
