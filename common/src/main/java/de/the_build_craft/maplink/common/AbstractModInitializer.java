@@ -51,7 +51,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 31.08.2025
+ * @version 09.09.2025
  */
 public abstract class AbstractModInitializer
 {
@@ -252,7 +252,8 @@ public abstract class AbstractModInitializer
 	 * @param ms Time in seconds
 	 */
 	public static void setUpdateDelay(int ms) {
-		ms = Math.min(3000, Math.max(ms, 1000));
+		int maxUpdateDelay = Math.min(4000, Math.max(config.general.maxUpdateDelay, 1000));
+		ms = Math.min(maxUpdateDelay, Math.max(ms, 1000));
 		if (ms == timerDelay || scheduledSlowUpdateTask == null) return;
 		timerDelay = ms;
 		scheduledSlowUpdateTask.cancel(true);

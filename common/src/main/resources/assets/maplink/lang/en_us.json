@@ -10,6 +10,8 @@
   "text.autoconfig.maplink.option.general.enabled": "Enable Mod",
   "text.autoconfig.maplink.option.general.serverEntries": "Server Entries",
   "text.autoconfig.maplink.option.general.serverEntries.@Tooltip": "Add your servers here.\nClick on the (+) on the left.",
+  "text.autoconfig.maplink.option.general.maxUpdateDelay": "Max Online Update Delay",
+  "text.autoconfig.maplink.option.general.maxUpdateDelay.@Tooltip": "[between 1000 ms and 4000 ms]\nBy default, the update delay from the web-map is used.\nHowever, many servers that update slower than once per second, actually support much higher rates.\nJust experiment how far you can push it ☺",
   "text.autoconfig.maplink.option.general.defaultY": "Default Y",
   "text.autoconfig.maplink.option.general.defaultY.@Tooltip": "default Y coordinate for maps that don't provide Y coordinates",
   "text.autoconfig.maplink.option.general.minimapWaypointsRenderBelow": "Show MiniMap Waypoints Under Entities",

@@ -35,7 +35,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.config;
 
 /**
  * @author Leander Knüttel
- * @version 06.09.2025
+ * @version 09.09.2025
  */
 @Config(name = "maplink")
 #if MC_VER < MC_1_20_6
@@ -87,6 +87,9 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @ConfigEntry.Gui.Tooltip
         public List<ServerEntry> serverEntries = new ArrayList<>();
+
+        @ConfigEntry.Gui.Tooltip
+        public int maxUpdateDelay = 2000;
 
         @ConfigEntry.Gui.Tooltip()
         public int defaultY = 64;
