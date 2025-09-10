@@ -1,9 +1,9 @@
 /*
- *    This file is part of the Remote player waypoints for Xaero's Map mod
+ *    This file is part of the Map Link mod
  *    licensed under the GNU GPL v3 License.
  *    (some parts of this file are originally from the Distant Horizons mod by James Seibel)
  *
- *    Copyright (C) 2024  Leander Knüttel
+ *    Copyright (C) 2024 - 2025  Leander Knüttel and contributors
  *
  *    This program is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ plugins {
     id "dev.architectury.loom" version "1.10-SNAPSHOT" apply false
 
     // Modpublisher: publish to Github, Modrinth and Curseforge in one go
-    id "com.hypherionmc.modutils.modpublisher" version "2.1.6"
+    id "com.hypherionmc.modutils.modpublisher" version "2.1.7"
 }
 
 
@@ -333,11 +333,11 @@ subprojects { p ->
         configurations = [project.configurations.shadowMe]
         if (isMinecraftSubProject && p != project(":common")) {
             configurations.push(project.configurations.shadowCommon) // Shadow the common subproject
-            //FIXME relocate "de.the_build_craft.remote_player_waypoints_for_xaero.common", "loaderCommon.${p.name}.de.the_build_craft.remote_player_waypoints_for_xaero.common" // Move the loader files to a different location
+            //FIXME relocate "de.the_build_craft.maplink.common", "loaderCommon.${p.name}.de.the_build_craft.maplink.common" // Move the loader files to a different location
         
             if (findProject(":fabricLike") && p != project(":fabricLike")) {
                 configurations.push(project.configurations.shadowFabricLike) // Shadow the fabricLike subproject
-                //FIXME relocate "de.the_build_craft.remote_player_waypoints_for_xaero.fabriclike", "loaderCommon.${p.name}.de.the_build_craft.remote_player_waypoints_for_xaero.fabriclike" // Move the loader files to a different location
+                //FIXME relocate "de.the_build_craft.maplink.fabriclike", "loaderCommon.${p.name}.de.the_build_craft.maplink.fabriclike" // Move the loader files to a different location
             }
         }
         def librariesLocation = rootProject.mod_id + ".libraries"
@@ -444,8 +444,8 @@ subprojects { p ->
         // ==================== Delete un-needed files ====================
         exclude rootProject.mod_id + ".fabricLike.mixins.json" // This isnt required atm, but we will be using it later
 
-//        exclude "*.remote_player_waypoints_for_xaero.accesswidener"
-////        include "${accessWidenerVersion}.remote_player_waypoints_for_xaero.accesswidener"
+//        exclude "*.maplink.accesswidener"
+////        include "${accessWidenerVersion}.maplink.accesswidener"
 
         // Jank solution to remove all unused accesswideners
         // The line above would work..., except that (neo)forge (well, mainly architectury) requires the original accesswidener file, meaning we require this jank solution to keep it

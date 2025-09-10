@@ -1,9 +1,9 @@
 /*
- *    This file is part of the Remote player waypoints for Xaero's Map mod
+ *    This file is part of the Map Link mod
  *    licensed under the GNU GPL v3 License.
  *    (some parts of this file are originally from the Distant Horizons mod by James Seibel)
  *
- *    Copyright (C) 2024  Leander Knüttel
+ *    Copyright (C) 2024 - 2025  Leander Knüttel and contributors
  *
  *    This program is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * file changed by: Leander Knüttel
- * date: 14.06.2024
+ * date: 25.08.2025
  */
 
 plugins {
@@ -103,6 +103,9 @@ dependencies {
 
     implementation "maven.modrinth:xaeros-world-map:${rootProject.xaeros_world_map_forge_version}"
     implementation "maven.modrinth:xaeros-minimap:${rootProject.xaeros_minimap_forge_version}"
+
+    compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.5.0"))
+    implementation(include("io.github.llamalad7:mixinextras-forge:0.5.0"))
 
     //use addModJar() to include a library, some_api_version should be in version.property
     //addModJar(someApi.module("moduleName", rootProject.some_api_version))

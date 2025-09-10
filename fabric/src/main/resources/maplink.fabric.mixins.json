@@ -1,0 +1,29 @@
+{
+    "required": true,
+    "minVersion": "0.8",
+    "package": "de.the_build_craft.maplink.mixins",
+    "mixins": [
+    ],
+    "client": [
+        "common.client.PlayerListHudMixin",
+        "common.mods.xaerominimap.WaypointMapRenderReaderMixin",
+        "common.mods.xaerominimap.AbstractWaypointRenderProviderMixin",
+        "common.mods.xaeroworldmap.WorldMapWaypointAccessor",
+        "common.mods.xaeroworldmap.WaypointReaderMixin",
+        "common.mods.xaeroworldmap.WaypointRenderProviderMixin",
+        "fabric.mods.xaerominimap.MinimapElementRendererHandlerMixin",
+        "fabric.mods.xaerominimap.WaypointWorldRendererMixin",
+        "fabric.mods.xaerominimap.WaypointsGuiRendererMixin",
+        "fabric.mods.xaerominimap.SupportModsMixin",
+        "fabric.mods.xaerominimap.PlayerTrackerMinimapElementRendererMixin",
+        "fabric.mods.xaeroworldmap.HighlighterRegistryMixin",
+        "fabric.mods.xaeroworldmap.WaypointRendererMixin",
+        "fabric.mods.xaeroworldmap.SupportModMixin",
+        "fabric.mods.xaeroworldmap.PlayerTrackerMapElementRendererMixin"
+    ],
+    "server": [
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}

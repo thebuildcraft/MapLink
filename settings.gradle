@@ -1,9 +1,9 @@
 /*
- *    This file is part of the Remote player waypoints for Xaero's Map mod
+ *    This file is part of the Map Link mod
  *    licensed under the GNU GPL v3 License.
  *    (some parts of this file are originally from the Distant Horizons mod by James Seibel)
  *
- *    Copyright (C) 2024  Leander Knüttel
+ *    Copyright (C) 2024 - 2025  Leander Knüttel and contributors
  *
  *    This program is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -121,4 +121,4 @@ for (loader in ((String) gradle.builds_for).split(",")) {
     include(loaderName)
 }
 
-rootProject.name = "remote_player_waypoints_for_xaero"
+rootProject.name = "maplink"

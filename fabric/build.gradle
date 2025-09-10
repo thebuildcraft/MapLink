@@ -1,9 +1,9 @@
 /*
- *    This file is part of the Remote player waypoints for Xaero's Map mod
+ *    This file is part of the Map Link mod
  *    licensed under the GNU GPL v3 License.
  *    (some parts of this file are originally from the Distant Horizons mod by James Seibel)
  *
- *    Copyright (C) 2024  Leander Knüttel
+ *    Copyright (C) 2024 - 2025  Leander Knüttel and contributors
  *
  *    This program is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -19,11 +19,11 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * file changed by: Leander Knüttel
- * date: 21.04.2024
+ * date: 25.08.2025
  */
 
 plugins {
-    id "fabric-loom" version "1.10-SNAPSHOT"
+    id "fabric-loom" version "1.11-SNAPSHOT"
 }
 
 loom {
@@ -84,15 +84,17 @@ dependencies {
 
     // Mod Menu
     if (rootProject.modmenu_version != "") {
-        modImplementation("com.terraformersmc:modmenu:${rootProject.modmenu_version}")
+        modImplementation("com.terraformersmc:modmenu:${rootProject.modmenu_version}") {
+            exclude(group: "net.fabricmc")
+        }
     }
 
     modApi("me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_config_api_fabric_version}") {
         exclude(group: "net.fabricmc")
     }
 
-    modImplementation "maven.modrinth:xaeros-world-map:${rootProject.xaeros_world_map_fabric_version}"
-    modImplementation "maven.modrinth:xaeros-minimap:${rootProject.xaeros_minimap_fabric_version}"
+    modImplementation("maven.modrinth:xaeros-world-map:${rootProject.xaeros_world_map_fabric_version}")
+    modImplementation("maven.modrinth:xaeros-minimap:${rootProject.xaeros_minimap_fabric_version}")
 
     //use addModJar() to include a library
     //addModJar(fabricApi.module("fabric-lifecycle-events-v1", rootProject.fabric_api_version))
