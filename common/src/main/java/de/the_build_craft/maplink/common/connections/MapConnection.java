@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -42,7 +43,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 01.09.2025
+ * @version 14.09.2025
  */
 public abstract class MapConnection {
     public URL queryURL;
@@ -111,6 +112,19 @@ public abstract class MapConnection {
         if (config.general.debugMode && config.general.chatLogInDebugMode) {
             Utils.sendToClientChat("---");
         }
+
+        if (!firstPlayerUpdate) {
+            for (Map.Entry<String, Long> lastUpdateEntry : AbstractModInitializer.lastPlayerUpdateTimeMap.entrySet()) {
+                if ((System.currentTimeMillis() - lastUpdateEntry.getValue()) / 1000
+                        >= (Math.max(30, config.general.timeUntilAfk) - 5)) {
+                    String playerName = lastUpdateEntry.getKey();
+                    AbstractModInitializer.lastPlayerPosMap.remove(playerName);
+                    AbstractModInitializer.playerOverAfkTimeMap.remove(playerName);
+                    AbstractModInitializer.AfkMap.remove(playerName);
+                }
+            }
+        }
+
         for (PlayerPosition p : playerPositions) {
             UpdateAfkInfo(p, clientName);
 
@@ -125,6 +139,8 @@ public abstract class MapConnection {
     }
 
     public void UpdateAfkInfo(PlayerPosition playerPosition, String clientName) {
+        AbstractModInitializer.lastPlayerUpdateTimeMap.put(playerPosition.name, System.currentTimeMillis());
+
         if (AbstractModInitializer.lastPlayerPosMap.containsKey(playerPosition.name)) {
             if (AbstractModInitializer.lastPlayerPosMap.get(playerPosition.name).roughlyEqual(playerPosition.pos)) {
                 if (config.general.debugMode && config.general.chatLogInDebugMode) {
@@ -132,7 +148,7 @@ public abstract class MapConnection {
                             + (System.currentTimeMillis() - AbstractModInitializer.lastPlayerActivityTimeMap.get(playerPosition.name)) / 1000);
                 }
                 if ((System.currentTimeMillis() - AbstractModInitializer.lastPlayerActivityTimeMap.get(playerPosition.name)) / 1000
-                        >= config.general.timeUntilAfk) {
+                        >= Math.max(30, config.general.timeUntilAfk)) {
                     AbstractModInitializer.AfkMap.put(playerPosition.name, true);
                 }
             } else {
@@ -144,7 +160,12 @@ public abstract class MapConnection {
         } else {
             AbstractModInitializer.lastPlayerActivityTimeMap.put(playerPosition.name, System.currentTimeMillis());
             AbstractModInitializer.lastPlayerPosMap.put(playerPosition.name, playerPosition.pos);
-            AbstractModInitializer.playerOverAfkTimeMap.put(playerPosition.name, firstPlayerUpdate && !playerPosition.name.equals(clientName));
+            if (firstPlayerUpdate) {
+                AbstractModInitializer.playerOverAfkTimeMap.put(playerPosition.name, !playerPosition.name.equals(clientName));
+            } else {
+                AbstractModInitializer.playerOverAfkTimeMap.put(playerPosition.name, false);
+                AbstractModInitializer.AfkMap.put(playerPosition.name, false);
+            }
         }
     }
 

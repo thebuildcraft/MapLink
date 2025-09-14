@@ -39,7 +39,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 /**
  * @author Leander Knüttel
  * @author MeerBiene
- * @version 30.08.2025
+ * @version 14.09.2025
  */
 @Mixin(PlayerTabOverlay.class)
 public class PlayerListHudMixin {
@@ -74,18 +74,18 @@ public class PlayerListHudMixin {
         if (AbstractModInitializer.AfkMap.containsKey(playerName)) {
             if (AbstractModInitializer.AfkMap.get(playerName)) {
                 if (config.general.showAfkTimeInTabList) {
-                    cir.setReturnValue(newText.append(Text.literal("  [AFK: "
+                    cir.setReturnValue(newText.append(Text.literal(" [AFK: "
                                     + (AbstractModInitializer.playerOverAfkTimeMap.get(playerName) ? "> " : "")
                                     + maplink$getFormatedDuration(playerName) + "]")
                             .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(config.general.AfkColor)))));
                 }
                 else {
-                    cir.setReturnValue(newText.append(Text.literal("  [AFK]")
+                    cir.setReturnValue(newText.append(Text.literal(" [AFK]")
                             .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(config.general.AfkColor)))));
                 }
             }
         } else {
-            cir.setReturnValue(newText.append(Text.literal("  [???]")
+            cir.setReturnValue(newText.append(Text.literal(" [???]")
                     .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(config.general.unknownAfkStateColor)))));
         }
     }

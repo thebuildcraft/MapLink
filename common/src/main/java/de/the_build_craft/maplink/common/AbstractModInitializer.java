@@ -51,7 +51,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 09.09.2025
+ * @version 14.09.2025
  */
 public abstract class AbstractModInitializer
 {
@@ -78,6 +78,7 @@ public abstract class AbstractModInitializer
 	public static final Map<String, Long> lastPlayerActivityTimeMap = new ConcurrentHashMap<>();
 	public static final Map<String, Double3> lastPlayerPosMap = new HashMap<>();
 	public static final Map<String, Boolean> playerOverAfkTimeMap = new ConcurrentHashMap<>();
+	public static final Map<String, Long> lastPlayerUpdateTimeMap = new HashMap<>();
 
 	public static boolean xaeroMapInstalled = false;
 	public static boolean overwriteCurrentDimension = false;
@@ -177,7 +178,7 @@ public abstract class AbstractModInitializer
                                     String playerName = StringArgumentType.getString(context, "player");
                                     int time = IntegerArgumentType.getInteger(context, "time");
 									AbstractModInitializer.lastPlayerActivityTimeMap.put(playerName, System.currentTimeMillis() - time * 1000L);
-									AbstractModInitializer.AfkMap.put(playerName, time > config.general.timeUntilAfk);
+									AbstractModInitializer.AfkMap.put(playerName, time >= Math.max(30, config.general.timeUntilAfk));
 									Utils.sendToClientChat("Set AFK time for " + playerName + " to " + time);
 									return 1;
 								}))));
