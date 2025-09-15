@@ -71,8 +71,9 @@
   "text.autoconfig.maplink.option.general.maxChunkArea.@Tooltip": "Measured in bounding box area in Chunks.\n⚠Setting this to high will cause the Area Markers to take very long to show.⚠",
 
   "text.autoconfig.maplink.option.general.ignoredServers": "Ignored Servers",
-  "text.autoconfig.maplink.option.general.ignoredServers.@PrefixText": "These Options Are Handled for You",
+  "text.autoconfig.maplink.option.general.ignoredServers.@PrefixText": "Misc Options",
   "text.autoconfig.maplink.option.general.ignoreMarkerMessage": "Ignore Marker Message",
+  "text.autoconfig.maplink.option.general.hideAllChatErrors": "Hide All Errors in Chat",
 
   "text.autoconfig.maplink.option.general.debugMode": "Debug Mode",
   "text.autoconfig.maplink.option.general.debugMode.@PrefixText": "Dev Options - please ignore",

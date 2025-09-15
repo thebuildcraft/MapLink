@@ -21,6 +21,7 @@
 package de.the_build_craft.maplink.common.wrappers;
 
 import de.the_build_craft.maplink.common.AbstractModInitializer;
+import de.the_build_craft.maplink.common.CommonModConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
@@ -32,7 +33,7 @@ import java.util.function.Supplier;
 
 /**
  * @author Leander Knüttel
- * @version 31.08.2025
+ * @version 15.09.2025
  */
 public class Utils {
     public static void sendToClientChat(Component text){
@@ -48,6 +49,7 @@ public class Utils {
     }
 
     public static void sendErrorToClientChat(Component text){
+        if (CommonModConfig.config.general.hideAllChatErrors) return;
         sendToClientChat(text.copy().withStyle(Style.EMPTY.withColor(ChatFormatting.RED)));
     }
 

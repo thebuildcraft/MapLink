@@ -35,7 +35,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.config;
 
 /**
  * @author Leander Knüttel
- * @version 09.09.2025
+ * @version 15.09.2025
  */
 @Config(name = "maplink")
 #if MC_VER < MC_1_20_6
@@ -188,11 +188,13 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         @ConfigEntry.Gui.Tooltip
         public int maxChunkArea = 500_000;
 
-        //auto handled options
+        //misc options
         @ConfigEntry.Gui.PrefixText
         public List<String> ignoredServers = new ArrayList<>();
 
         public boolean ignoreMarkerMessage = false;
+
+        public boolean hideAllChatErrors = false;
 
         //dev options
         @ConfigEntry.Gui.PrefixText
