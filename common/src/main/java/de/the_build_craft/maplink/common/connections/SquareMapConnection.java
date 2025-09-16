@@ -43,7 +43,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 06.09.2025
+ * @version 16.09.2025
  */
 public class SquareMapConnection extends MapConnection {
     private String markerStringTemplate = "";
@@ -165,7 +165,7 @@ public class SquareMapConnection extends MapConnection {
     List<AreaMarker> areaMarkers = new ArrayList<>();
 
     @Override
-    public void getWaypointPositions() throws IOException {
+    public void getWaypointPositions(boolean forceRefresh) throws IOException {
         if (markerStringTemplate.isEmpty() || currentDimension.isEmpty()) {
             if (ClientMapHandler.getInstance() != null) {
                 ClientMapHandler.getInstance().removeAllMarkerWaypoints();
@@ -185,6 +185,7 @@ public class SquareMapConnection extends MapConnection {
         if (lastMarkerDimension.equals(currentDimension)
                 && newMarkerHash == lastMarkerHash
                 && newAreaMarkerHash == lastAreaMarkerHash
+                && !forceRefresh
         ) {
             ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
             return;

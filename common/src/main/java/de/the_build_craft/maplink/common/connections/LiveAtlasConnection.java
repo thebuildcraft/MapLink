@@ -132,10 +132,15 @@ public class LiveAtlasConnection extends MapConnection {
         return map;
     }
 
+    private int lastMapIndex;
+
     @Override
-    public void getWaypointPositions() throws IOException {
+    public void getWaypointPositions(boolean forceRefresh) throws IOException {
         if (mapConnections.isEmpty()) {
-            if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().removeAllMarkerWaypoints();
+            if (ClientMapHandler.getInstance() != null) {
+                ClientMapHandler.getInstance().removeAllMarkerWaypoints();
+                ClientMapHandler.getInstance().removeAllAreaMarkers(true);
+            }
             return;
         }
 
@@ -144,7 +149,8 @@ public class LiveAtlasConnection extends MapConnection {
             serverEntry.setMarkerLayers(new ArrayList<>(getMarkerLayers()));
         }
 
-        mapConnections.get(mapIndex).getWaypointPositions();
+        mapConnections.get(mapIndex).getWaypointPositions(mapIndex != lastMapIndex);
+        lastMapIndex = mapIndex;
     }
 
     @Override
