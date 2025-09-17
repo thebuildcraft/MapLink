@@ -19,63 +19,39 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * file changed by: Leander Knüttel
- * date: 25.08.2025
+ * date: 17.09.2025
  */
 
 plugins {
-    id "fabric-loom" version "1.11-SNAPSHOT"
+    id 'com.gradleup.shadow'
 }
 
-loom {
-    accessWidenerPath = project(":common").file("src/main/resources/${accessWidenerVersion}.${mod_id}.accesswidener")
-
-    mixin {
-        useLegacyMixinAp = false
-    }
-    // "runs" isn't required, but when we do need it then it can be useful
-    runs {
-        client {
-            client()
-            setConfigName("Fabric Client")
-            ideConfigGenerated(true)
-            runDir("../run")
-        }
-        server {
-            server()
-            setConfigName("Fabric Server")
-            ideConfigGenerated(true)
-            runDir("../run")
-        }
-    }
-}
-
-remapJar {
-    inputFile = shadowJar.archiveFile
-    dependsOn shadowJar
+architectury {
+    platformSetupLoomIde()
+    fabric()
 }
 
 configurations {
-    // The addModJar basically embeds the mod to the built jar
-    addModJar
-    include.extendsFrom addModJar
-    modImplementation.extendsFrom addModJar
-}
+    common {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentFabric.extendsFrom common
 
-def addMod(path, enabled) {
-    if (enabled == "2")
-        dependencies { modImplementation(path) }
-    else if (enabled == "1")
-        dependencies { modCompileOnly(path) }
+    // Files in this configuration will be bundled into your mod using the Shadow plugin.
+    // Don't use the `shadow` configuration from the plugin itself as it's meant for excluding files.
+    shadowBundle {
+        canBeResolved = true
+        canBeConsumed = false
+    }
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
-    mappings loom.layered() {
-        // Mojmap mappings
-        officialMojangMappings()
-        // Parchment mappings (it adds parameter mappings & javadoc)
-        parchment("org.parchmentmc.data:parchment-${rootProject.parchment_version}@zip")
-    }
+    common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
+    shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
+
     // Fabric loader
     modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
 
@@ -95,34 +71,19 @@ dependencies {
 
     modImplementation("maven.modrinth:xaeros-world-map:${rootProject.xaeros_world_map_fabric_version}")
     modImplementation("maven.modrinth:xaeros-minimap:${rootProject.xaeros_minimap_fabric_version}")
-
-    //use addModJar() to include a library
-    //addModJar(fabricApi.module("fabric-lifecycle-events-v1", rootProject.fabric_api_version))
-
-    //addMod can be used, to control it via the version.property
-    //addMod("example.maven:some_mod:${rootProject.some_mod_version}", rootProject.enable_some_mod)
-}
-
-task deleteResources(type: Delete) {
-    delete file("build/resources/main")
 }
 
 processResources {
-    dependsOn(copyCoreResources)
     dependsOn(copyCommonLoaderResources)
 }
 
-runClient {
-    dependsOn(copyCoreResources)
-    dependsOn(copyCommonLoaderResources)
-//    jvmArgs([ "-XX:-OmitStackTraceInFastThrow", minecraftMemoryJavaArg ])
-    finalizedBy(deleteResources)
+shadowJar {
+    configurations = [project.configurations.shadowBundle]
+    archiveClassifier = 'dev-shadow'
 }
 
-sourcesJar {
-    def commonSources = project(":common").sourcesJar
-    dependsOn commonSources
-    from commonSources.archiveFile.map { zipTree(it) }
+remapJar {
+    inputFile.set shadowJar.archiveFile
 }
 
 publisher {
@@ -224,7 +185,7 @@ publisher {
     setDisableEmptyJarCheck(false)
 
     // Additional files to upload. Same as artifact, this can be a task, file or string
-    addAdditionalFile("build/libs/${mod_id}-fabric-${rootProject.versionStr}-sources.jar")
+    //addAdditionalFile("build/libs/${mod_id}-fabric-${rootProject.versionStr}-sources.jar")
 
     // Additional files to upload with a custom display name and changelog.
     // Currently only supported on Curseforge

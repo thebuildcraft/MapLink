@@ -1,7 +1,6 @@
 /*
  *    This file is part of the Map Link mod
  *    licensed under the GNU GPL v3 License.
- *    (some parts of this file are originally from the Distant Horizons mod by James Seibel)
  *
  *    Copyright (C) 2024 - 2025  Leander Knüttel and contributors
  *
@@ -18,41 +17,22 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
- * file changed by: Leander Knüttel
- * date: 25.08.2025
+ * by: Leander Knüttel
+ * date: 17.09.2025
  */
 
-plugins {
-    id "org.spongepowered.gradle.vanilla" version "0.2.1-SNAPSHOT"
-}
-
-minecraft {
-    accessWideners(project(":common").file("src/main/resources/${accessWidenerVersion}.${rootProject.mod_id}.accesswidener"))
-    version(rootProject.minecraft_version)
+architectury {
+    common(((String) gradle.builds_for).split(","))
 }
 
 dependencies {
-    // So mixins can be written in common
-    compileOnly group:'org.spongepowered', name:'mixin', version:'0.8.5'
-    compileOnly group: 'io.github.llamalad7', name: 'mixinextras-common', version: '0.5.0'
-    annotationProcessor group: 'io.github.llamalad7', name: 'mixinextras-common', version: '0.5.0'
+    // We depend on Fabric Loader here to use the Fabric @Environment annotations,
+    // which get remapped to the correct annotations on each platform.
+    // Do NOT use other classes from Fabric Loader.
+    modImplementation "net.fabricmc:fabric-loader:$rootProject.fabric_loader_version"
 
-    compileOnly("maven.modrinth:xaeros-world-map:${rootProject.xaeros_world_map_fabric_version}")
-    compileOnly("maven.modrinth:xaeros-minimap:${rootProject.xaeros_minimap_fabric_version}")
-    compileOnly("me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_config_api_fabric_version}")
-}
-
-publishing {
-    publications {
-        mavenCommon(MavenPublication) {
-            artifactId = rootProject.mod_id
-            from components.java
-        }
-    }
-
-    // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-    repositories {
-        // Add repositories to publish to here.
-    }
+    modImplementation "maven.modrinth:xaeros-world-map:${rootProject.xaeros_world_map_fabric_version}"
+    modImplementation "maven.modrinth:xaeros-minimap:${rootProject.xaeros_minimap_fabric_version}"
+    modImplementation "me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_config_api_fabric_version}"
 }
 

@@ -19,123 +19,58 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * file changed by: Leander Knüttel
- * date: 25.06.2024
+ * date: 17.09.2025
  */
 
 plugins {
-    // Note: This is only needed for multi-loader projects
-    // The main architectury loom version is set at the start of the root build.gradle
-    id "architectury-plugin" version "3.4-SNAPSHOT"
+    id 'com.gradleup.shadow'
 }
-
-sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17
 
 architectury {
     platformSetupLoomIde()
     neoForge()
 }
 
-loom {
-    silentMojangMappingsLicense() // Shut the licencing warning
-    accessWidenerPath = project(":common").file("src/main/resources/${accessWidenerVersion}.${mod_id}.accesswidener")
-
-    mixin {
-        useLegacyMixinAp = false
-    }
-    neoForge {
-        // Access wideners are defined in the `remapJar.atAccessWideners`
-
-        // Mixins are defined in the `mods.toml`
-    }
-    mixin {
-        // Mixins are defined in the `mods.toml`
-    }
-
-    // "runs" isn't required, but when we do need it then it can be useful
-    runs {
-        client {
-            client()
-            setConfigName("NeoForge Client")
-            ideConfigGenerated(true)
-            runDir("../run")
-            //vmArgs("-XX:-OmitStackTraceInFastThrow", minecraftMemoryJavaArg)
-        }
-        server {
-            server()
-            setConfigName("NeoForge Server")
-            ideConfigGenerated(true)
-            runDir("../run")
-        }
-    }
-}
-
-remapJar {
-    inputFile = shadowJar.archiveFile
-    dependsOn shadowJar
-
-    atAccessWideners.add("${rootProject.mod_id}.accesswidener")
-}
-
 configurations {
-    // The addModJar basically embeds the mod to the built jar
-    addModJar
-    include.extendsFrom addModJar
-    modImplementation.extendsFrom addModJar
-}
+    common {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentNeoForge.extendsFrom common
 
-def addMod(path, enabled) {
-    if (enabled == "2")
-        dependencies { implementation(path) }
-    else if (enabled == "1")
-        dependencies { modCompileOnly(path) }
+    // Files in this configuration will be bundled into your mod using the Shadow plugin.
+    // Don't use the `shadow` configuration from the plugin itself as it's meant for excluding files.
+    shadowBundle {
+        canBeResolved = true
+        canBeConsumed = false
+    }
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
-    mappings loom.layered() {
-        // Mojmap mappings
-        officialMojangMappings()
-        // Parchment mappings (it adds parameter mappings & javadoc)
-        parchment("org.parchmentmc.data:parchment-${rootProject.parchment_version}@zip")
-    }
+    common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
+    shadowBundle project(path: ':common', configuration: 'transformProductionNeoForge')
 
-    // Neoforge
     neoForge "net.neoforged:neoforge:${rootProject.neoforge_version}"
 
     modApi "me.shedaniel.cloth:cloth-config-neoforge:${rootProject.cloth_config_api_neoforge_version}"
 
-    implementation "maven.modrinth:xaeros-world-map:${rootProject.xaeros_world_map_neoforge_version}"
-    implementation "maven.modrinth:xaeros-minimap:${rootProject.xaeros_minimap_neoforge_version}"
-
-    //use addModJar() to include a library, some_api_version should be in version.property
-    //addModJar(someApi.module("moduleName", rootProject.some_api_version))
-
-    //addMod can be used, to control it via the version.property
-    //addMod("example.maven:some_mod:${rootProject.some_mod_version}", rootProject.enable_some_mod)
+    modImplementation "maven.modrinth:xaeros-world-map:${rootProject.xaeros_world_map_neoforge_version}"
+    modImplementation "maven.modrinth:xaeros-minimap:${rootProject.xaeros_minimap_neoforge_version}"
 }
 
-task deleteResources(type: Delete) {
-    delete file("build/resources/main")
+shadowJar {
+    configurations = [project.configurations.shadowBundle]
+    archiveClassifier = 'dev-shadow'
 }
 
-tasks.register('copyAllResources') {
-    dependsOn(copyCoreResources)
-    dependsOn(copyCommonLoaderResources)
+remapJar {
+    inputFile.set shadowJar.archiveFile
 }
 
 processResources {
-    dependsOn(tasks.named('copyAllResources'))
-}
-
-tasks.named('runClient') {
-    dependsOn(tasks.named('copyAllResources'))
-    finalizedBy(deleteResources)
-}
-
-sourcesJar {
-    def commonSources = project(":common").sourcesJar
-    dependsOn commonSources
-    from commonSources.archiveFile.map { zipTree(it) }
+    dependsOn(copyCommonLoaderResources)
 }
 
 publisher {
@@ -219,7 +154,7 @@ publisher {
     setDisableEmptyJarCheck(false)
 
     // Additional files to upload. Same as artifact, this can be a task, file or string
-    addAdditionalFile("build/libs/${mod_id}-neoforge-${rootProject.versionStr}-sources.jar")
+    //addAdditionalFile("build/libs/${mod_id}-neoforge-${rootProject.versionStr}-sources.jar")
 
     // Additional files to upload with a custom display name and changelog.
     // Currently only supported on Curseforge

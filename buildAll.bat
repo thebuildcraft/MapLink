@@ -31,6 +31,7 @@ for %%f in (versionProperties\*) do (
     copy spigot\build\libs\*.jar buildAllJars\original\
     echo ==================== Deleting unnecessary *-all.jars ====================
     del /F /Q buildAllJars\original\*-all.jar
+    del /F /Q buildAllJars\original\*-dev-shadow.jar
     @rem echo ==================== Merging !version! ====================
     @rem call .\gradlew.bat mergeJars -PmcVer="!version!" --no-daemon
     @rem echo ==================== Moving Merged jar ====================

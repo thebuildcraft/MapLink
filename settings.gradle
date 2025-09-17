@@ -19,7 +19,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * file changed by: Leander Knüttel
- * date: 09.06.2024
+ * date: 17.09.2025
  */
 
 pluginManagement {
@@ -105,7 +105,6 @@ def loadProperties() {
 
     props.each { prop ->
         gradle.ext.set(prop.key, prop.value)
-        // println "Added prop [key:" + prop.key + ", value:" + prop.value + "]"
     }
     gradle.ext.mcVers = mcVers
     gradle.ext.mcIndex = mcIndex
