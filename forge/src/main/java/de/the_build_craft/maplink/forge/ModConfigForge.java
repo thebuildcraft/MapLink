@@ -73,11 +73,11 @@ public class ModConfigForge extends CommonModConfig {
 
         #if MC_VER < MC_1_17_1
         ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.CONFIGGUIFACTORY, () -> (mc, screen) -> {
-            return ModConfigGui.getConfigBuilder().setParentScreen(parent).build();
+            return ModConfigGui.getConfigBuilder().setParentScreen(screen).build();
         });
         #elif MC_VER >= MC_1_17_1 && MC_VER < MC_1_19_2
         ModLoadingContext.get().registerExtensionPoint(ConfigGuiHandler.ConfigGuiFactory.class,
-                () -> new ConfigGuiHandler.ConfigGuiFactory((mc, screen) -> ModConfigGui.getConfigBuilder().setParentScreen(parent).build()));
+                () -> new ConfigGuiHandler.ConfigGuiFactory((mc, screen) -> ModConfigGui.getConfigBuilder().setParentScreen(screen).build()));
         #else
         ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class, () -> new ConfigScreenHandler.ConfigScreenFactory((client, parent) -> ModConfigGui.getConfigBuilder().setParentScreen(parent).build()));
         #endif

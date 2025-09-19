@@ -27,7 +27,11 @@ import me.shedaniel.clothconfig2.impl.builders.SubCategoryBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.network.chat.Component;
+#if MC_VER >= MC_1_19_2
 import net.minecraft.network.chat.contents.TranslatableContents;
+#else
+import net.minecraft.network.chat.TranslatableComponent;
+#endif
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -72,7 +76,7 @@ public class ModConfigGui {
                         serverEntry = se;
                     }
                     return new MultiElementListEntry<>(
-                            se == null ? Text.translatable("maplink.option.ServerEntry") : Text.literal(se.ip + getServerLink(se.link)),
+                            (se == null || se.ip.isEmpty()) ? Text.translatable("maplink.option.ServerEntry") : Text.literal(se.ip + getServerLink(se.link)),
                             serverEntry,
                             Arrays.asList(
                                     entryBuilder.startEnumSelector(Text.translatable("maplink.option.ServerEntry.maptype"), ModConfig.ServerEntry.MapType.class, serverEntry.maptype).setDefaultValue(ModConfig.ServerEntry.MapType.Bluemap).setSaveConsumer(m -> serverEntry.maptype = m).build(),
@@ -401,7 +405,11 @@ public class ModConfigGui {
     private static void autoTooltip(List<AbstractConfigListEntry> entries) {
         for (AbstractConfigListEntry<?> entry : entries) {
             if (entry instanceof TooltipListEntry<?>) {
+                #if MC_VER >= MC_1_19_2
                 String tooltipKey = ((TranslatableContents) entry.getFieldName().getContents()).getKey() + ".@Tooltip";
+                #else
+                String tooltipKey = ((TranslatableComponent) entry.getFieldName()).getKey() + ".@Tooltip";
+                #endif
                 Component tooltip = Text.translatable(tooltipKey);
                 if (!tooltipKey.equals(tooltip.getString())) ((TooltipListEntry<?>) entry).setTooltipSupplier(() -> Optional.of(new Component[]{tooltip}));
             }
