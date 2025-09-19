@@ -34,12 +34,13 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 19.09.2025
  */
 @Mod(AbstractModInitializer.MOD_ID)
 public class ForgeMain extends AbstractModInitializer
 {
-	public ForgeMain()
+	@SuppressWarnings("removal")
+    public ForgeMain()
 	{
 		loaderType = LoaderType.Forge;
         new ModConfigForge();

@@ -22,19 +22,18 @@ package de.the_build_craft.maplink.fabric.wrappers;
 
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
-import de.the_build_craft.maplink.common.ModConfig;
-import me.shedaniel.autoconfig.AutoConfig;
+import de.the_build_craft.maplink.common.ModConfigGui;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
 /**
  * @author Leander Knüttel
- * @version 14.06.2024
+ * @version 19.09.2025
  */
 @Environment(EnvType.CLIENT)
 public class ModMenuIntegration implements ModMenuApi {
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
-        return parent -> AutoConfig.getConfigScreen(ModConfig.class, parent).get();
+        return parent -> ModConfigGui.getConfigBuilder().setParentScreen(parent).build();
     }
 }

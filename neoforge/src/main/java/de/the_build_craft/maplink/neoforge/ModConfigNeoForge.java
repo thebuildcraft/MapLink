@@ -23,6 +23,7 @@ package de.the_build_craft.maplink.neoforge;
 import de.the_build_craft.maplink.common.AbstractModInitializer;
 import de.the_build_craft.maplink.common.CommonModConfig;
 import de.the_build_craft.maplink.common.ModConfig;
+import de.the_build_craft.maplink.common.ModConfigGui;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.serializer.JanksonConfigSerializer;
 import me.shedaniel.autoconfig.serializer.PartitioningSerializer;
@@ -41,7 +42,7 @@ import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 
 /**
  * @author Leander Knüttel
- * @version 09.09.2025
+ * @version 19.09.2025
  */
 public class ModConfigNeoForge extends CommonModConfig {
     private static final String oldId = "remote_player_waypoints_for_xaero";
@@ -65,12 +66,10 @@ public class ModConfigNeoForge extends CommonModConfig {
         AutoConfig.register(ModConfig.class, PartitioningSerializer.wrap(JanksonConfigSerializer::new));
 
         #if MC_VER < MC_1_20_6
-		ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class, () -> new ConfigScreenHandler.ConfigScreenFactory((client, parent) -> {
-            return AutoConfig.getConfigScreen(ModConfig.class, parent).get();
-        }));
+		ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class, () -> new ConfigScreenHandler.ConfigScreenFactory((client, parent) -> ModConfigGui.getConfigBuilder().setParentScreen(parent).build()));
 		#else
         ModLoadingContext.get().registerExtensionPoint(IConfigScreenFactory.class,
-                () -> (client, parent) -> AutoConfig.getConfigScreen(ModConfig.class, parent).get());
+                () -> (client, parent) -> ModConfigGui.getConfigBuilder().setParentScreen(parent).build());
 		#endif
 
         return AutoConfig.getConfigHolder(ModConfig.class).getConfig();

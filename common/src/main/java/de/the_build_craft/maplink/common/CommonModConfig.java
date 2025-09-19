@@ -29,13 +29,14 @@ import java.util.Objects;
 
 /**
  * @author Leander Knüttel
- * @version 06.09.2025
+ * @version 19.09.2025
  */
 public abstract class CommonModConfig {
     public static ModConfig config;
 
     public CommonModConfig() {
         config = getConfig();
+        if (config.general.serverEntries.isEmpty()) config.general.serverEntries.add(new ModConfig.ServerEntry());
     }
 
     protected abstract ModConfig getConfig();

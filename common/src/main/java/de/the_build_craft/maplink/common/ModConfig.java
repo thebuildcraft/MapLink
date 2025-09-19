@@ -25,7 +25,10 @@ import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 import me.shedaniel.autoconfig.serializer.PartitioningSerializer;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +38,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.config;
 
 /**
  * @author Leander Knüttel
- * @version 15.09.2025
+ * @version 19.09.2025
  */
 @Config(name = "maplink")
 #if MC_VER < MC_1_20_6
@@ -607,13 +610,16 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         }
 
         public enum MarkerVisibilityMode {
-            Auto,
-            All,
-            None,
-            BlackList,
-            WhiteList;
+            Auto(false),
+            All(false),
+            None(false),
+            BlackList(true),
+            WhiteList(true);
 
-            MarkerVisibilityMode() {
+            public final boolean allowsEdit;
+
+            MarkerVisibilityMode(boolean allowsEdit) {
+                this.allowsEdit = allowsEdit;
             }
         }
 
@@ -715,7 +721,11 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @Override
         public String toString() {
-            return Text.translatable("maplink.WaypointColor." + this.name()).getString();
+            return toText().getString();
+        }
+
+        public Component toText() {
+            return Text.translatable("maplink.WaypointColor." + this.name()).setStyle(Style.EMPTY.withColor(ChatFormatting.values()[this.ordinal()]));
         }
     }
 
@@ -742,7 +752,11 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @Override
         public String toString() {
-            return Text.translatable("maplink.ConditionalActiveMode." + this.name()).getString();
+            return toText().getString();
+        }
+
+        public Component toText() {
+            return Text.translatable("maplink.ConditionalActiveMode." + this.name());
         }
     }
 }

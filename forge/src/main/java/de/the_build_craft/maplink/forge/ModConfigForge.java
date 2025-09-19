@@ -23,6 +23,7 @@ package de.the_build_craft.maplink.forge;
 import de.the_build_craft.maplink.common.AbstractModInitializer;
 import de.the_build_craft.maplink.common.CommonModConfig;
 import de.the_build_craft.maplink.common.ModConfig;
+import de.the_build_craft.maplink.common.ModConfigGui;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.serializer.JanksonConfigSerializer;
 import me.shedaniel.autoconfig.serializer.PartitioningSerializer;
@@ -46,11 +47,12 @@ import java.nio.file.Path;
 
 /**
  * @author Leander Knüttel
- * @version 09.09.2025
+ * @version 19.09.2025
  */
 public class ModConfigForge extends CommonModConfig {
     private static final String oldId = "remote_player_waypoints_for_xaero";
 
+    @SuppressWarnings("removal")
     @Override
     protected ModConfig getConfig() {
         try {
@@ -71,15 +73,13 @@ public class ModConfigForge extends CommonModConfig {
 
         #if MC_VER < MC_1_17_1
         ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.CONFIGGUIFACTORY, () -> (mc, screen) -> {
-            return AutoConfig.getConfigScreen(ModConfig.class, screen).get();
+            return ModConfigGui.getConfigBuilder().setParentScreen(parent).build();
         });
         #elif MC_VER >= MC_1_17_1 && MC_VER < MC_1_19_2
         ModLoadingContext.get().registerExtensionPoint(ConfigGuiHandler.ConfigGuiFactory.class,
-                () -> new ConfigGuiHandler.ConfigGuiFactory((mc, screen) -> AutoConfig.getConfigScreen(ModConfig.class, screen).get()));
+                () -> new ConfigGuiHandler.ConfigGuiFactory((mc, screen) -> ModConfigGui.getConfigBuilder().setParentScreen(parent).build()));
         #else
-        ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class, () -> new ConfigScreenHandler.ConfigScreenFactory((client, parent) -> {
-            return AutoConfig.getConfigScreen(ModConfig.class, parent).get();
-        }));
+        ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class, () -> new ConfigScreenHandler.ConfigScreenFactory((client, parent) -> ModConfigGui.getConfigBuilder().setParentScreen(parent).build()));
         #endif
 
         return AutoConfig.getConfigHolder(ModConfig.class).getConfig();
