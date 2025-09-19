@@ -36,9 +36,9 @@ _Formerly known as "Remote Player Waypoints for Xaero's Map"_
 - Squaremap
 
 ### How to use
-1. Open the mod config in Mod Menu (requires Cloth Config API)
-2. Add a new server entry in the config
-3. Select the correct "Web Map Type"
+1. Open the mod config menu (requires Mod Menu on Fabric/Quilt)
+2. Add a new server-entry in the config: [General -> Server Entries]
+3. Select the correct [Web Map Type]
 4. Put in the exact server-ip you use to connect to the server
 5. Put in the link to the web map (just copy it from the browser)
 
