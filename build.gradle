@@ -19,7 +19,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * file changed by: Leander Knüttel
- * date: 17.09.2025
+ * date: 19.09.2025
  */
 
 plugins {
@@ -117,6 +117,7 @@ subprojects { p ->
             // Parchment mappings (it adds parameter mappings & javadoc)
             parchment("org.parchmentmc.data:parchment-${rootProject.parchment_version}@zip")
         }
+        implementation 'com.github.minecraft-dev:annotations:master-SNAPSHOT'
     }
 
     // Put stuff from gradle.properties into the mod info
