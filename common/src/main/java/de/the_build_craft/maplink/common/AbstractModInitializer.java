@@ -57,7 +57,7 @@ public abstract class AbstractModInitializer
 {
 	public static final String MOD_ID = "maplink";
 	public static final String MOD_NAME = "Map Link";
-	public static final String VERSION = "4.0.0";
+	public static final String VERSION = "4.0.1";
 	public static final Logger LOGGER = LogManager.getLogger("MapLink");
 	public static AbstractModInitializer INSTANCE;
 	public LoaderType loaderType;
