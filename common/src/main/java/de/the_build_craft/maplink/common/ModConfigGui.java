@@ -42,7 +42,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.config;
 
 /**
  * @author Leander Knüttel
- * @version 19.09.2025
+ * @version 26.09.2025
  */
 @SuppressWarnings({"UnstableApiUsage", "rawtypes"})
 public class ModConfigGui {
@@ -55,7 +55,7 @@ public class ModConfigGui {
         builder.setSavingRunnable(CommonModConfig::saveConfig);
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
         ConfigCategory general = builder.getOrCreateCategory(Text.translatable("maplink.category.general"));
-        BooleanListEntry mainToggle = entryBuilder.startBooleanToggle(Text.translatable("maplink.option.general.enabled"), true).setDefaultValue(true).setSaveConsumer(b -> config.general.enabled = b).build();
+        BooleanListEntry mainToggle = entryBuilder.startBooleanToggle(Text.translatable("maplink.option.general.enabled"), config.general.enabled).setDefaultValue(true).setSaveConsumer(b -> config.general.enabled = b).build();
         general.addEntry(mainToggle);
         general.addEntry(new NestedListListEntry<ModConfig.ServerEntry, MultiElementListEntry<ModConfig.ServerEntry>>(
                 Text.translatable("maplink.option.general.serverEntries"),
@@ -381,12 +381,16 @@ public class ModConfigGui {
     }
 
     private static boolean shouldExpand(@Nullable ModConfig.ServerEntry serverEntry) {
-        if (serverEntry == null) return true;
+        return true;
+
+        // Cloth Config doesn't allow manual expanding...
+
+        /*if (serverEntry == null) return true;
         if (serverEntry.ip.isEmpty() || serverEntry.link.isEmpty()) return true;
         ServerData serverData = Minecraft.getInstance().getCurrentServer();
         if (serverData == null) return true;
         String serverIP = serverData.ip.toLowerCase(Locale.ROOT);
-        return Objects.equals(serverEntry.ip, serverIP);
+        return Objects.equals(serverEntry.ip, serverIP);*/
     }
 
     private static String getServerIp(@Nullable ModConfig.ServerEntry serverEntry) {
