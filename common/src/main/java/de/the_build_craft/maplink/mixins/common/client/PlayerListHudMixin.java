@@ -39,7 +39,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 /**
  * @author Leander Knüttel
  * @author MeerBiene
- * @version 14.09.2025
+ * @version 03.10.2025
  */
 @Mixin(PlayerTabOverlay.class)
 public class PlayerListHudMixin {
@@ -68,7 +68,11 @@ public class PlayerListHudMixin {
             return;
         }
 
+        #if MC_VER >= MC_1_21_9
+        String playerName = entry.getProfile().name();
+        #else
         String playerName = entry.getProfile().getName();
+        #endif
         MutableComponent newText = cir.getReturnValue().copy();
 
         if (AbstractModInitializer.AfkMap.containsKey(playerName)) {

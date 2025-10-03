@@ -49,7 +49,7 @@ import static de.the_build_craft.maplink.common.FastUpdateTask.playerPositions;
 
 /**
  * @author Leander Knüttel
- * @version 06.09.2025
+ * @version 03.10.2025
  */
 public class XaeroClientMapHandler extends ClientMapHandler {
     public static final Long2ObjectMap<Set<AreaMarker>> chunkHighlightMap = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
@@ -93,21 +93,28 @@ public class XaeroClientMapHandler extends ClientMapHandler {
             currentWorldmapPlayerTrackerUUIDs.clear();
 
             for (PlayerInfo playerInfo : mc.getConnection().getOnlinePlayers()) {
-                PlayerPosition playerPosition = playerPositions.get(playerInfo.getProfile().getName());
+                #if MC_VER >= MC_1_21_9
+                String playerName = playerInfo.getProfile().name();
+                UUID id = playerInfo.getProfile().id();
+                #else
+                String playerName = playerInfo.getProfile().getName();
+                UUID id = playerInfo.getProfile().getId();
+                #endif
+                PlayerPosition playerPosition = playerPositions.get(playerName);
                 if (playerPosition == null || !currentPlayerIds.contains(playerPosition.id)) continue;
 
                 WaypointState waypointState = getWaypointState(playerPosition.id);
                 playerPosition.gameProfile = playerInfo.getProfile();
 
                 if (waypointState.renderOnHud || waypointState.renderOnMiniMap) {
-                    hudAndMinimapPlayerTrackerPositions.computeIfAbsent(playerInfo.getProfile().getId(), uuid -> new MutablePlayerPosition(playerPosition, waypointState))
+                    hudAndMinimapPlayerTrackerPositions.computeIfAbsent(id, uuid -> new MutablePlayerPosition(playerPosition, waypointState))
                             .updateFrom(playerPosition.pos);
-                    currentHudAndMinimapPlayerTrackerUUIDs.add(playerInfo.getProfile().getId());
+                    currentHudAndMinimapPlayerTrackerUUIDs.add(id);
                 }
                 if (waypointState.renderOnWorldMap) {
-                    worldmapPlayerTrackerPositions.computeIfAbsent(playerInfo.getProfile().getId(), uuid -> new MutablePlayerPosition(playerPosition, waypointState))
+                    worldmapPlayerTrackerPositions.computeIfAbsent(id, uuid -> new MutablePlayerPosition(playerPosition, waypointState))
                             .updateFrom(playerPosition.pos);
-                    currentWorldmapPlayerTrackerUUIDs.add(playerInfo.getProfile().getId());
+                    currentWorldmapPlayerTrackerUUIDs.add(id);
                 }
             }
 

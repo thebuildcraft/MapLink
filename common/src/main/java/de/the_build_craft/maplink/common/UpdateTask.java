@@ -43,7 +43,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
  * @author eatmyvenom
  * @author TheMrEngMan
  * @author Leander Knüttel
- * @version 16.09.2025
+ * @version 03.10.2025
  */
 public class UpdateTask {
     private final Minecraft mc;
@@ -80,7 +80,11 @@ public class UpdateTask {
         // Skip if not in game
         if (mc.level == null
                 || mc.player == null
+                #if MC_VER >= MC_1_21_9
+                || mc.getCameraEntity() == null
+                #else
                 || mc.cameraEntity == null
+                #endif
                 || (mc.getSingleplayerServer() != null && !mc.getSingleplayerServer().isPublished())
                 || mc.getCurrentServer() == null
                 || mc.getConnection() == null

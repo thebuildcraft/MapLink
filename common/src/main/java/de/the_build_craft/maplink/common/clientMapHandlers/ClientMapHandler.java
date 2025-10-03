@@ -50,7 +50,7 @@ import static de.the_build_craft.maplink.common.FastUpdateTask.playerPositions;
 
 /**
  * @author Leander Knüttel
- * @version 07.09.2025
+ * @version 03.10.2025
  */
 public abstract class ClientMapHandler {
     public static final String waypointPrefix = "maplink_";
@@ -177,14 +177,22 @@ public abstract class ClientMapHandler {
     }
 
     public void handlePlayerWaypoints() {
+        #if MC_VER >= MC_1_21_9
+        if (mc.getCameraEntity() == null || mc.level == null) return;
+        #else
         if (mc.cameraEntity == null || mc.level == null) return;
+        #endif
         if (config.general.enablePlayerWaypoints) {
             // Keep track of which waypoints were previously shown
             // to remove any that are not to be shown anymore
             currentPlayerIds.clear();
 
             Map<String, AbstractClientPlayer> playerClientEntityMap = mc.level.players().stream().collect(
+                    #if MC_VER >= MC_1_21_9
+                    Collectors.toMap(a -> a.getGameProfile().name(), a -> a));
+                    #else
                     Collectors.toMap(a -> a.getGameProfile().getName(), a -> a));
+                    #endif
 
             int maxHudD = config.hud.maxPlayerDistance;
             int minMiniD = config.minimap.minPlayerDistance;
@@ -220,7 +228,11 @@ public abstract class ClientMapHandler {
 
             boolean enablePlayerIcons = config.general.enablePlayerIconWaypoints;
 
+            #if MC_VER >= MC_1_21_9
+            Vec3 cameraPos = mc.getCameraEntity().position();
+            #else
             Vec3 cameraPos = mc.cameraEntity.position();
+            #endif
             tempPlayerWaypointPositions.clear();
             tempPlayerWaypointPositions.addAll(playerPositions.values());
             tempPlayerWaypointPositions.sort(Comparator.comparing(p -> cameraPos.distanceToSqr(p.pos.x, p.pos.y, p.pos.z)));
@@ -245,13 +257,19 @@ public abstract class ClientMapHandler {
                     if (config.worldmap.hidePlayersInRange) waypointState.renderOnWorldMap = false;
 
                     if (waypointState.renderOnHud) {
-                        #if MC_VER >= MC_1_17_1
+                        #if MC_VER >= MC_1_21_9
+                        ClipContext clipContext = new ClipContext(mc.getCameraEntity().getEyePosition(),
+                        #elif MC_VER >= MC_1_17_1
                         ClipContext clipContext = new ClipContext(mc.cameraEntity.getEyePosition(),
                         #else
                         ClipContext clipContext = new ClipContext(mc.cameraEntity.getEyePosition(1),
                         #endif
                                 playerClientEntityMap.get(playerName).position().add(0, 1, 0),
+                                #if MC_VER >= MC_1_21_9
+                                ClipContext.Block.VISUAL, ClipContext.Fluid.ANY, mc.getCameraEntity());
+                                #else
                                 ClipContext.Block.VISUAL, ClipContext.Fluid.ANY, mc.cameraEntity);
+                                #endif
                         // If this player is visible, don't show waypoint on Hud (depending on the config settings)
                         if (mc.level.clip(clipContext).getType() != HitResult.Type.BLOCK) {
                             if (config.hud.hidePlayersVisible) waypointState.renderOnHud = false;
@@ -336,7 +354,11 @@ public abstract class ClientMapHandler {
     abstract void updatePlayerWaypointColors();
 
     public void handleMarkerWaypoints(List<Position> markerPositions) {
+        #if MC_VER >= MC_1_21_9
+        if (mc.getCameraEntity() == null) return;
+        #else
         if (mc.cameraEntity == null) return;
+        #endif
         ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
         if (config.general.enableMarkerWaypoints && serverEntry != null) {
             // Keep track of which waypoints were previously shown
@@ -373,12 +395,16 @@ public abstract class ClientMapHandler {
 
             boolean enableMarkerIcons = config.general.enableMarkerIcons;
 
+            #if MC_VER >= MC_1_21_9
+            Vec3 cameraPos = mc.getCameraEntity().position();
+            #else
             Vec3 cameraPos = mc.cameraEntity.position();
+            #endif
             markerPositions.sort(Comparator.comparing(p -> cameraPos.distanceToSqr(p.pos.x, p.pos.y, p.pos.z)));
 
             for (Position markerPosition : markerPositions) {
                 WaypointState waypointState = idToWaypointState.get(markerPosition.id);
-                double d = mc.cameraEntity.position().distanceTo(new Vec3(markerPosition.pos.x, markerPosition.pos.y, markerPosition.pos.z));
+                double d = cameraPos.distanceTo(new Vec3(markerPosition.pos.x, markerPosition.pos.y, markerPosition.pos.z));
 
                 waypointState.renderOnHud = config.hud.showMarkerWaypoints != ModConfig.ConditionalActiveMode.NEVER
                         && onHud < maxOnHud && d >= minHudD && d <= maxHudD;

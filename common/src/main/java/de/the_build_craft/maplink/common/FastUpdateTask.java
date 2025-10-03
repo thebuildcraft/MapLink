@@ -39,7 +39,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 
 /**
  * @author Leander Knüttel
- * @version 05.09.2025
+ * @version 03.10.2025
  */
 public class FastUpdateTask {
     private final Minecraft mc;
@@ -67,7 +67,11 @@ public class FastUpdateTask {
         // Skip if not in game or disabled
         if (mc.level == null
                 || mc.player == null
+                #if MC_VER >= MC_1_21_9
+                || mc.getCameraEntity() == null
+                #else
                 || mc.cameraEntity == null
+                #endif
                 || (mc.getSingleplayerServer() != null && !mc.getSingleplayerServer().isPublished())
                 || mc.getCurrentServer() == null
                 || mc.getConnection() == null
@@ -93,12 +97,25 @@ public class FastUpdateTask {
 
             #if MC_VER >= MC_1_21_6
             Map<UUID, String> uuidPlayerMap = mc.getConnection().getOnlinePlayers().stream()
+                    #if MC_VER >= MC_1_21_9
+                    .collect(Collectors.toMap(playerInfo -> playerInfo.getProfile().id(),
+                            playerInfo -> playerInfo.getProfile().name()));
+                    #else
                     .collect(Collectors.toMap(playerInfo -> playerInfo.getProfile().getId(),
                             playerInfo -> playerInfo.getProfile().getName()));
+                    #endif
 
+            #if MC_VER >= MC_1_21_9
+            Vec3 cameraPos = mc.getCameraEntity().getEyePosition();
+            #else
             Vec3 cameraPos = mc.cameraEntity.getEyePosition();
+            #endif
 
+            #if MC_VER >= MC_1_21_9
+            mc.player.connection.getWaypointManager().forEachWaypoint(mc.getCameraEntity(),
+            #else
             mc.player.connection.getWaypointManager().forEachWaypoint(mc.cameraEntity,
+            #endif
                     trackedWaypoint -> {
                         if (trackedWaypoint.type == TrackedWaypoint.Type.VEC3I) {
                             TrackedWaypoint.Vec3iWaypoint vec3iWaypoint = (TrackedWaypoint.Vec3iWaypoint) trackedWaypoint;
@@ -123,7 +140,11 @@ public class FastUpdateTask {
             #endif
 
             for (AbstractClientPlayer player : mc.level.players()) {
+                #if MC_VER >= MC_1_21_9
+                String name = player.getGameProfile().name();
+                #else
                 String name = player.getGameProfile().getName();
+                #endif
                 //Only show players that are visible on the OnlineMap to comply with Modrinth's content rules!
                 if (player instanceof RemotePlayer && onlinePlayerPositions.containsKey(name)) {
                     updateFromLocalPosition(new PlayerPosition(player));

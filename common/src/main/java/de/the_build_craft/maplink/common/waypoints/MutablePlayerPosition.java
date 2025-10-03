@@ -29,7 +29,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.config;
 
 /**
  * @author Leander Knüttel
- * @version 05.09.2025
+ * @version 03.10.2025
  */
 public class MutablePlayerPosition {
     private final String id;
@@ -42,7 +42,11 @@ public class MutablePlayerPosition {
 
     public MutablePlayerPosition(PlayerPosition playerPosition, WaypointState waypointState) {
         this.id = playerPosition.id;
+        #if MC_VER >= MC_1_21_9
+        this.uuid = playerPosition.gameProfile.id();
+        #else
         this.uuid = playerPosition.gameProfile.getId();
+        #endif
         this.prevPos = new MutableDouble3(playerPosition.pos);
         this.pos = new MutableDouble3(playerPosition.pos);
         this.waypointState = waypointState;
