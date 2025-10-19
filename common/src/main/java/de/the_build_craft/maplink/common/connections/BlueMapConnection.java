@@ -42,7 +42,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 06.09.2025
+ * @version 16.09.2025
  */
 public class BlueMapConnection extends MapConnection {
     List<Integer> lastWorldIndices = new ArrayList<>(Collections.singletonList(0));
@@ -135,7 +135,7 @@ public class BlueMapConnection extends MapConnection {
     List<AreaMarker> areaMarkers = new ArrayList<>();
 
     @Override
-    public void getWaypointPositions() throws IOException {
+    public void getWaypointPositions(boolean forceRefresh) throws IOException {
         Type apiResponseType = new TypeToken<Map<String, BlueMapMarkerSet>>() {}.getType();
 
         ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
@@ -151,6 +151,7 @@ public class BlueMapConnection extends MapConnection {
         if (newWorldIndicesHash == lastWorldIndicesHash
                 && newMarkerHash == lastMarkerHash
                 && newAreaMarkerHash == lastAreaMarkerHash
+                && !forceRefresh
         ) {
             ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
             return;

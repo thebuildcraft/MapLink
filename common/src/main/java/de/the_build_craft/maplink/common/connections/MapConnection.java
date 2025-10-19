@@ -43,7 +43,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 14.09.2025
+ * @version 16.09.2025
  */
 public abstract class MapConnection {
     public URL queryURL;
@@ -169,7 +169,7 @@ public abstract class MapConnection {
         }
     }
 
-    public abstract void getWaypointPositions() throws IOException;
+    public abstract void getWaypointPositions(boolean forceRefresh) throws IOException;
 
     public void OpenOnlineMapConfig() {
         #if MC_VER < MC_1_21_5

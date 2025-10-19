@@ -43,7 +43,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
  * @author ewpratten
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 06.09.2025
+ * @version 16.09.2025
  */
 public class DynmapConnection extends MapConnection {
     private String markerStringTemplate = "";
@@ -260,7 +260,7 @@ public class DynmapConnection extends MapConnection {
     List<AreaMarker> areaMarkers = new ArrayList<>();
 
     @Override
-    public void getWaypointPositions() throws IOException {
+    public void getWaypointPositions(boolean forceRefresh) throws IOException {
         ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
         if (serverEntry.needsMarkerLayerUpdate() && !partOfLiveAtlas) {
             serverEntry.setMarkerLayers(new ArrayList<>(getMarkerLayers()));
@@ -288,6 +288,7 @@ public class DynmapConnection extends MapConnection {
         if (lastMarkerDimension.equals(dimension)
                 && newMarkerHash == lastMarkerHash
                 && newAreaMarkerHash == lastAreaMarkerHash
+                && !forceRefresh
         ) {
             ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
             return;

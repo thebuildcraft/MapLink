@@ -24,6 +24,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.mojang.authlib.GameProfile;
 import de.the_build_craft.maplink.common.waypoints.MutablePlayerPosition;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import xaero.common.HudMod;
 import xaero.hud.minimap.player.tracker.system.IRenderedPlayerTracker;
@@ -36,7 +37,7 @@ import java.util.UUID;
 
 /**
  * @author Leander Knüttel
- * @version 31.08.2025
+ * @version 03.10.2025
  */
 public class RemotePlayerTrackerSystem implements IRenderedPlayerTracker<MutablePlayerPosition>, IPlayerTrackerSystem<MutablePlayerPosition> {
     private final RemotePlayerTrackerReader reader;
@@ -60,11 +61,16 @@ public class RemotePlayerTrackerSystem implements IRenderedPlayerTracker<Mutable
     }
 
     public static String injectDistanceText(GameProfile instance, Operation<String> original, Vec3 pos) {
-        if (Minecraft.getInstance().cameraEntity == null) return original.call(instance);
-        #if MC_VER >= MC_1_17_1
-        Vec3 cameraPos = Minecraft.getInstance().cameraEntity.getEyePosition();
+        #if MC_VER >= MC_1_21_9
+        Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
         #else
-        Vec3 cameraPos = Minecraft.getInstance().cameraEntity.getEyePosition(1);
+        Entity cameraEntity = Minecraft.getInstance().cameraEntity;
+        #endif
+        if (cameraEntity == null) return original.call(instance);
+        #if MC_VER >= MC_1_17_1
+        Vec3 cameraPos = cameraEntity.getEyePosition();
+        #else
+        Vec3 cameraPos = cameraEntity.getEyePosition(1);
         #endif
         double distance = cameraPos.distanceTo(pos);
         int autoConvertToKmThreshold = HudMod.INSTANCE.getSettings().autoConvertWaypointDistanceToKmThreshold;

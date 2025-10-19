@@ -29,7 +29,7 @@ import net.minecraft.client.player.AbstractClientPlayer;
  *
  * @author ewpratten
  * @author Leander Knüttel
- * @version 01.09.2025
+ * @version 03.10.2025
  */
 public class PlayerPosition extends Position {
     public GameProfile gameProfile;
@@ -46,7 +46,11 @@ public class PlayerPosition extends Position {
     }
 
     public PlayerPosition(AbstractClientPlayer player) {
+        #if MC_VER >= MC_1_21_9
+        super(player.getGameProfile().name(), player.getX(), player.getY(), player.getZ(), player.getGameProfile().name(), MarkerLayer.PlayerLayer);
+        #else
         super(player.getGameProfile().getName(), player.getX(), player.getY(), player.getZ(), player.getGameProfile().getName(), MarkerLayer.PlayerLayer);
+        #endif
         this.world = "";
         this.gameProfile = player.getGameProfile();
     }

@@ -23,6 +23,7 @@ package de.the_build_craft.maplink.mixins.neoforge.mods.xaerominimap;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.authlib.GameProfile;
+import com.mojang.blaze3d.vertex.PoseStack;
 import de.the_build_craft.maplink.common.clientMapHandlers.XaeroClientMapHandler;
 import de.the_build_craft.maplink.common.waypoints.MutablePlayerPosition;
 import de.the_build_craft.maplink.common.waypoints.WaypointState;
@@ -48,12 +49,15 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 
 /**
  * @author Leander Knüttel
- * @version 31.08.2025
+ * @version 03.10.2025
  */
 @Pseudo
 @Mixin(PlayerTrackerMinimapElementRenderer.class)
 public class PlayerTrackerMinimapElementRendererMixin {
-    #if MC_VER >= MC_1_21_6
+    #if MC_VER >= MC_1_21_9
+    @WrapOperation(method = "renderElement(Lxaero/hud/minimap/player/tracker/PlayerTrackerMinimapElement;ZZDFDDLxaero/hud/minimap/element/render/MinimapElementRenderInfo;Lxaero/hud/minimap/element/render/MinimapElementGraphics;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)Z",
+            at = @At(value = "INVOKE", target = "Lcom/mojang/authlib/GameProfile;name()Ljava/lang/String;"))
+    #elif MC_VER >= MC_1_21_6
     @WrapOperation(method = "renderElement(Lxaero/hud/minimap/player/tracker/PlayerTrackerMinimapElement;ZZDFDDLxaero/hud/minimap/element/render/MinimapElementRenderInfo;Lxaero/hud/minimap/element/render/MinimapElementGraphics;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)Z",
             at = @At(value = "INVOKE", target = "Lcom/mojang/authlib/GameProfile;getName()Ljava/lang/String;"))
     #elif MC_VER >= MC_1_20_1

@@ -35,12 +35,12 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 
 /**
  * @author Leander Knüttel
- * @version 01.09.2025
+ * @version 16.09.2025
  */
 public class LiveAtlasConnection extends MapConnection {
-    public static final Pattern dynmapRegexPattern = Pattern.compile("\\n +dynmap: \\{\\n(.*\\n)*?.*}\\n");
-    public static final Pattern Pl3xMapRegexPattern = Pattern.compile("\n +\t+ +pl3xmap: \"(.+?)\"\n");
-    public static final Pattern SquareMapRegexPattern = Pattern.compile("\n +\t+ +squaremap: \"(.+?)\"\n");
+    public static final Pattern dynmapRegexPattern = Pattern.compile("dynmap: *\\{\\R*((?!\\s+//\\s*).*\\R*)*?[^}\"']*}");
+    public static final Pattern Pl3xMapRegexPattern = Pattern.compile("pl3xmap: *[\"'](.+)[\"']");
+    public static final Pattern SquareMapRegexPattern = Pattern.compile("squaremap: *[\"'](.+)[\"']");
     List<MapConnection> mapConnections = new ArrayList<>();
     int mapIndex;
 
@@ -132,10 +132,15 @@ public class LiveAtlasConnection extends MapConnection {
         return map;
     }
 
+    private int lastMapIndex;
+
     @Override
-    public void getWaypointPositions() throws IOException {
+    public void getWaypointPositions(boolean forceRefresh) throws IOException {
         if (mapConnections.isEmpty()) {
-            if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().removeAllMarkerWaypoints();
+            if (ClientMapHandler.getInstance() != null) {
+                ClientMapHandler.getInstance().removeAllMarkerWaypoints();
+                ClientMapHandler.getInstance().removeAllAreaMarkers(true);
+            }
             return;
         }
 
@@ -144,7 +149,8 @@ public class LiveAtlasConnection extends MapConnection {
             serverEntry.setMarkerLayers(new ArrayList<>(getMarkerLayers()));
         }
 
-        mapConnections.get(mapIndex).getWaypointPositions();
+        mapConnections.get(mapIndex).getWaypointPositions(mapIndex != lastMapIndex);
+        lastMapIndex = mapIndex;
     }
 
     @Override

@@ -40,7 +40,7 @@ import java.util.Map;
 
 /**
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 03.10.2025
  */
 public class XaerosMapCompatFabric extends XaerosMapCompat {
     //partially from Earthcomputer/minimap-sync licensed under the MIT License
@@ -79,7 +79,12 @@ public class XaerosMapCompatFabric extends XaerosMapCompat {
                 float height = xaeroIconRenderData.height;
                 int a = (int) (xaeroIconRenderData.a * 255);
 
-                #if MC_VER >= MC_1_21_1
+                #if MC_VER >= MC_1_21_9
+                buffer.addVertex(pose, x, y, 0).setColor(255, 255, 255, a).setUv(0, 0);
+                buffer.addVertex(pose, x, y + height, 0).setColor(255, 255, 255, a).setUv(0, 1);
+                buffer.addVertex(pose, x + width, y + height, 0).setColor(255, 255, 255, a).setUv(1, 1);
+                buffer.addVertex(pose, x + width, y, 0).setColor(255, 255, 255, a).setUv(1, 0);
+                #elif MC_VER >= MC_1_21_1
                 buffer.addVertex(pose, x, y, 0).setWhiteAlpha(a).setUv(0, 0);
                 buffer.addVertex(pose, x, y + height, 0).setWhiteAlpha(a).setUv(0, 1);
                 buffer.addVertex(pose, x + width, y + height, 0).setWhiteAlpha(a).setUv(1, 1);

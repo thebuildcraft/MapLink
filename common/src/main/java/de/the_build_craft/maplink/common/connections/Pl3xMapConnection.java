@@ -43,7 +43,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 06.09.2025
+ * @version 16.09.2025
  */
 public class Pl3xMapConnection extends MapConnection{
     private String markerLayerStringTemplate = "";
@@ -169,7 +169,7 @@ public class Pl3xMapConnection extends MapConnection{
     }
 
     @Override
-    public void getWaypointPositions() throws IOException {
+    public void getWaypointPositions(boolean forceRefresh) throws IOException {
         if (markerLayerStringTemplate.isEmpty() || currentDimension.isEmpty()) {
             if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().removeAllMarkerWaypoints();
             return;
@@ -189,7 +189,8 @@ public class Pl3xMapConnection extends MapConnection{
         int newAreaMarkerHash = serverEntry.getAreaMarkerVisibilityHash();
         if (lastMarkerDimension.equals(currentDimension)
                 && newAreaMarkerHash == lastAreaMarkerHash
-                && newMarkerHash == lastMarkerHash) {
+                && newMarkerHash == lastMarkerHash
+                && !forceRefresh) {
             ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
             return;
         }
