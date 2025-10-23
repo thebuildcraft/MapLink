@@ -35,7 +35,7 @@ import org.apache.logging.log4j.Logger;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 22.05.2024
+ * @version 23.10.2025
  */
 public class ForgeServerProxy implements AbstractModInitializer.IEventProxy
 {
@@ -59,6 +59,7 @@ public class ForgeServerProxy implements AbstractModInitializer.IEventProxy
 	}
 
 	@SubscribeEvent
+	@SuppressWarnings("unchecked")
 	public void registerCommands(RegisterCommandsEvent event){
 		#if MC_VER > MC_1_18_2
 		ForgeMain.registerServerCommands((CommandDispatcher<CommandSourceStack>) (CommandDispatcher<?>) event.getDispatcher(),

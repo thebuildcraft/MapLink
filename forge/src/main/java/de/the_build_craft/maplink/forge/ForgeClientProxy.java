@@ -61,6 +61,7 @@ public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 
 	#if MC_VER > MC_1_17_1
 	@SubscribeEvent
+	@SuppressWarnings("unchecked")
 	public void registerClientCommands(RegisterClientCommandsEvent event) {
 		ForgeMain.registerClientCommands((CommandDispatcher<CommandSourceStack>) (CommandDispatcher<?>) event.getDispatcher());
 	}

@@ -35,7 +35,7 @@ import java.util.List;
 
 /**
  * @author Leander Knüttel
- * @version 28.08.2025
+ * @version 23.10.2025
  */
 public class SquareMapMarkerUpdate {
     public static class Marker{
@@ -54,6 +54,7 @@ public class SquareMapMarkerUpdate {
     public String id;
     public Marker[] markers = new Marker[0];
 
+    @SuppressWarnings("unchecked")
     public static class PointsAdapterFactory implements TypeAdapterFactory {
         @Override
         public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {

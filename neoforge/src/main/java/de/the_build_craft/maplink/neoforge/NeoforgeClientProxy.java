@@ -58,6 +58,7 @@ public class NeoforgeClientProxy implements AbstractModInitializer.IEventProxy
 	}
 
 	@SubscribeEvent
+	@SuppressWarnings("unchecked")
 	public void registerClientCommands(RegisterClientCommandsEvent event) {
 		NeoforgeMain.registerClientCommands((CommandDispatcher<CommandSourceStack>) (CommandDispatcher<?>) event.getDispatcher());
 	}

@@ -35,7 +35,7 @@ import org.apache.logging.log4j.Logger;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 22.05.2024
+ * @version 23.10.2025
  */
 public class NeoforgeServerProxy implements AbstractModInitializer.IEventProxy
 {
@@ -59,6 +59,7 @@ public class NeoforgeServerProxy implements AbstractModInitializer.IEventProxy
 	}
 
 	@SubscribeEvent
+	@SuppressWarnings("unchecked")
 	public void registerCommands(RegisterCommandsEvent event){
 		NeoforgeMain.registerServerCommands(
 				(CommandDispatcher<CommandSourceStack>) (CommandDispatcher<?>) event.getDispatcher(),
