@@ -43,7 +43,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
  * @author eatmyvenom
  * @author TheMrEngMan
  * @author Leander Knüttel
- * @version 03.10.2025
+ * @version 23.10.2025
  */
 public class UpdateTask {
     private final Minecraft mc;
@@ -205,16 +205,21 @@ public class UpdateTask {
         AbstractModInitializer.connected = true;
     }
 
-    private void Reset() {
-        AbstractModInitializer.setConnection(null);
-        ClientMapHandler.clearRegisteredPositions();
-        FastUpdateTask.getInstance().clearAllPlayerPositions();
-        if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().reset();
-        connectionErrorWasShown = false;
-        cantFindServerErrorWasShown = false;
-        cantGetPlayerPositionsErrorWasShown = false;
-        cantGetMarkerPositionsErrorWasShown = false;
-        linkBrokenErrorWasShown = false;
-        nextUpdateDelay = 1000;
+    private static final Object resetLock = new Object();
+    public void Reset() {
+        synchronized (resetLock) {
+            MainThreadTaskQueue.clearQueue();
+
+            AbstractModInitializer.setConnection(null);
+            ClientMapHandler.clearRegisteredPositions();
+            FastUpdateTask.getInstance().clearAllPlayerPositions();
+            if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().reset();
+            connectionErrorWasShown = false;
+            cantFindServerErrorWasShown = false;
+            cantGetPlayerPositionsErrorWasShown = false;
+            cantGetMarkerPositionsErrorWasShown = false;
+            linkBrokenErrorWasShown = false;
+            nextUpdateDelay = 1000;
+        }
     }
 }

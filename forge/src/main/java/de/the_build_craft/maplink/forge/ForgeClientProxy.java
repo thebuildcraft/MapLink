@@ -23,11 +23,14 @@ package de.the_build_craft.maplink.forge;
 
 import com.mojang.brigadier.CommandDispatcher;
 import de.the_build_craft.maplink.common.AbstractModInitializer;
+import de.the_build_craft.maplink.common.MainThreadTaskQueue;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 #if MC_VER > MC_1_17_1
 import net.minecraftforge.client.event.RegisterClientCommandsEvent;
 #endif
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.apache.logging.log4j.Logger;
 
@@ -36,7 +39,7 @@ import org.apache.logging.log4j.Logger;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 23.10.2025
  */
 public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 {
@@ -47,11 +50,11 @@ public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 	{
 		LOGGER.info("Registering Forge Client Events");
 
-		#if MC_VER > MC_1_17_1
+		//#if MC_VER > MC_1_17_1
 		// remove #if once more Events are registered
 		// (Forge throws an error if this line is there, but no event is registered)
 		MinecraftForge.EVENT_BUS.register(this);
-		#endif
+		//#endif
 
 		//OR register Forge Client Events here
 	}
@@ -62,4 +65,18 @@ public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 		ForgeMain.registerClientCommands((CommandDispatcher<CommandSourceStack>) (CommandDispatcher<?>) event.getDispatcher());
 	}
 	#endif
+
+	@SubscribeEvent
+	public void onClientTick(TickEvent.ClientTickEvent event) {
+		MainThreadTaskQueue.executeQueuedTasks();
+	}
+
+	@SubscribeEvent
+	#if MC_VER >= MC_1_19_2
+	public void onClientLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
+	#else
+	public void onClientLoggingOut(ClientPlayerNetworkEvent.LoggedOutEvent event) {
+	#endif
+		AbstractModInitializer.slowUpdateTask.Reset();
+	}
 }

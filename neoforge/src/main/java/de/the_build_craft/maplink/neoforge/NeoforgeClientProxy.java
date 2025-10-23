@@ -23,8 +23,15 @@ package de.the_build_craft.maplink.neoforge;
 
 import com.mojang.brigadier.CommandDispatcher;
 import de.the_build_craft.maplink.common.AbstractModInitializer;
+import de.the_build_craft.maplink.common.MainThreadTaskQueue;
 import net.minecraft.commands.CommandSourceStack;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+#if MC_VER >= MC_1_20_6
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+#else
+import net.neoforged.neoforge.event.TickEvent.ClientTickEvent;
+#endif
 import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import org.apache.logging.log4j.Logger;
@@ -34,7 +41,7 @@ import org.apache.logging.log4j.Logger;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 23.05.2024
+ * @version 23.10.2025
  */
 public class NeoforgeClientProxy implements AbstractModInitializer.IEventProxy
 {
@@ -54,4 +61,15 @@ public class NeoforgeClientProxy implements AbstractModInitializer.IEventProxy
 	public void registerClientCommands(RegisterClientCommandsEvent event) {
 		NeoforgeMain.registerClientCommands((CommandDispatcher<CommandSourceStack>) (CommandDispatcher<?>) event.getDispatcher());
 	}
+
+	@SubscribeEvent
+	public void onClientTick(ClientTickEvent event) {
+		MainThreadTaskQueue.executeQueuedTasks();
+	}
+
+	@SubscribeEvent
+	public void onClientLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
+		AbstractModInitializer.slowUpdateTask.Reset();
+	}
+
 }

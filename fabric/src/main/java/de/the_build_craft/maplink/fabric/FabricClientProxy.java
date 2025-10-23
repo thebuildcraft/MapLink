@@ -23,6 +23,7 @@ package de.the_build_craft.maplink.fabric;
 
 import com.mojang.brigadier.CommandDispatcher;
 import de.the_build_craft.maplink.common.AbstractModInitializer;
+import de.the_build_craft.maplink.common.MainThreadTaskQueue;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 #if MC_VER > MC_1_18_2
@@ -30,6 +31,9 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 #else
 import net.fabricmc.fabric.api.client.command.v1.ClientCommandManager;
 #endif
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientLoginConnectionEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.commands.CommandSourceStack;
 import org.apache.logging.log4j.Logger;
 
@@ -39,7 +43,7 @@ import org.apache.logging.log4j.Logger;
  * @author coolGi
  * @author Ran
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 23.10.2025
  */
 @Environment(EnvType.CLIENT)
 public class FabricClientProxy implements AbstractModInitializer.IEventProxy
@@ -55,6 +59,11 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 		#else
 		FabricMain.registerClientCommands((CommandDispatcher<CommandSourceStack>) (CommandDispatcher<?>) ClientCommandManager.DISPATCHER);
 		#endif
+
+		ClientTickEvents.END_CLIENT_TICK.register(t -> MainThreadTaskQueue.executeQueuedTasks());
+
+		ClientPlayConnectionEvents.DISCONNECT.register((c, m) -> AbstractModInitializer.slowUpdateTask.Reset());
+		ClientLoginConnectionEvents.DISCONNECT.register((c, m) -> AbstractModInitializer.slowUpdateTask.Reset());
 
 		//register Fabric Client Events here
 	}

@@ -23,6 +23,8 @@ package de.the_build_craft.maplink.common.clientMapHandlers;
 #if MC_VER >= MC_1_21_5
 import com.mojang.blaze3d.textures.GpuTexture;
 #endif
+import de.the_build_craft.maplink.common.AbstractModInitializer;
+import de.the_build_craft.maplink.common.MainThreadTaskQueue;
 import de.the_build_craft.maplink.common.waypoints.*;
 import de.the_build_craft.maplink.mixins.common.mods.xaeroworldmap.WorldMapWaypointAccessor;
 import net.minecraft.client.multiplayer.PlayerInfo;
@@ -49,7 +51,7 @@ import static de.the_build_craft.maplink.common.FastUpdateTask.playerPositions;
 
 /**
  * @author Leander Knüttel
- * @version 03.10.2025
+ * @version 23.10.2025
  */
 public class XaeroClientMapHandler extends ClientMapHandler {
     public static final Long2ObjectMap<Set<AreaMarker>> chunkHighlightMap = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
@@ -74,6 +76,8 @@ public class XaeroClientMapHandler extends ClientMapHandler {
     private final Set<UUID> currentHudAndMinimapPlayerTrackerUUIDs = new HashSet<>();
     private final Set<UUID> currentWorldmapPlayerTrackerUUIDs = new HashSet<>();
 
+    private final Map<String, MainThreadTaskQueue.QueuedTask<Void>> queuedTaskMap = new ConcurrentHashMap<>();
+
     @Override
     public void reset() {
         removeAllPlayerWaypoints();
@@ -81,6 +85,13 @@ public class XaeroClientMapHandler extends ClientMapHandler {
         removeAllAreaMarkers(true);
         hudAndMinimapPlayerTrackerPositions.clear();
         worldmapPlayerTrackerPositions.clear();
+
+        Iterator<Map.Entry<String, MainThreadTaskQueue.QueuedTask<Void>>> queuedTaskIterator = queuedTaskMap.entrySet().iterator();
+        while (queuedTaskIterator.hasNext()) {
+            Map.Entry<String, MainThreadTaskQueue.QueuedTask<Void>> queuedTaskEntry = queuedTaskIterator.next();
+            if (queuedTaskEntry != null) queuedTaskEntry.getValue().cancel();
+            queuedTaskIterator.remove();
+        }
     }
 
     @Override
@@ -140,26 +151,62 @@ public class XaeroClientMapHandler extends ClientMapHandler {
     }
 
     private <P extends Position> void addOrUpdateMiniMapWaypoint(P position, Map<String, TempWaypoint> idToWaypoint, Function<P, TempWaypoint> waypointInit) {
-        if (idToWaypoint.containsKey(position.id)) {
-            Waypoint w = idToWaypoint.get(position.id);
+        if (!AbstractModInitializer.connected) return;
+        MainThreadTaskQueue.QueuedTask<Void> queuedTask = queuedTaskMap.get(position.id);
+        if (queuedTask != null) {
+            if (queuedTask.future.isDone()) {
+                queuedTaskMap.remove(position.id);
+            } else {
+                queuedTask.future.thenRun(() -> {
+                    Waypoint w = idToWaypoint.get(position.id);
+                    if (w != null) {
+                        Int3 pos = position.pos.floorToInt3();
+                        w.setX(pos.x);
+                        w.setY(pos.y);
+                        w.setZ(pos.z);
+                    }
+                });
+                return;
+            }
+        }
+        Waypoint w = idToWaypoint.get(position.id);
+        if (w != null) {
             Int3 pos = position.pos.floorToInt3();
             w.setX(pos.x);
             w.setY(pos.y);
             w.setZ(pos.z);
         } else {
-            idToWaypoint.put(position.id, waypointInit.apply(position));
+            queuedTaskMap.put(position.id, MainThreadTaskQueue.queueTask(() -> {idToWaypoint.put(position.id, waypointInit.apply(position));}));
         }
     }
 
     private <P extends Position> void addOrUpdateWorldMapWaypoint(P position, Map<String, xaero.map.mods.gui.Waypoint> idToWaypoint, Function<P, TempWaypoint> waypointInit) {
-        if (idToWaypoint.containsKey(position.id)) {
-            WorldMapWaypointAccessor w = (WorldMapWaypointAccessor) idToWaypoint.get(position.id);
+        if (!AbstractModInitializer.connected) return;
+        MainThreadTaskQueue.QueuedTask<Void> queuedTask = queuedTaskMap.get(position.id);
+        if (queuedTask != null) {
+            if (queuedTask.future.isDone()) {
+                queuedTaskMap.remove(position.id);
+            } else {
+                queuedTask.future.thenRun(() -> {
+                    WorldMapWaypointAccessor w = (WorldMapWaypointAccessor) idToWaypoint.get(position.id);
+                    if (w != null) {
+                        Int3 pos = position.pos.floorToInt3();
+                        w.setX(pos.x);
+                        w.setY(pos.y);
+                        w.setZ(pos.z);
+                    }
+                });
+                return;
+            }
+        }
+        WorldMapWaypointAccessor w = (WorldMapWaypointAccessor) idToWaypoint.get(position.id);
+        if (w != null) {
             Int3 pos = position.pos.floorToInt3();
             w.setX(pos.x);
             w.setY(pos.y);
             w.setZ(pos.z);
         } else {
-            idToWaypoint.put(position.id, new CustomWorldMapWaypoint(waypointInit.apply(position)));
+            queuedTaskMap.put(position.id, MainThreadTaskQueue.queueTask(() -> {idToWaypoint.put(position.id, new CustomWorldMapWaypoint(waypointInit.apply(position)));}));
         }
     }
 

@@ -51,7 +51,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 03.10.2025
+ * @version 23.10.2025
  */
 public abstract class AbstractModInitializer
 {
@@ -64,7 +64,7 @@ public abstract class AbstractModInitializer
 
 	// Update tasks
 	public static int timerDelay = 1000;
-	private static UpdateTask slowUpdateTask;
+	public static UpdateTask slowUpdateTask;
 	private static FastUpdateTask fastUpdateTask;
 	private static ScheduledFuture<?> scheduledSlowUpdateTask;
 	private static ScheduledFuture<?> scheduledFastUpdateTask;

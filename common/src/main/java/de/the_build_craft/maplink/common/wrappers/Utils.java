@@ -22,6 +22,7 @@ package de.the_build_craft.maplink.common.wrappers;
 
 import de.the_build_craft.maplink.common.AbstractModInitializer;
 import de.the_build_craft.maplink.common.CommonModConfig;
+import de.the_build_craft.maplink.common.MainThreadTaskQueue;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
@@ -33,14 +34,14 @@ import java.util.function.Supplier;
 
 /**
  * @author Leander Knüttel
- * @version 15.09.2025
+ * @version 23.10.2025
  */
 public class Utils {
     public static void sendToClientChat(Component text){
         if (Minecraft.getInstance().level == null) {
             AbstractModInitializer.LOGGER.warn("Caught client chat message outside the game:\n{}", text.getString());
         } else {
-            Minecraft.getInstance().gui.getChat().addMessage(text);
+            MainThreadTaskQueue.queueTask(() -> Minecraft.getInstance().gui.getChat().addMessage(text));
         }
     }
 
