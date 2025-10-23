@@ -1,4 +1,6 @@
 {
+  "modmenu.descriptionTranslation.maplink": "Synchronizes player positions, marker positions and area overlays from Bluemap, Dynmap, Pl3xMap or Squaremap with Xaero's Minimap and Worldmap. Also displays AFK time in the tab list.",
+
   "maplink.title": "Map Link",
 
   "maplink.category.general": "General",
