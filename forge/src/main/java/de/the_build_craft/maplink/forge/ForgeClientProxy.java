@@ -30,7 +30,7 @@ import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RegisterClientCommandsEvent;
 #endif
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.TickEvent.ClientTickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.apache.logging.log4j.Logger;
 
@@ -39,7 +39,7 @@ import org.apache.logging.log4j.Logger;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 23.10.2025
+ * @version 24.10.2025
  */
 public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 {
@@ -68,7 +68,11 @@ public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 	#endif
 
 	@SubscribeEvent
-	public void onClientTick(TickEvent.ClientTickEvent event) {
+	#if MC_VER >= MC_1_21_4
+	public void onClientTick(ClientTickEvent.Post event) {
+	#else
+	public void onClientTick(ClientTickEvent event) {
+	#endif
 		MainThreadTaskQueue.executeQueuedTasks();
 	}
 
