@@ -39,7 +39,7 @@ import org.apache.logging.log4j.Logger;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 24.10.2025
+ * @version 28.10.2025
  */
 public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 {
@@ -68,7 +68,7 @@ public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 	#endif
 
 	@SubscribeEvent
-	#if MC_VER >= MC_1_21_4
+	#if MC_VER >= MC_1_20_4
 	public void onClientTick(ClientTickEvent.Post event) {
 	#else
 	public void onClientTick(ClientTickEvent event) {
