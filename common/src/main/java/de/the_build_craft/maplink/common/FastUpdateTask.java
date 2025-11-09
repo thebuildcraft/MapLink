@@ -39,7 +39,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 
 /**
  * @author Leander Knüttel
- * @version 03.10.2025
+ * @version 09.11.2025
  */
 public class FastUpdateTask {
     private final Minecraft mc;
@@ -65,17 +65,7 @@ public class FastUpdateTask {
 
     private void runUpdate() {
         // Skip if not in game or disabled
-        if (mc.level == null
-                || mc.player == null
-                #if MC_VER >= MC_1_21_9
-                || mc.getCameraEntity() == null
-                #else
-                || mc.cameraEntity == null
-                #endif
-                || (mc.getSingleplayerServer() != null && !mc.getSingleplayerServer().isPublished())
-                || mc.getCurrentServer() == null
-                || mc.getConnection() == null
-                || !mc.getConnection().getConnection().isConnected()
+        if (!AbstractModInitializer.checkIfInGame()
                 || !config.general.enabled
                 || ClientMapHandler.getInstance() == null) {
             return;

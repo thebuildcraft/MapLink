@@ -26,7 +26,6 @@ import de.the_build_craft.maplink.common.connections.*;
 import de.the_build_craft.maplink.common.wrappers.Text;
 import de.the_build_craft.maplink.common.wrappers.Utils;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Style;
 
@@ -43,15 +42,9 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
  * @author eatmyvenom
  * @author TheMrEngMan
  * @author Leander Knüttel
- * @version 23.10.2025
+ * @version 09.11.2025
  */
 public class UpdateTask {
-    private final Minecraft mc;
-
-    public UpdateTask() {
-        this.mc = Minecraft.getInstance();
-    }
-
     private boolean connectionErrorWasShown = false;
     private boolean cantFindServerErrorWasShown = false;
     private boolean cantGetPlayerPositionsErrorWasShown = false;
@@ -78,17 +71,7 @@ public class UpdateTask {
 
     private void runUpdate() {
         // Skip if not in game
-        if (mc.level == null
-                || mc.player == null
-                #if MC_VER >= MC_1_21_9
-                || mc.getCameraEntity() == null
-                #else
-                || mc.cameraEntity == null
-                #endif
-                || (mc.getSingleplayerServer() != null && !mc.getSingleplayerServer().isPublished())
-                || mc.getCurrentServer() == null
-                || mc.getConnection() == null
-                || !mc.getConnection().getConnection().isConnected()) {
+        if (!AbstractModInitializer.checkIfInGame()) {
             Reset();
             return;
         }
@@ -100,7 +83,11 @@ public class UpdateTask {
         }
 
         // Get the IP of this server
-        String serverIP = mc.getCurrentServer().ip.toLowerCase(Locale.ROOT);
+        String serverIP = AbstractModInitializer.getCurrentServerIP();
+        if (serverIP == null) {
+            Reset();
+            return;
+        }
 
         if (!Objects.equals(currentServerIP, serverIP)){
             currentServerIP = serverIP;
@@ -114,7 +101,7 @@ public class UpdateTask {
                 ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
 
                 if (Objects.equals(serverEntry, null)) {
-                    if (!(config.general.ignoredServers.contains(serverIP) || cantFindServerErrorWasShown)) {
+                    if (!(config.general.ignoredServers.contains(serverIP) || cantFindServerErrorWasShown || AbstractModInitializer.checkIfInSingleplayer())) {
                         String message = "[" + AbstractModInitializer.MOD_NAME + "]: " +
                                 "Could not find a web map link for this server. " +
                                 "Make sure to add it to the config. (this server ip was detected: " + serverIP + ") ";

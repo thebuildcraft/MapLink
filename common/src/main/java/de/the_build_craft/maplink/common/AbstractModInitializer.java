@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.*;
 
 import static de.the_build_craft.maplink.common.CommonModConfig.*;
@@ -51,7 +52,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 28.10.2025
+ * @version 09.11.2025
  */
 public abstract class AbstractModInitializer
 {
@@ -306,6 +307,40 @@ public abstract class AbstractModInitializer
 		}
 		else{
 			return new String[]{id};
+		}
+	}
+
+	public static boolean checkIfInGame() {
+		Minecraft mc = Minecraft.getInstance();
+		return mc.level != null
+				&& mc.player != null
+				#if MC_VER >= MC_1_21_9
+				&& mc.getCameraEntity() != null
+                #else
+                && mc.cameraEntity != null
+                #endif;
+	}
+
+	public static boolean checkIfInSingleplayer() {
+        return Minecraft.getInstance().getSingleplayerServer() != null;
+	}
+
+	public static boolean checkIfInMultiplayer() {
+		Minecraft mc = Minecraft.getInstance();
+		return mc.getCurrentServer() != null
+				&& mc.getConnection() != null
+				&& mc.getConnection().getConnection().isConnected();
+	}
+
+	@Nullable
+    @SuppressWarnings("DataFlowIssue")
+	public static String getCurrentServerIP() {
+		if (AbstractModInitializer.checkIfInSingleplayer()) {
+			return "lan";
+		} else if (AbstractModInitializer.checkIfInMultiplayer()) {
+			return Minecraft.getInstance().getCurrentServer().ip.toLowerCase(Locale.ROOT);
+		} else {
+			return null;
 		}
 	}
 	

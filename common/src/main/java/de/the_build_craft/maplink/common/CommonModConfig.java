@@ -21,15 +21,13 @@
 package de.the_build_craft.maplink.common;
 
 import me.shedaniel.autoconfig.AutoConfig;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ServerData;
 
 import java.util.Locale;
 import java.util.Objects;
 
 /**
  * @author Leander Knüttel
- * @version 19.09.2025
+ * @version 09.11.2025
  */
 public abstract class CommonModConfig {
     public static ModConfig config;
@@ -60,11 +58,10 @@ public abstract class CommonModConfig {
     }
 
     public static ModConfig.ServerEntry getCurrentServerEntry() {
-        ServerData serverData = Minecraft.getInstance().getCurrentServer();
-        if (serverData == null) return null;
-        String serverIP = serverData.ip.toLowerCase(Locale.ROOT);
-        for (ModConfig.ServerEntry server : config.general.serverEntries){
-            if (Objects.equals(serverIP, server.ip.toLowerCase(Locale.ROOT))){
+        String serverIP = AbstractModInitializer.getCurrentServerIP();
+        if (serverIP == null) return null;
+        for (ModConfig.ServerEntry server : config.general.serverEntries) {
+            if (Objects.equals(serverIP, server.ip.toLowerCase(Locale.ROOT))) {
                 return server;
             }
         }
