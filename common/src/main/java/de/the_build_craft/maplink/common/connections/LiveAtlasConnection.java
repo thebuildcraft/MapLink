@@ -35,7 +35,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 
 /**
  * @author Leander Knüttel
- * @version 16.09.2025
+ * @version 09.11.2025
  */
 public class LiveAtlasConnection extends MapConnection {
     public static final Pattern dynmapRegexPattern = Pattern.compile("dynmap: *\\{\\R*((?!\\s+//\\s*).*\\R*)*?[^}\"']*}");
@@ -95,6 +95,15 @@ public class LiveAtlasConnection extends MapConnection {
                 mapConnections.add(new SquareMapConnection(baseURL, g, true));
             } catch (Exception e) {
                 AbstractModInitializer.LOGGER.error("error creating Squaremap connection for LiveAtlas", e);
+            }
+        }
+        // use default /standalone/config.js
+        if (mapConnections.isEmpty()) {
+            try {
+                mapConnections.add(new DynmapConnection(baseURL,
+                        HTTP.makeTextHttpRequest(URI.create(baseURL + "/standalone/config.js").toURL()), true));
+            } catch (Exception e) {
+                AbstractModInitializer.LOGGER.error("error creating Dynmap connection for LiveAtlas", e);
             }
         }
     }
