@@ -43,7 +43,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 16.09.2025
+ * @version 09.11.2025
  */
 public abstract class MapConnection {
     public URL queryURL;
@@ -107,7 +107,8 @@ public abstract class MapConnection {
                     break;
                 }
             }
-        }
+        }//                     if sb is invisible on Dynmap
+        if (currentDimension.equals("-some-other-bogus-world-")) currentDimension = "";
 
         if (config.general.debugMode && config.general.chatLogInDebugMode) {
             Utils.sendToClientChat("---");
