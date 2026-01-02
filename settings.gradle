@@ -19,7 +19,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * file changed by: Leander Knüttel
- * date: 17.09.2025
+ * date: 02.01.2026
  */
 
 pluginManagement {
@@ -83,7 +83,7 @@ def loadProperties() {
         mcVers[i] = mcVers[i].replaceAll("\\.properties", "") // As we are getting the file names, we should remove the ".properties" at the end to get the versions
     }
 
-    mcVers.sort() // Sort so it always goes from oldest to newest
+    mcVers.sort((a,b) -> sortSemanticVersionOldestToNewest(a,b)) // Sort so it always goes from oldest to newest
 
     int mcIndex = -1
     println "Avalible MC versions: ${mcVers}"
@@ -109,6 +109,37 @@ def loadProperties() {
     gradle.ext.mcVers = mcVers
     gradle.ext.mcIndex = mcIndex
 }
+
+/**
+ * input format: "major.minor.patch"
+ * needed so we can sort versions with different length strings
+ * IE: 1.21.1 should come before 1.21.10
+ */
+private static int sortSemanticVersionOldestToNewest(String version1, String version2)
+{
+    String[] parts1 = version1.split("\\.");
+    String[] parts2 = version2.split("\\.");
+
+    int major1 = Integer.parseInt(parts1[0]);
+    int major2 = Integer.parseInt(parts2[0]);
+    if (major1 != major2)
+    {
+        return Integer.compare(major1, major2);
+    }
+
+    int minor1 = Integer.parseInt(parts1[1]);
+    int minor2 = Integer.parseInt(parts2[1]);
+    if (minor1 != minor2)
+    {
+        return Integer.compare(minor1, minor2);
+    }
+
+    int patch1 = Integer.parseInt(parts1[2]);
+    int patch2 = Integer.parseInt(parts2[2]);
+    return Integer.compare(patch1, patch2);
+}
+
+
 loadProperties()
 
 // sub-projects
