@@ -64,6 +64,10 @@ pluginManagement {
             name "Firstdark"
             url "https://maven.firstdark.dev/releases"
         }
+        maven {
+            url "https://chocolateminecraft.com/maven"
+            name "Xaero's Maven"
+        }
         mavenCentral()
         gradlePluginPortal()
         

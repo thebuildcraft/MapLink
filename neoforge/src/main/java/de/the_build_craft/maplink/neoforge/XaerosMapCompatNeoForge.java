@@ -40,7 +40,7 @@ import java.util.Map;
 
 /**
  * @author Leander Knüttel
- * @version 03.10.2025
+ * @version 02.01.2026
  */
 public class XaerosMapCompatNeoForge extends XaerosMapCompat {
     //partially from Earthcomputer/minimap-sync licensed under the MIT License
@@ -50,7 +50,10 @@ public class XaerosMapCompatNeoForge extends XaerosMapCompat {
         if (textureToData.isEmpty()) return;
         MultiTextureRenderTypeRendererProvider multiTextureRenderTypeRenderers = BuiltInHudModules.MINIMAP.getCurrentSession().getMultiTextureRenderTypeRenderers();
         MultiTextureRenderTypeRenderer renderer = multiTextureRenderTypeRenderers.getRenderer(
-                #if MC_VER >= MC_1_21_6
+                #if MC_VER >= MC_1_21_11
+                MultiTextureRenderTypeRendererProvider::defaultTextureBind,
+                CustomRenderTypes.GUI_NEAREST);
+                #elif MC_VER >= MC_1_21_6
                 MultiTextureRenderTypeRendererProvider::defaultTextureBind,
                 CustomRenderTypes.GUI);
                 #elif MC_VER >= MC_1_21_5

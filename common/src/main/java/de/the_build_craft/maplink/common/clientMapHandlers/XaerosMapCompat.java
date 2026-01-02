@@ -22,6 +22,13 @@ package de.the_build_craft.maplink.common.clientMapHandlers;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+#if MC_VER != MC_1_19_4 && MC_VER != MC_1_20_2 && MC_VER != MC_1_20_6
+import xaero.hud.minimap.common.config.option.MinimapProfiledConfigOptions;
+import xaero.map.common.config.option.WorldMapProfiledConfigOptions;
+#endif
+import xaero.map.WorldMap;
+import xaero.common.HudMod;
+
 #if MC_VER >= MC_1_19_4
 import org.joml.Matrix4f;
 #else
@@ -34,10 +41,13 @@ import java.util.Map;
 
 /**
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 02.01.2026
  */
 public abstract class XaerosMapCompat {
     public static XaerosMapCompat Instance;
+
+    public static int xaeroAutoConvertToKmThreshold;
+    public static boolean xaeroWaypointBackground;
 
     public XaerosMapCompat() {
         Instance = this;
@@ -60,4 +70,14 @@ public abstract class XaerosMapCompat {
     }
 
     public abstract void drawAllCustomIcons();
+
+    public static void cacheXaeroSettings() {
+        #if MC_VER != MC_1_19_4 && MC_VER != MC_1_20_2 && MC_VER != MC_1_20_6
+        xaeroAutoConvertToKmThreshold = HudMod.INSTANCE.getHudConfigs().getClientConfigManager().getCurrentProfile().get(MinimapProfiledConfigOptions.WAYPOINT_CONVERT_DISTANCE_TO_KM_AT);
+        xaeroWaypointBackground = WorldMap.INSTANCE.getConfigs().getClientConfigManager().getCurrentProfile().get(WorldMapProfiledConfigOptions.WAYPOINT_BACKGROUNDS);
+        #else
+        xaeroAutoConvertToKmThreshold = HudMod.INSTANCE.getSettings().autoConvertWaypointDistanceToKmThreshold;
+        xaeroWaypointBackground = WorldMap.settings.waypointBackgrounds;
+        #endif
+    }
 }

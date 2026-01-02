@@ -21,7 +21,7 @@
 package de.the_build_craft.maplink.common.waypoints;
 
 import de.the_build_craft.maplink.common.clientMapHandlers.ClientMapHandler;
-import xaero.common.settings.ModSettings;
+import xaero.hud.minimap.waypoint.WaypointColor;
 import xaero.map.mods.gui.Waypoint;
 
 /**
@@ -33,7 +33,7 @@ public class CustomWorldMapWaypoint extends Waypoint {
     private WaypointState waypointState;
 
     public CustomWorldMapWaypoint(TempWaypoint w) {
-        super(w, w.getX(), w.getY(), w.getZ(), w.getName(), w.getInitials(), ModSettings.COLORS[w.getWaypointColor().ordinal()], w.getPurpose().ordinal(), false, ClientMapHandler.waypointPrefix, w.isYIncluded(), 1);
+        super(w, w.getX(), w.getY(), w.getZ(), w.getName(), w.getInitials(), WaypointColor.fromIndex(w.getWaypointColor().ordinal()).getHex(), w.getPurpose().ordinal(), false, ClientMapHandler.waypointPrefix, w.isYIncluded(), 1);
         setTemporary(w.isTemporary());
         setGlobal(w.isGlobal());
         this.id = w.id;

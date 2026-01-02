@@ -29,13 +29,21 @@ import de.the_build_craft.maplink.common.waypoints.*;
 import de.the_build_craft.maplink.common.wrappers.Text;
 import de.the_build_craft.maplink.common.wrappers.Utils;
 import net.minecraft.ChatFormatting;
+#if MC_VER >= MC_1_21_11
+import net.minecraft.util.Util;
+#else
 import net.minecraft.Util;
+#endif
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Style;
+#if MC_VER >= MC_1_21_11
+import net.minecraft.resources.Identifier;
+#else
 import net.minecraft.resources.ResourceLocation;
+#endif
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -50,7 +58,7 @@ import static de.the_build_craft.maplink.common.FastUpdateTask.playerPositions;
 
 /**
  * @author Leander Knüttel
- * @version 03.10.2025
+ * @version 02.01.2026
  */
 public abstract class ClientMapHandler {
     public static final String waypointPrefix = "maplink_";
@@ -147,7 +155,11 @@ public abstract class ClientMapHandler {
         #else
         DynamicTexture texture = new DynamicTexture(iconLinkToNativeImage.get(link));
         #endif
+
+        #if MC_VER < MC_1_21_11
         texture.setFilter(false, false);
+        #endif
+
         Minecraft.getInstance().getTextureManager().register(ClientMapHandler.getIconResourceLocation(link), texture);
         DynamicTexture old = iconLinkToTexture.put(link, texture);
         if (old != null) {
@@ -157,22 +169,34 @@ public abstract class ClientMapHandler {
     }
 
     //partially from Earthcomputer/minimap-sync licensed under the MIT License
-    public static ResourceLocation getIconResourceLocation(String icon) {
-        #if MC_VER >= MC_1_21_5
-        return ResourceLocation.fromNamespaceAndPath("maplink", "xaeros_" + ClientMapHandler.makeResourceSafeString(icon));
-        #elif MC_VER >= MC_1_19_2
-        return ResourceLocation.tryBuild("maplink", "xaeros_" + ClientMapHandler.makeResourceSafeString(icon));
-        #else
-        return new ResourceLocation("maplink", "xaeros_" + ClientMapHandler.makeResourceSafeString(icon));
-        #endif
+    #if MC_VER >= MC_1_21_11
+    public static Identifier getIconResourceLocation(String icon) {
+        return Identifier.fromNamespaceAndPath("maplink", "xaeros_" + ClientMapHandler.makeResourceSafeString(icon));
     }
+    #elif MC_VER >= MC_1_21_5
+    public static ResourceLocation getIconResourceLocation(String icon) {
+        return ResourceLocation.fromNamespaceAndPath("maplink", "xaeros_" + ClientMapHandler.makeResourceSafeString(icon));
+    }
+    #elif MC_VER >= MC_1_19_2
+    public static ResourceLocation getIconResourceLocation(String icon) {
+        return ResourceLocation.tryBuild("maplink", "xaeros_" + ClientMapHandler.makeResourceSafeString(icon));
+    }
+    #else
+    public static ResourceLocation getIconResourceLocation(String icon) {
+        return new ResourceLocation("maplink", "xaeros_" + ClientMapHandler.makeResourceSafeString(icon));
+    }
+    #endif
 
     //from Earthcomputer/minimap-sync licensed under the MIT License
     public static String makeResourceSafeString(String original) {
         //noinspection deprecation
         String hash = Hashing.sha1().hashUnencodedChars(original).toString();
         original = original.toLowerCase(Locale.ROOT);
+        #if MC_VER >= MC_1_21_11
+        original = Util.sanitizeName(original, Identifier::validPathChar);
+        #else
         original = Util.sanitizeName(original, ResourceLocation::validPathChar);
+        #endif
         return original + "/" + hash;
     }
 

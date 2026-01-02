@@ -19,7 +19,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * file changed by: Leander Knüttel
- * date: 17.09.2025
+ * date: 02.01.2026
  */
 
 plugins {
@@ -58,6 +58,9 @@ dependencies {
 
     modImplementation "maven.modrinth:xaeros-world-map:${rootProject.xaeros_world_map_neoforge_version}"
     modImplementation "maven.modrinth:xaeros-minimap:${rootProject.xaeros_minimap_neoforge_version}"
+    if (rootProject.hasProperty("xaero_lib_version")){
+        modImplementation "xaero.lib:xaerolib-neoforge-${rootProject.xaero_lib_version}"
+    }
 }
 
 shadowJar {

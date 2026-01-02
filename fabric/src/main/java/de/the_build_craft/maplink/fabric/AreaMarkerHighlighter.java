@@ -49,7 +49,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 
 /**
  * @author Leander Knüttel
- * @version 07.09.2025
+ * @version 02.01.2026
  */
 public class AreaMarkerHighlighter extends ChunkHighlighter implements MapHighlightClearer {
     public AreaMarkerHighlighter() {
@@ -62,7 +62,9 @@ public class AreaMarkerHighlighter extends ChunkHighlighter implements MapHighli
         if (Minecraft.getInstance().level == null) return;
         try {
             MapDimension mapDim = WorldMapSession.getCurrentSession().getMapProcessor().getMapWorld()
-                    #if MC_VER >= MC_1_19_4
+                    #if MC_VER >= MC_1_21_11
+                    .getDimension(Minecraft.getInstance().level.dimension());
+                    #elif MC_VER >= MC_1_19_4
                     .getDimension(ResourceKey.create(Registries.DIMENSION, Minecraft.getInstance().level.dimension().location()));
                     #else
                     .getDimension(ResourceKey.create(Registry.DIMENSION_REGISTRY, Minecraft.getInstance().level.dimension().location()));

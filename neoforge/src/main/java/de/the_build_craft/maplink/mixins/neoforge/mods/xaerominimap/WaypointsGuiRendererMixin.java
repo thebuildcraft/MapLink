@@ -59,7 +59,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 /**
  * @author TheMrEngMan
  * @author Leander Knüttel
- * @version 07.09.2025
+ * @version 02.01.2026
  */
 
 @Pseudo
@@ -102,7 +102,23 @@ public class WaypointsGuiRendererMixin {
     }
 
     //partially from Earthcomputer/minimap-sync licensed under the MIT License
-    #if MC_VER >= MC_1_21_6
+    #if MC_VER >= MC_1_21_11
+    @WrapOperation(method = "drawIcon(Lxaero/hud/minimap/element/render/MinimapElementGraphics;Lxaero/common/minimap/waypoints/Waypoint;IIIIIIIIIFILxaero/lib/client/graphics/XaeroBufferProvider;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V",
+            at = @At(value = "INVOKE", target = "Lxaero/hud/render/util/RenderBufferUtil;addColoredRect(Lorg/joml/Matrix4f;Lcom/mojang/blaze3d/vertex/VertexConsumer;FFIIFFFF)V"))
+    private void drawCustomIcon(Matrix4f matrix,
+                                VertexConsumer vertexBuffer,
+                                float x,
+                                float y,
+                                int w,
+                                int h,
+                                float r,
+                                float g,
+                                float b,
+                                float a,
+                                Operation<Void> original,
+                                MinimapElementGraphics guiGraphics,
+                                Waypoint waypoint) {
+    #elif MC_VER >= MC_1_21_6
     @WrapOperation(method = "drawIcon(Lxaero/hud/minimap/element/render/MinimapElementGraphics;Lxaero/common/minimap/waypoints/Waypoint;IIIIIIIIIFILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V",
             at = @At(value = "INVOKE", target = "Lxaero/hud/render/util/RenderBufferUtil;addColoredRect(Lorg/joml/Matrix4f;Lcom/mojang/blaze3d/vertex/VertexConsumer;FFIIFFFF)V"))
     private void drawCustomIcon(Matrix4f matrix,
@@ -180,7 +196,20 @@ public class WaypointsGuiRendererMixin {
     }
 
     //partially from Earthcomputer/minimap-sync licensed under the MIT License
-    #if MC_VER >= MC_1_21_6
+    #if MC_VER >= MC_1_21_11
+    @WrapOperation(method = "drawIcon(Lxaero/hud/minimap/element/render/MinimapElementGraphics;Lxaero/common/minimap/waypoints/Waypoint;IIIIIIIIIFILxaero/lib/client/graphics/XaeroBufferProvider;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V",
+            at = @At(value = "INVOKE", target = "Lxaero/common/misc/Misc;drawNormalText(Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/lang/String;FFIZLnet/minecraft/client/renderer/MultiBufferSource;)V"))
+    private void dontDrawSymbolStringForCustomIcons(PoseStack matrices,
+                                                    String symbol,
+                                                    float x,
+                                                    float y,
+                                                    int color,
+                                                    boolean shadow,
+                                                    MultiBufferSource renderTypeBuffer,
+                                                    Operation<Void> original,
+                                                    MinimapElementGraphics guiGraphics,
+                                                    Waypoint w) {
+    #elif MC_VER >= MC_1_21_6
     @WrapOperation(method = "drawIcon(Lxaero/hud/minimap/element/render/MinimapElementGraphics;Lxaero/common/minimap/waypoints/Waypoint;IIIIIIIIIFILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V",
             at = @At(value = "INVOKE", target = "Lxaero/common/misc/Misc;drawNormalText(Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/lang/String;FFIZLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V"))
     private void dontDrawSymbolStringForCustomIcons(PoseStack matrices,

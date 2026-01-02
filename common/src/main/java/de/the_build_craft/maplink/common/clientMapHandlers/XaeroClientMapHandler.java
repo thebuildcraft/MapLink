@@ -29,7 +29,6 @@ import de.the_build_craft.maplink.common.waypoints.*;
 import de.the_build_craft.maplink.mixins.common.mods.xaeroworldmap.WorldMapWaypointAccessor;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.renderer.texture.DynamicTexture;
-import xaero.common.settings.ModSettings;
 #if MC_VER != MC_1_17_1
 import xaero.hud.minimap.waypoint.WaypointColor;
 #endif
@@ -51,7 +50,7 @@ import static de.the_build_craft.maplink.common.FastUpdateTask.playerPositions;
 
 /**
  * @author Leander Knüttel
- * @version 23.10.2025
+ * @version 02.01.2026
  */
 public class XaeroClientMapHandler extends ClientMapHandler {
     public static final Long2ObjectMap<Set<AreaMarker>> chunkHighlightMap = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
@@ -240,17 +239,13 @@ public class XaeroClientMapHandler extends ClientMapHandler {
 
     private void updateMiniMapWaypointColors(Map<String, TempWaypoint> map, Function<TempWaypoint, Integer> waypointToColor) {
         for (TempWaypoint waypoint : map.values()) {
-            #if MC_VER == MC_1_17_1
-            waypoint.setColor(waypointToColor.apply(waypoint));
-            #else
             waypoint.setWaypointColor(WaypointColor.fromIndex(waypointToColor.apply(waypoint)));
-            #endif
         }
     }
 
     private void updateWorldMapWaypointColors(Map<String, xaero.map.mods.gui.Waypoint> map, Function<xaero.map.mods.gui.Waypoint, Integer> waypointToColor) {
         for (xaero.map.mods.gui.Waypoint waypoint : map.values()) {
-            ((WorldMapWaypointAccessor) waypoint).setColor(ModSettings.COLORS[waypointToColor.apply(waypoint)]);
+            ((WorldMapWaypointAccessor) waypoint).setColor(WaypointColor.fromIndex(waypointToColor.apply(waypoint)).getHex());
         }
     }
 

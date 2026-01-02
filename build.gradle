@@ -294,6 +294,8 @@ allprojects { p ->
         maven { url "https://maven.neoforged.net/releases/" }
         maven { url "https://maven.neoforged.net/snapshots/" }
 
+        maven { url "https://chocolateminecraft.com/maven" }
+
         // These 4 are for importing mods that arnt on CursedForge, Modrinth, GitHub, GitLab or anywhere opensource
         flatDir {
             dirs "${rootDir}/mods/fabric"

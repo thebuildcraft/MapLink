@@ -54,7 +54,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 
 /**
  * @author Leander Knüttel
- * @version 07.09.2025
+ * @version 02.01.2026
  */
 @Pseudo
 @Mixin(WaypointWorldRenderer.class)
@@ -62,11 +62,11 @@ public class WaypointWorldRendererMixin {
     //partially from Earthcomputer/minimap-sync licensed under the MIT License
     @ModifyExpressionValue(method = "renderIcon", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/Font;width(Ljava/lang/String;)I"))
     private int modifyFontWidthForCustomIcons(int original,
-                                              Waypoint w,
+                                              Waypoint w/*,
                                               boolean highlit,
                                               PoseStack matrixStack,
                                               Font fontRenderer,
-                                              MultiBufferSource.BufferSource bufferSource) {
+                                              MultiBufferSource.BufferSource bufferSource*/) {
         if (w instanceof TempWaypoint) {
             WaypointState waypointState = ((TempWaypoint) w).getWaypointState();
             if (waypointState.renderIconOnHud) {
@@ -94,11 +94,11 @@ public class WaypointWorldRendererMixin {
                                 float a,
                                 VertexConsumer waypointBackgroundConsumer,
                                 Operation<Void> original,
-                                Waypoint w,
+                                Waypoint w/*,
                                 boolean highlit,
                                 PoseStack matrixStack_,
                                 Font fontRenderer,
-                                MultiBufferSource.BufferSource bufferSource) {
+                                MultiBufferSource.BufferSource bufferSource*/) {
         WaypointState waypointState = null;
         if (w instanceof TempWaypoint) waypointState = ((TempWaypoint) w).getWaypointState();
         if (waypointState != null && waypointState.renderIconOnHud) {
@@ -109,6 +109,10 @@ public class WaypointWorldRendererMixin {
     }
 
     //partially from Earthcomputer/minimap-sync licensed under the MIT License
+    #if MC_VER >= MC_1_21_11
+    @WrapOperation(method = "renderIcon", at = @At(value = "INVOKE", target = "Lxaero/common/misc/Misc;drawNormalText(Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/lang/String;FFIZLnet/minecraft/client/renderer/MultiBufferSource;)V"))
+    private void dontDrawSymbolStringForCustomIcons(PoseStack matrices, String symbol, float x, float y, int color, boolean shadow, MultiBufferSource renderTypeBuffer, Operation<Void> original, Waypoint w) {
+    #else
     @WrapOperation(method = "renderIcon", at = @At(value = "INVOKE", target = "Lxaero/common/misc/Misc;drawNormalText(Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/lang/String;FFIZLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V"))
     private void dontDrawSymbolStringForCustomIcons(PoseStack matrices,
                                                     String symbol,
@@ -119,6 +123,7 @@ public class WaypointWorldRendererMixin {
                                                     MultiBufferSource.BufferSource renderTypeBuffer,
                                                     Operation<Void> original,
                                                     Waypoint w) {
+    #endif
         if (w instanceof TempWaypoint) {
             WaypointState waypointState = ((TempWaypoint) w).getWaypointState();
             if (!waypointState.renderIconOnHud) {

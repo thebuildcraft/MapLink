@@ -22,11 +22,11 @@ package de.the_build_craft.maplink.neoforge;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.mojang.authlib.GameProfile;
+import de.the_build_craft.maplink.common.clientMapHandlers.XaerosMapCompat;
 import de.the_build_craft.maplink.common.waypoints.MutablePlayerPosition;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
-import xaero.common.HudMod;
 import xaero.hud.minimap.player.tracker.system.IRenderedPlayerTracker;
 import xaero.map.radar.tracker.system.IPlayerTrackerSystem;
 
@@ -37,7 +37,7 @@ import java.util.UUID;
 
 /**
  * @author Leander Knüttel
- * @version 03.10.2025
+ * @version 02.01.2026
  */
 public class RemotePlayerTrackerSystem implements IRenderedPlayerTracker<MutablePlayerPosition>, IPlayerTrackerSystem<MutablePlayerPosition> {
     private final RemotePlayerTrackerReader reader;
@@ -73,8 +73,8 @@ public class RemotePlayerTrackerSystem implements IRenderedPlayerTracker<Mutable
         Vec3 cameraPos = cameraEntity.getEyePosition(1);
         #endif
         double distance = cameraPos.distanceTo(pos);
-        int autoConvertToKmThreshold = HudMod.INSTANCE.getSettings().autoConvertWaypointDistanceToKmThreshold;
-        String distanceText = (autoConvertToKmThreshold != -1 && distance >= autoConvertToKmThreshold)
+
+        String distanceText = (XaerosMapCompat.xaeroAutoConvertToKmThreshold != -1 && distance >= XaerosMapCompat.xaeroAutoConvertToKmThreshold)
                 ? precision1.format(distance / 1000) + "km"
                 : precision0.format(distance) + "m";
         return distanceText + " | " + original.call(instance);

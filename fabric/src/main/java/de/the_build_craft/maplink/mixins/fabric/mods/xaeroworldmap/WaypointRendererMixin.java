@@ -24,6 +24,7 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.vertex.PoseStack;
+import de.the_build_craft.maplink.common.clientMapHandlers.XaerosMapCompat;
 import de.the_build_craft.maplink.common.waypoints.CustomWorldMapWaypoint;
 import de.the_build_craft.maplink.common.waypoints.WaypointState;
 #if MC_VER >= MC_1_20_1
@@ -42,8 +43,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import xaero.map.WorldMap;
 #if MC_VER >= MC_1_21_5
 import com.mojang.blaze3d.textures.GpuTexture;
 #endif
@@ -62,7 +61,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 
 /**
  * @author Leander Knüttel
- * @version 07.09.2025
+ * @version 02.01.2026
  */
 @Pseudo
 @Mixin(WaypointRenderer.class)
@@ -143,7 +142,7 @@ public class WaypointRendererMixin {
         WaypointState waypointState = null;
         if (w instanceof CustomWorldMapWaypoint) waypointState = ((CustomWorldMapWaypoint) w).getWaypointState();
         if (waypointState != null && waypointState.renderIconOnWorldMap) {
-            return hovered || (WorldMap.settings.waypointBackgrounds && config.worldmap.waypointIconBackground);
+            return hovered || (XaerosMapCompat.xaeroWaypointBackground && config.worldmap.waypointIconBackground);
         } else {
             return renderBackground;
         }
@@ -196,7 +195,7 @@ public class WaypointRendererMixin {
         WaypointState waypointState = null;
         if (w instanceof CustomWorldMapWaypoint) waypointState = ((CustomWorldMapWaypoint) w).getWaypointState();
         if (waypointState != null && waypointState.renderIconOnWorldMap) {
-            boolean renderBackground = hovered || (WorldMap.settings.waypointBackgrounds && config.worldmap.waypointIconBackground);
+            boolean renderBackground = hovered || (XaerosMapCompat.xaeroWaypointBackground && config.worldmap.waypointIconBackground);
             original.call(poseStack, -15f, renderBackground ? -41f : -12, $$2);
         } else {
             original.call(poseStack, $$0, $$1, $$2);
@@ -214,7 +213,7 @@ public class WaypointRendererMixin {
         WaypointState waypointState = null;
         if (w instanceof CustomWorldMapWaypoint) waypointState = ((CustomWorldMapWaypoint) w).getWaypointState();
         if (waypointState != null && waypointState.renderIconOnWorldMap) {
-            boolean renderBackground = hovered || (WorldMap.settings.waypointBackgrounds && config.worldmap.waypointIconBackground);
+            boolean renderBackground = hovered || (XaerosMapCompat.xaeroWaypointBackground && config.worldmap.waypointIconBackground);
             original.call(poseStack, -15d, renderBackground ? -41d : -12, $$2);
         } else {
             original.call(poseStack, $$0, $$1, $$2);

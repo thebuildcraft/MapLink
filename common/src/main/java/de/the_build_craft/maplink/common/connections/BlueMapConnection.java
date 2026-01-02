@@ -186,7 +186,10 @@ public class BlueMapConnection extends MapConnection {
                         ClientMapHandler.registerPosition(position, marker.icon.startsWith("http") ? marker.icon : (marker.icon.equals("assets/poi.svg") ? null : markerIconLinkTemplate.replace("{icon}", marker.icon)));
                     } else if (Objects.equals(marker.type, "shape") || Objects.equals(marker.type, "extrude")) {
                         if (!serverEntry.includeAreaMarkerLayer(markerSetEntry.getKey()) || !serverEntry.includeAreaMarker(marker.label)) continue;
-                        areaMarkers.add(new AreaMarker(marker.label, pos.x, pos.y, pos.z, marker.shape, marker.lineColor, marker.fillColor, i + markerSetEntry.getKey() + markerEntry.getKey(), new MarkerLayer(markerSetEntry.getKey(), markerSetEntry.getValue().label)));
+                        List<Double3[]> polygons = new ArrayList<>();
+                        polygons.add(marker.shape);
+                        polygons.addAll(Arrays.asList(marker.holes));
+                        areaMarkers.add(new AreaMarker(marker.label, pos.x, pos.y, pos.z, polygons.stream().toArray(Double3[][]::new), marker.lineColor, marker.fillColor, i + markerSetEntry.getKey() + markerEntry.getKey(), new MarkerLayer(markerSetEntry.getKey(), markerSetEntry.getValue().label)));
                     }
                 }
             }
