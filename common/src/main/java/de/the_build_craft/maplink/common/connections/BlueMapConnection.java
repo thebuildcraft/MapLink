@@ -42,7 +42,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 16.09.2025
+ * @version 02.01.2026
  */
 public class BlueMapConnection extends MapConnection {
     List<Integer> lastWorldIndices = new ArrayList<>(Collections.singletonList(0));
@@ -131,6 +131,7 @@ public class BlueMapConnection extends MapConnection {
     int lastWorldIndicesHash;
     int lastMarkerHash;
     int lastAreaMarkerHash;
+    boolean lastExcludeOPAC;
     List<Position> positions = new ArrayList<>();
     List<AreaMarker> areaMarkers = new ArrayList<>();
 
@@ -148,9 +149,11 @@ public class BlueMapConnection extends MapConnection {
         int newWorldIndicesHash = lastWorldIndices.hashCode();
         int newMarkerHash = serverEntry.getMarkerVisibilityHash();
         int newAreaMarkerHash = serverEntry.getAreaMarkerVisibilityHash();
+        boolean newExcludeOPAC = config.general.excludeOPAC;
         if (newWorldIndicesHash == lastWorldIndicesHash
                 && newMarkerHash == lastMarkerHash
                 && newAreaMarkerHash == lastAreaMarkerHash
+                && newExcludeOPAC == lastExcludeOPAC
                 && !forceRefresh
         ) {
             ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
@@ -159,6 +162,7 @@ public class BlueMapConnection extends MapConnection {
         lastWorldIndicesHash = newWorldIndicesHash;
         lastMarkerHash = newMarkerHash;
         lastAreaMarkerHash = newAreaMarkerHash;
+        lastExcludeOPAC = newExcludeOPAC;
         positions.clear();
         areaMarkers.clear();
 
@@ -169,6 +173,8 @@ public class BlueMapConnection extends MapConnection {
                     Utils.sendToClientChat("====================================");
                     Utils.sendToClientChat("markerSet: " + markerSetEntry.getKey());
                 }
+
+                if (config.general.excludeOPAC && Objects.equals(markerSetEntry.getKey(), "opac-bluemap-integration")) continue;
 
                 for (Map.Entry<String, BlueMapMarkerSet.Marker> markerEntry : markerSetEntry.getValue().markers.entrySet()) {
                     BlueMapMarkerSet.Marker marker = markerEntry.getValue();

@@ -42,7 +42,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.config;
 
 /**
  * @author Leander Knüttel
- * @version 26.09.2025
+ * @version 02.01.2026
  */
 @SuppressWarnings({"UnstableApiUsage", "rawtypes"})
 public class ModConfigGui {
@@ -165,7 +165,8 @@ public class ModConfigGui {
                 entryBuilder.startIntSlider(Text.translatable("maplink.option.general.areaLineAlphaMin"), config.general.areaLineAlphaMin, 0, 100).setDefaultValue(defaultConfig.general.areaLineAlphaMin).setSaveConsumer(i -> config.general.areaLineAlphaMin = i).build(),
                 entryBuilder.startIntSlider(Text.translatable("maplink.option.general.areaLineAlphaMax"), config.general.areaLineAlphaMax, 0, 100).setDefaultValue(defaultConfig.general.areaLineAlphaMax).setSaveConsumer(i -> config.general.areaLineAlphaMax = i).build(),
                 entryBuilder.startIntSlider(Text.translatable("maplink.option.general.blocksPerChunkThreshold"), config.general.blocksPerChunkThreshold, 1, 256).setDefaultValue(defaultConfig.general.blocksPerChunkThreshold).setSaveConsumer(i -> config.general.blocksPerChunkThreshold = i).build(),
-                entryBuilder.startIntField(Text.translatable("maplink.option.general.maxChunkArea"), config.general.maxChunkArea).setDefaultValue(defaultConfig.general.maxChunkArea).setSaveConsumer(i -> config.general.maxChunkArea = i).setMin(1).build()
+                entryBuilder.startIntField(Text.translatable("maplink.option.general.maxChunkArea"), config.general.maxChunkArea).setDefaultValue(defaultConfig.general.maxChunkArea).setSaveConsumer(i -> config.general.maxChunkArea = i).setMin(1).build(),
+                entryBuilder.startBooleanToggle(Text.translatable("maplink.option.general.excludeOPAC"), config.general.excludeOPAC).setDefaultValue(defaultConfig.general.excludeOPAC).setSaveConsumer(b -> config.general.excludeOPAC = b).build()
         ));
         autoTooltip(areaOptions);
         autoRequirement(areaOptions, Requirement.isTrue(areaToggle), areaToggle);

@@ -38,7 +38,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.config;
 
 /**
  * @author Leander Knüttel
- * @version 19.09.2025
+ * @version 02.01.2026
  */
 @Config(name = "maplink")
 #if MC_VER < MC_1_20_6
@@ -190,6 +190,8 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
         @ConfigEntry.Gui.Tooltip
         public int maxChunkArea = 500_000;
+
+        public boolean excludeOPAC = true;
 
         //misc options
         @ConfigEntry.Gui.PrefixText

@@ -71,6 +71,7 @@
   "maplink.option.general.blocksPerChunkThreshold.@Tooltip": "Chunks with less highlighted blocks will not be highlighted.",
   "maplink.option.general.maxChunkArea": "Max Size per Area Marker",
   "maplink.option.general.maxChunkArea.@Tooltip": "Measured in bounding box area in Chunks.\n⚠Setting this to high will cause the Area Markers to take very long to show.⚠",
+  "maplink.option.general.excludeOPAC": "Exclude \"Open Parties and Claims\" Areas",
 
   "maplink.option.general.ignoredServers": "Ignored Servers",
   "maplink.option.general.ignoredServers.@PrefixText": "Misc Options",
