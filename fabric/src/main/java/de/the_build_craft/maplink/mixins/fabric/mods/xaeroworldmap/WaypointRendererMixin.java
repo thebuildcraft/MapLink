@@ -61,11 +61,23 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 
 /**
  * @author Leander Knüttel
- * @version 02.01.2026
+ * @version 03.01.2026
  */
 @Pseudo
 @Mixin(WaypointRenderer.class)
 public class WaypointRendererMixin {
+    #if MC_VER >= MC_1_21_11
+    @Inject(method = "preRender", at = @At("HEAD"))
+    private void createGuiNearestRenderer(ElementRenderInfo renderInfo, MultiBufferSource.BufferSource vanillaBufferSource, MultiTextureRenderTypeRendererProvider rendererProvider, boolean shadow, CallbackInfo ci) {
+        XaerosMapCompat.Instance.createGuiNearestRenderer();
+    }
+
+    @Inject(method = "postRender", at = @At(value = "INVOKE", target = "Lxaero/map/graphics/renderer/multitexture/MultiTextureRenderTypeRendererProvider;draw(Lxaero/map/graphics/renderer/multitexture/MultiTextureRenderTypeRenderer;)V", shift = At.Shift.AFTER))
+    private void drawGuiNearestRenderer(ElementRenderInfo renderInfo, MultiBufferSource.BufferSource vanillaBufferSource, MultiTextureRenderTypeRendererProvider rendererProvider, boolean shadow, CallbackInfo ci) {
+        XaerosMapCompat.Instance.drawGuiNearestRenderer();
+    }
+    #endif
+
     #if MC_VER >= MC_1_21_6
     @WrapOperation(method = "renderElement*", at = @At(value = "INVOKE", target = "Lxaero/map/mods/gui/WaypointSymbolCreator;getSymbolTexture(Lxaero/map/element/MapElementGraphics;Ljava/lang/String;)Lxaero/map/icon/XaeroIcon;"))
     private XaeroIcon getCustomIcon(WaypointSymbolCreator waypointSymbolCreator,
@@ -415,7 +427,11 @@ public class WaypointRendererMixin {
         WaypointState waypointState = null;
         if (w instanceof CustomWorldMapWaypoint) waypointState = ((CustomWorldMapWaypoint) w).getWaypointState();
         if (waypointState != null && waypointState.renderIconOnWorldMap) {
+            #if MC_VER >= MC_1_21_11
+            original.call(matrix, XaerosMapCompat.Instance.GUI_NEAREST_Renderer, x, y, u - 1, v - 1, 64, 64, r, g, b, a, 64, 64, texture);
+            #else
             original.call(matrix, renderer, x, y, u - 1, v - 1, 64, 64, r, g, b, a, 64, 64, texture);
+            #endif
         } else {
             original.call(matrix, renderer, x, y, u, v, width, height, r, g, b, a, textureWidth, textureHeight, texture);
         }

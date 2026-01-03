@@ -29,6 +29,12 @@ import xaero.map.common.config.option.WorldMapProfiledConfigOptions;
 import xaero.map.WorldMap;
 import xaero.common.HudMod;
 
+#if MC_VER >= MC_1_21_11
+import xaero.map.graphics.CustomRenderTypes;
+import xaero.map.graphics.renderer.multitexture.MultiTextureRenderTypeRenderer;
+import xaero.map.graphics.renderer.multitexture.MultiTextureRenderTypeRendererProvider;
+#endif
+
 #if MC_VER >= MC_1_19_4
 import org.joml.Matrix4f;
 #else
@@ -41,7 +47,7 @@ import java.util.Map;
 
 /**
  * @author Leander Knüttel
- * @version 02.01.2026
+ * @version 03.01.2026
  */
 public abstract class XaerosMapCompat {
     public static XaerosMapCompat Instance;
@@ -49,8 +55,16 @@ public abstract class XaerosMapCompat {
     public static int xaeroAutoConvertToKmThreshold;
     public static boolean xaeroWaypointBackground;
 
+    #if MC_VER >= MC_1_21_11
+    public final MultiTextureRenderTypeRendererProvider multiTextureRenderTypeRendererProvider;
+    public MultiTextureRenderTypeRenderer GUI_NEAREST_Renderer;
+    #endif
+
     public XaerosMapCompat() {
         Instance = this;
+        #if MC_VER >= MC_1_21_11
+        multiTextureRenderTypeRendererProvider = new MultiTextureRenderTypeRendererProvider(2);
+        #endif
     }
 
     protected static final Map<DynamicTexture, List<XaeroIconRenderData>> textureToData = new Object2ObjectOpenHashMap<>();
@@ -80,4 +94,14 @@ public abstract class XaerosMapCompat {
         xaeroWaypointBackground = WorldMap.settings.waypointBackgrounds;
         #endif
     }
+
+    #if MC_VER >= MC_1_21_11
+    public void createGuiNearestRenderer() {
+        GUI_NEAREST_Renderer = multiTextureRenderTypeRendererProvider.getRenderer(MultiTextureRenderTypeRendererProvider::defaultTextureBind, CustomRenderTypes.GUI_NEAREST);
+    }
+
+    public void drawGuiNearestRenderer() {
+        XaerosMapCompat.Instance.multiTextureRenderTypeRendererProvider.draw(GUI_NEAREST_Renderer);
+    }
+    #endif
 }
