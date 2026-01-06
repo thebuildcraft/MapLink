@@ -35,6 +35,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static de.the_build_craft.maplink.common.CommonModConfig.config;
 
@@ -44,78 +46,58 @@ import static de.the_build_craft.maplink.common.CommonModConfig.config;
  * @author ewpratten
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 26.08.2025
+ * @author yqs112358
+ * @version 06.01.2026
  */
 public class HTTP {
+    private static final int TIMEOUT_MS = 10_000;
+    private static final Gson GSON = new Gson();
+    private static final Pattern CHARSET_PATTERN = Pattern.compile("(?i)charset\\s*=\\s*\"?([^\";]+)\"?");
 
     private static Charset getResponseCharset(HttpURLConnection request) {
-        String contentType = request.getContentType();
-        if (contentType != null) {
+        try {
             // e.g. "application/json; charset=utf-8"
-            String[] parts = contentType.split(";");
-            for (String part : parts) {
-                String trimmed = part.trim();
-                if (trimmed.regionMatches(true, 0, "charset=", 0, "charset=".length())) {
-                    String charsetName = trimmed.substring("charset=".length()).trim();
-                    // strip optional quotes
-                    if (charsetName.length() >= 2 && charsetName.startsWith("\"") && charsetName.endsWith("\"")) {
-                        charsetName = charsetName.substring(1, charsetName.length() - 1);
-                    }
-                    try {
-                        return Charset.forName(charsetName);
-                    } catch (Exception ignored) {
-                        return StandardCharsets.UTF_8;
-                    }
-                }
+            String contentType = request.getContentType();
+
+            if (contentType == null) return StandardCharsets.UTF_8;
+
+            Matcher matcher = CHARSET_PATTERN.matcher(contentType);
+            if (matcher.find()) {
+                return Charset.forName(matcher.group(1).strip());
             }
+        } catch (Exception ignored) {
         }
-        // Bluemap JSON is UTF-8; never fall back to platform default (GBK on many Windows installs)
+
+        // never fall back to platform default
         return StandardCharsets.UTF_8;
     }
 
     /**
      * Make an HTTP request, and deserialize
-     *
-     * @param <T>      Type
-     * @param endpoint URL to request from
-     * @param clazz    Type class
-     * @return Deserialized object
-     * @throws IOException
      */
     public static <T> T makeJSONHTTPRequest(URL endpoint, Class<T> clazz) throws IOException {
         // Turn to a Java object
-        Gson gson = new Gson();
-        return gson.fromJson(makeTextHttpRequest(endpoint), clazz);
+        return GSON.fromJson(makeTextHttpRequest(endpoint), clazz);
     }
 
     /**
      * Make an HTTP request, and deserialize
-     *
-     * @param <T>      Type
-     * @param endpoint URL to request from
-     * @param apiResponseType Type class
-     * @return Deserialized object
-     * @throws IOException
      */
     public static <T> T makeJSONHTTPRequest(URL endpoint, Type apiResponseType) throws IOException {
         // Turn to a Java object
-        Gson gson = new Gson();
-        return gson.fromJson(makeTextHttpRequest(endpoint), apiResponseType);
-    }
-
-    public static String makeTextHttpRequest(URL url) throws IOException {
-        return makeTextHttpRequest(url, false);
+        return GSON.fromJson(makeTextHttpRequest(endpoint), apiResponseType);
     }
 
     public static HttpURLConnection openHTTPConnection(URL url, String contentType) throws IOException {
         // Open an HTTP request
         HttpURLConnection request = (HttpURLConnection) url.openConnection();
         request.setRequestMethod("GET");
-        request.setRequestProperty("Content-Type", contentType);
+        request.setRequestProperty("Accept", contentType);
         request.setRequestProperty("User-Agent", AbstractModInitializer.MOD_NAME);
         request.setInstanceFollowRedirects(true);
-        request.setConnectTimeout(10_000);
-        request.setReadTimeout(10_000);
+        request.setConnectTimeout(TIMEOUT_MS);
+        request.setReadTimeout(TIMEOUT_MS);
+
         // completely insecure and should normally not be used!
         if (config.general.ignoreCertificatesUseAtYourOwnRisk && request instanceof HttpsURLConnection) {
             try {
@@ -126,10 +108,15 @@ public class HTTP {
                 ((HttpsURLConnection) request).setHostnameVerifier(allHostsValid);
             } catch (Exception ignored) {}
         }
+
         return request;
     }
 
-    public static String makeTextHttpRequest(URL url, boolean includeNewLine) throws IOException{
+    public static String makeTextHttpRequest(URL url) throws IOException {
+        return makeTextHttpRequest(url, false);
+    }
+
+    public static String makeTextHttpRequest(URL url, boolean includeNewLine) throws IOException {
         // Open an HTTP request
         HttpURLConnection request = openHTTPConnection(url, "application/json");
 
@@ -147,7 +134,7 @@ public class HTTP {
         return response.toString();
     }
 
-    public static NativeImage makeImageHttpRequest(URL url) throws IOException{
+    public static NativeImage makeImageHttpRequest(URL url) throws IOException {
         // Open an HTTP request
         HttpURLConnection request = openHTTPConnection(url, "image/png");
 
