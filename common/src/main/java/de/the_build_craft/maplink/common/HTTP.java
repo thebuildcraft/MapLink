@@ -31,6 +31,8 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 
@@ -45,6 +47,31 @@ import static de.the_build_craft.maplink.common.CommonModConfig.config;
  * @version 26.08.2025
  */
 public class HTTP {
+
+    private static Charset getResponseCharset(HttpURLConnection request) {
+        String contentType = request.getContentType();
+        if (contentType != null) {
+            // e.g. "application/json; charset=utf-8"
+            String[] parts = contentType.split(";");
+            for (String part : parts) {
+                String trimmed = part.trim();
+                if (trimmed.regionMatches(true, 0, "charset=", 0, "charset=".length())) {
+                    String charsetName = trimmed.substring("charset=".length()).trim();
+                    // strip optional quotes
+                    if (charsetName.length() >= 2 && charsetName.startsWith("\"") && charsetName.endsWith("\"")) {
+                        charsetName = charsetName.substring(1, charsetName.length() - 1);
+                    }
+                    try {
+                        return Charset.forName(charsetName);
+                    } catch (Exception ignored) {
+                        return StandardCharsets.UTF_8;
+                    }
+                }
+            }
+        }
+        // Bluemap JSON is UTF-8; never fall back to platform default (GBK on many Windows installs)
+        return StandardCharsets.UTF_8;
+    }
 
     /**
      * Make an HTTP request, and deserialize
@@ -107,12 +134,14 @@ public class HTTP {
         HttpURLConnection request = openHTTPConnection(url, "application/json");
 
         // Get the content
-        BufferedReader responseReader = new BufferedReader(new InputStreamReader(request.getInputStream()));
+        Charset charset = getResponseCharset(request);
         StringBuilder response = new StringBuilder();
-        String output;
-        while ((output = responseReader.readLine()) != null) {
-            response.append(output);
-            if (includeNewLine) response.append("\n");
+        try (BufferedReader responseReader = new BufferedReader(new InputStreamReader(request.getInputStream(), charset))) {
+            String output;
+            while ((output = responseReader.readLine()) != null) {
+                response.append(output);
+                if (includeNewLine) response.append("\n");
+            }
         }
 
         return response.toString();
