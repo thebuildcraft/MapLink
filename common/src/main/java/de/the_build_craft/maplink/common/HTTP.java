@@ -47,7 +47,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.config;
  * @author Leander Knüttel
  * @author eatmyvenom
  * @author yqs112358
- * @version 06.01.2026
+ * @version 07.01.2026
  */
 public class HTTP {
     private static final int TIMEOUT_MS = 10_000;
@@ -63,7 +63,7 @@ public class HTTP {
 
             Matcher matcher = CHARSET_PATTERN.matcher(contentType);
             if (matcher.find()) {
-                return Charset.forName(matcher.group(1).strip());
+                return Charset.forName(matcher.group(1).trim());
             }
         } catch (Exception ignored) {
         }
