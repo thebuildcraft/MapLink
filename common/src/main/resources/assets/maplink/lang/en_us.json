@@ -81,6 +81,10 @@
   "maplink.option.general.debugMode": "Debug Mode",
   "maplink.option.general.debugMode.@PrefixText": "Dev Options - please ignore",
   "maplink.option.general.chatLogInDebugMode": "Chat Logs in Debug Mode - Chat Spam...",
+  "maplink.option.general.userAgent": "HTTP User Agent",
+  "maplink.option.general.userAgent.@Tooltip": "This is used to change user agent of requests.",
+  "maplink.option.general.cloudflareClearanceCookie": "Cloudflare Clearance Cookie",
+  "maplink.option.general.cloudflareClearanceCookie.@Tooltip": "You don't need this unless map website is protected with Cloudflare. The user agent that used to get this cookie MUST match with the user agent above.",
 
 
   "maplink.option.ServerEntry": "Server Entry",

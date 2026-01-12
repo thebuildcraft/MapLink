@@ -38,7 +38,8 @@ import static de.the_build_craft.maplink.common.CommonModConfig.config;
 
 /**
  * @author Leander Knüttel
- * @version 02.01.2026
+ * @author Ömer Ferhat Şenel
+ * @version 13.01.2026
  */
 @Config(name = "maplink")
 #if MC_VER < MC_1_20_6
@@ -206,6 +207,12 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         public boolean debugMode = false;
 
         public boolean chatLogInDebugMode = false;
+
+        @ConfigEntry.Gui.Tooltip
+        public String userAgent = "";
+
+        @ConfigEntry.Gui.Tooltip
+        public String cloudflareClearanceCookie = "";
 
         @ConfigEntry.Gui.Excluded
         public boolean ignoreCertificatesUseAtYourOwnRisk = false;
