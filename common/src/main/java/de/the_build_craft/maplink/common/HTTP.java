@@ -47,7 +47,8 @@ import static de.the_build_craft.maplink.common.CommonModConfig.config;
  * @author Leander Knüttel
  * @author eatmyvenom
  * @author yqs112358
- * @version 07.01.2026
+ * @author Ömer Ferhat Şenel
+ * @version 13.01.2026
  */
 public class HTTP {
     private static final int TIMEOUT_MS = 10_000;
@@ -93,10 +94,18 @@ public class HTTP {
         HttpURLConnection request = (HttpURLConnection) url.openConnection();
         request.setRequestMethod("GET");
         request.setRequestProperty("Accept", contentType);
-        request.setRequestProperty("User-Agent", AbstractModInitializer.MOD_NAME);
+        request.setRequestProperty("User-Agent",
+                !config.general.userAgent.isEmpty() ? config.general.userAgent : AbstractModInitializer.MOD_NAME);
         request.setInstanceFollowRedirects(true);
         request.setConnectTimeout(TIMEOUT_MS);
         request.setReadTimeout(TIMEOUT_MS);
+
+        // add cf_clearance if user defined it
+        // this is to "bypass" Cloudflare's bot protection. it uses a already verified cookie from Cloudflare.
+        if (!config.general.cloudflareClearanceCookie.isEmpty()) {
+            request.setRequestProperty("Cookie",
+                    String.format("cf_clearance=%s", config.general.cloudflareClearanceCookie));
+        }
 
         // completely insecure and should normally not be used!
         if (config.general.ignoreCertificatesUseAtYourOwnRisk && request instanceof HttpsURLConnection) {
