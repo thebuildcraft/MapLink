@@ -22,19 +22,22 @@ package de.the_build_craft.maplink.common;
 
 import de.the_build_craft.maplink.common.wrappers.Text;
 import me.shedaniel.clothconfig2.api.*;
-import me.shedaniel.clothconfig2.gui.entries.*;
+import me.shedaniel.clothconfig2.gui.entries.BooleanListEntry;
+import me.shedaniel.clothconfig2.gui.entries.MultiElementListEntry;
+import me.shedaniel.clothconfig2.gui.entries.NestedListListEntry;
+import me.shedaniel.clothconfig2.gui.entries.TooltipListEntry;
 import me.shedaniel.clothconfig2.impl.builders.SubCategoryBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.network.chat.Component;
-#if MC_VER >= MC_1_19_2
-import net.minecraft.network.chat.contents.TranslatableContents;
-#else
 import net.minecraft.network.chat.TranslatableComponent;
-#endif
+import net.minecraft.network.chat.contents.TranslatableContents;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,7 +45,8 @@ import static de.the_build_craft.maplink.common.CommonModConfig.config;
 
 /**
  * @author Leander Knüttel
- * @version 02.01.2026
+ * @author Ömer Ferhat Şenel
+ * @version 13.01.2026
  */
 @SuppressWarnings({"UnstableApiUsage", "rawtypes"})
 public class ModConfigGui {
@@ -184,7 +188,9 @@ public class ModConfigGui {
         SubCategoryBuilder devOptions = entryBuilder.startSubCategory(Text.translatable("maplink.option.general.debugMode.@PrefixText"));
         devOptions.addAll(Arrays.asList(
                 entryBuilder.startBooleanToggle(Text.translatable("maplink.option.general.debugMode"), config.general.debugMode).setDefaultValue(defaultConfig.general.debugMode).setSaveConsumer(b -> config.general.debugMode = b).build(),
-                entryBuilder.startBooleanToggle(Text.translatable("maplink.option.general.chatLogInDebugMode"), config.general.chatLogInDebugMode).setDefaultValue(defaultConfig.general.debugMode).setSaveConsumer(b -> config.general.chatLogInDebugMode = b).build()
+                entryBuilder.startBooleanToggle(Text.translatable("maplink.option.general.chatLogInDebugMode"), config.general.chatLogInDebugMode).setDefaultValue(defaultConfig.general.debugMode).setSaveConsumer(b -> config.general.chatLogInDebugMode = b).build(),
+                entryBuilder.startStrField(Text.translatable("maplink.option.general.userAgent"), config.general.userAgent).setDefaultValue(defaultConfig.general.userAgent).setSaveConsumer(s -> config.general.userAgent = s).build(),
+                entryBuilder.startStrField(Text.translatable("maplink.option.general.cloudflareClearanceCookie"), config.general.cloudflareClearanceCookie).setDefaultValue(defaultConfig.general.cloudflareClearanceCookie).setSaveConsumer(s -> config.general.cloudflareClearanceCookie = s).build()
         ));
         autoTooltip(devOptions);
         general.addEntry(devOptions.build());
