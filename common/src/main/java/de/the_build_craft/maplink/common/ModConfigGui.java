@@ -30,8 +30,11 @@ import me.shedaniel.clothconfig2.impl.builders.SubCategoryBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
+#if MC_VER >= MC_1_19_2
 import net.minecraft.network.chat.contents.TranslatableContents;
+#else
+import net.minecraft.network.chat.TranslatableComponent;
+#endif
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
