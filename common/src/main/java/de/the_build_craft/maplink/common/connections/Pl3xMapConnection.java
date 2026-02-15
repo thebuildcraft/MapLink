@@ -43,7 +43,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 16.09.2025
+ * @version 15.02.2026
  */
 public class Pl3xMapConnection extends MapConnection{
     private String markerLayerStringTemplate = "";
@@ -54,16 +54,17 @@ public class Pl3xMapConnection extends MapConnection{
         try {
             generateLink(serverEntry, true);
         }
-        catch (Exception ignored){
+        catch (Exception a) {
             try {
                 generateLink(serverEntry, false);
             }
-            catch (Exception e){
+            catch (Exception b) {
+                b.addSuppressed(a);
                 if (!updateTask.linkBrokenErrorWasShown){
                     updateTask.linkBrokenErrorWasShown = true;
                     Utils.sendErrorToClientChat("[" + AbstractModInitializer.MOD_NAME + "]: Error: Your Pl3xMap link is broken!");
                 }
-                throw e;
+                throw b;
             }
         }
     }

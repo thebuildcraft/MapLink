@@ -54,16 +54,17 @@ public class DynmapConnection extends MapConnection {
         try {
             generateLink(serverEntry, true);
         }
-        catch (Exception ignored){
+        catch (Exception a){
             try {
                 generateLink(serverEntry, false);
             }
-            catch (Exception e){
+            catch (Exception b){
+                b.addSuppressed(a);
                 if (!updateTask.linkBrokenErrorWasShown){
                     updateTask.linkBrokenErrorWasShown = true;
                     Utils.sendErrorToClientChat("[" + AbstractModInitializer.MOD_NAME + "]: Error: Your Dynmap link is broken!");
                 }
-                throw e;
+                throw b;
             }
         }
     }

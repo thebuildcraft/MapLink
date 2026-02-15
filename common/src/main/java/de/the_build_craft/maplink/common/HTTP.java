@@ -33,11 +33,12 @@ import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -119,22 +120,31 @@ public class HTTP {
         return makeTextHttpRequest(url, false);
     }
 
+    private static final Set<String> errorURLs = new HashSet<>();
     public static String makeTextHttpRequest(URL url, boolean includeNewLine) throws IOException {
-        // Open an HTTP request
-        HttpURLConnection request = openHTTPConnection(url, "application/json");
+        try {
+            // Open an HTTP request
+            HttpURLConnection request = openHTTPConnection(url, "application/json");
 
-        // Get the content
-        Charset charset = getResponseCharset(request);
-        StringBuilder response = new StringBuilder();
-        try (BufferedReader responseReader = new BufferedReader(new InputStreamReader(request.getInputStream(), charset))) {
-            String output;
-            while ((output = responseReader.readLine()) != null) {
-                response.append(output);
-                if (includeNewLine) response.append("\n");
+            // Get the content
+            Charset charset = getResponseCharset(request);
+            StringBuilder response = new StringBuilder();
+            try (BufferedReader responseReader = new BufferedReader(new InputStreamReader(request.getInputStream(), charset))) {
+                String output;
+                while ((output = responseReader.readLine()) != null) {
+                    response.append(output);
+                    if (includeNewLine) response.append("\n");
+                }
             }
-        }
 
-        return response.toString();
+            return response.toString();
+        } catch (Exception e) {
+            if (!errorURLs.contains(url.toString())) {
+                errorURLs.add(url.toString());
+                AbstractModInitializer.LOGGER.error("Error sending request to: {}", url.toString());
+            }
+            throw e;
+        }
     }
 
     public static NativeImage makeImageHttpRequest(URL url) throws IOException {
