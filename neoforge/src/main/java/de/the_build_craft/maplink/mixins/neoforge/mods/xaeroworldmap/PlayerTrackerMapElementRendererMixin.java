@@ -25,9 +25,9 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.vertex.PoseStack;
 import de.the_build_craft.maplink.common.clientMapHandlers.XaeroClientMapHandler;
+import de.the_build_craft.maplink.common.clientMapHandlers.playerTracker.RemotePlayerTrackerSystem;
 import de.the_build_craft.maplink.common.waypoints.MutablePlayerPosition;
 import de.the_build_craft.maplink.common.waypoints.WaypointState;
-import de.the_build_craft.maplink.neoforge.RemotePlayerTrackerSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -52,7 +52,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.config;
 
 /**
  * @author Leander Knüttel
- * @version 03.10.2025
+ * @version 15.02.2026
  */
 @Pseudo
 @Mixin(PlayerTrackerMapElementRenderer.class)

@@ -26,7 +26,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import de.the_build_craft.maplink.common.clientMapHandlers.XaerosMapCompat;
+import de.the_build_craft.maplink.common.clientMapHandlers.XaeroClientMapHandler;
 import de.the_build_craft.maplink.common.waypoints.TempWaypoint;
 import de.the_build_craft.maplink.common.waypoints.WaypointState;
 import net.minecraft.client.Minecraft;
@@ -59,7 +59,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 /**
  * @author TheMrEngMan
  * @author Leander Knüttel
- * @version 02.01.2026
+ * @version 15.02.2026
  */
 
 @Pseudo
@@ -189,7 +189,7 @@ public class WaypointsGuiRendererMixin {
         WaypointState waypointState = null;
         if (waypoint instanceof TempWaypoint) waypointState = ((TempWaypoint) waypoint).getWaypointState();
         if (waypointState != null && waypointState.renderIconOnMiniMap) {
-            XaerosMapCompat.batchDrawCustomIcon(matrix, waypointState.getDynamicTexture(), x, y, w, h, a);
+            XaeroClientMapHandler.xaeroMiniMapSupport.batchDrawCustomIcon(matrix, waypointState.getDynamicTexture(), x, y, w, h, a);
         } else {
             original.call(matrix, vertexBuffer, x, y, w, h, r, g, b, a);
         }
@@ -313,6 +313,6 @@ public class WaypointsGuiRendererMixin {
 
     @Inject(method = "postRender", at = @At("HEAD"))
     private void callBatchRendering(MinimapElementRenderInfo renderInfo, MultiBufferSource.BufferSource vanillaBufferSource, MultiTextureRenderTypeRendererProvider multiTextureRenderTypeRenderers, CallbackInfo ci) {
-        XaerosMapCompat.Instance.drawAllCustomIcons();
+        XaeroClientMapHandler.xaeroMiniMapSupport.drawAllCustomIcons();
     }
 }

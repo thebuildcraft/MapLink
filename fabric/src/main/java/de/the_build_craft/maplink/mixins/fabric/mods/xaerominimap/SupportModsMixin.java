@@ -21,9 +21,9 @@
 package de.the_build_craft.maplink.mixins.fabric.mods.xaerominimap;
 
 import de.the_build_craft.maplink.common.AbstractModInitializer;
-import de.the_build_craft.maplink.fabric.RemotePlayerTrackerSystem;
-import de.the_build_craft.maplink.common.clientMapHandlers.XaeroClientMapHandler;
-import de.the_build_craft.maplink.fabric.RemotePlayerTrackerReader;
+import de.the_build_craft.maplink.common.clientMapHandlers.*;
+import de.the_build_craft.maplink.common.clientMapHandlers.playerTracker.MiniMapPlayerTrackerReader;
+import de.the_build_craft.maplink.common.clientMapHandlers.playerTracker.MiniMapPlayerTrackerSystem;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
@@ -34,7 +34,7 @@ import xaero.common.mods.SupportMods;
 
 /**
  * @author Leander Knüttel
- * @version 31.08.2025
+ * @version 15.02.2026
  */
 @Pseudo
 @Mixin(SupportMods.class)
@@ -42,13 +42,16 @@ public class SupportModsMixin {
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(IXaeroMinimap modMain, CallbackInfo ci) {
         try {
+            XaeroClientMapHandler.xaeroMiniMapSupport = new XaeroMiniMapSupport();
             #if MC_VER >= MC_1_21_5
             modMain.getRenderedPlayerTrackerManager().register(
             #else
             modMain.getPlayerTracker().register(
             #endif
-                    AbstractModInitializer.MOD_ID, new RemotePlayerTrackerSystem(
-                            new RemotePlayerTrackerReader(), XaeroClientMapHandler.hudAndMinimapPlayerTrackerPositions));
-        } catch (Exception ignored) {}
+                    AbstractModInitializer.MOD_ID, new MiniMapPlayerTrackerSystem(
+                            new MiniMapPlayerTrackerReader(), XaeroClientMapHandler.hudAndMinimapPlayerTrackerPositions));
+        } catch (Exception e) {
+            AbstractModInitializer.LOGGER.error("Error initializing XaeroMiniMap Support!", e);
+        }
     }
 }

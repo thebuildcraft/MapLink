@@ -20,15 +20,12 @@ for %%f in (versionProperties\*) do (
     del /F /Q forge\build
     del neoforge\build\libs\*.jar
     del /F /Q neoforge\build
-    del spigot\build\libs\*.jar
-    del /F /Q spigot\build
     echo ==================== Building !version! ====================
     call .\gradlew.bat build -PmcVer="!version!" --no-daemon
     echo ==================== Copying jars ====================
     copy fabric\build\libs\*.jar buildAllJars\original\
     copy forge\build\libs\*.jar buildAllJars\original\
     copy neoforge\build\libs\*.jar buildAllJars\original\
-    copy spigot\build\libs\*.jar buildAllJars\original\
     echo ==================== Deleting unnecessary *-all.jars ====================
     del /F /Q buildAllJars\original\*-all.jar
     del /F /Q buildAllJars\original\*-dev-shadow.jar

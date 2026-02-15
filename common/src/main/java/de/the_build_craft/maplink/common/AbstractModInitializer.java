@@ -41,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.*;
 
 import static de.the_build_craft.maplink.common.CommonModConfig.*;
@@ -52,7 +51,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 03.01.2026
+ * @version 15.02.2026
  */
 public abstract class AbstractModInitializer
 {
@@ -81,7 +80,8 @@ public abstract class AbstractModInitializer
 	public static final Map<String, Boolean> playerOverAfkTimeMap = new ConcurrentHashMap<>();
 	public static final Map<String, Long> lastPlayerUpdateTimeMap = new HashMap<>();
 
-	public static boolean xaeroMapInstalled = false;
+	public static boolean xaeroMiniMapInstalled = false;
+    public static boolean xaeroWorldMapInstalled = false;
 	public static boolean overwriteCurrentDimension = false;
 
 	private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
@@ -105,9 +105,11 @@ public abstract class AbstractModInitializer
 
 		this.startup();//<-- common mod init in here
 
-		xaeroMapInstalled = ModChecker.INSTANCE.classExists("xaero.minimap.XaeroMinimap") || ModChecker.INSTANCE.classExists("xaero.pvp.BetterPVP");
-		LOGGER.info("mapModInstalled: " + xaeroMapInstalled);
-		if (xaeroMapInstalled) {
+        xaeroMiniMapInstalled = ModChecker.INSTANCE.classExists("xaero.minimap.XaeroMinimap") || ModChecker.INSTANCE.classExists("xaero.pvp.BetterPVP");
+		LOGGER.info("xaeroMiniMapInstalled: " + xaeroMiniMapInstalled);
+        xaeroWorldMapInstalled = ModChecker.INSTANCE.classExists("xaero.map.WorldMap");
+        LOGGER.info("xaeroWorldMapInstalled: " + xaeroWorldMapInstalled);
+		if (xaeroMiniMapInstalled || xaeroWorldMapInstalled) {
 			new XaeroClientMapHandler();
 		}
 

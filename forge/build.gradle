@@ -19,7 +19,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * file changed by: Leander Knüttel
- * date: 02.01.2026
+ * date: 15.02.2026
  */
 
 plugins {
@@ -67,11 +67,33 @@ dependencies {
 
     modApi "me.shedaniel.cloth:cloth-config-forge:${rootProject.cloth_config_api_forge_version}"
 
-    modImplementation "maven.modrinth:xaeros-world-map:${rootProject.xaeros_world_map_forge_version}"
-    modImplementation "maven.modrinth:xaeros-minimap:${rootProject.xaeros_minimap_forge_version}"
-    if (rootProject.hasProperty("xaero_lib_version")){
-        modImplementation "xaero.lib:xaerolib-forge-${rootProject.xaero_lib_version}"
+    if (rootProject.enable_xaeros_minimap == "true") {
+        if (rootProject.hasProperty("xaeros_minimap_forge_version") && rootProject.xaeros_minimap_forge_version != "") {
+            modImplementation "xaero.minimap:xaerominimap-forge-${rootProject.minecraft_version}:${rootProject.xaeros_minimap_forge_version}"
+        } else {
+            modImplementation "xaero.minimap:xaerominimap-forge-${rootProject.minecraft_version}:${rootProject.default_xaeros_minimap_version}"
+        }
+    } else {
+        if (rootProject.hasProperty("xaeros_minimap_forge_version") && rootProject.xaeros_minimap_forge_version != "") {
+            modCompileOnly "xaero.minimap:xaerominimap-forge-${rootProject.minecraft_version}:${rootProject.xaeros_minimap_forge_version}"
+        } else {
+            modCompileOnly "xaero.minimap:xaerominimap-forge-${rootProject.minecraft_version}:${rootProject.default_xaeros_minimap_version}"
+        }
     }
+    if (rootProject.enable_xaeros_worldmap == "true") {
+        if (rootProject.hasProperty("xaeros_worldmap_forge_version") && rootProject.xaeros_worldmap_forge_version != "") {
+            modImplementation "xaero.map:xaeroworldmap-forge-${rootProject.minecraft_version}:${rootProject.xaeros_worldmap_forge_version}"
+        } else {
+            modImplementation "xaero.map:xaeroworldmap-forge-${rootProject.minecraft_version}:${rootProject.default_xaeros_worldmap_version}"
+        }
+    } else {
+        if (rootProject.hasProperty("xaeros_worldmap_forge_version") && rootProject.xaeros_worldmap_forge_version != "") {
+            modCompileOnly "xaero.map:xaeroworldmap-forge-${rootProject.minecraft_version}:${rootProject.xaeros_worldmap_forge_version}"
+        } else {
+            modCompileOnly "xaero.map:xaeroworldmap-forge-${rootProject.minecraft_version}:${rootProject.default_xaeros_worldmap_version}"
+        }
+    }
+    modCompileOnly "xaero.lib:xaerolib-forge-${rootProject.minecraft_version}:${rootProject.xaero_lib_version}"
 
     compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.5.0"))
     implementation(include("io.github.llamalad7:mixinextras-forge:0.5.0"))

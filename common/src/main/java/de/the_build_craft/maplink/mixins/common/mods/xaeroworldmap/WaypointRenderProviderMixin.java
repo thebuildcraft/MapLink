@@ -20,7 +20,7 @@
 
 package de.the_build_craft.maplink.mixins.common.mods.xaeroworldmap;
 
-import de.the_build_craft.maplink.common.clientMapHandlers.XaeroClientMapHandler;
+import de.the_build_craft.maplink.common.clientMapHandlers.XaeroWorldMapSupport;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Unique;
@@ -40,7 +40,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.config;
 
 /**
  * @author Leander Knüttel
- * @version 07.09.2025
+ * @version 15.02.2026
  */
 @Pseudo
 @Mixin(WaypointRenderProvider.class)
@@ -57,9 +57,9 @@ public class WaypointRenderProviderMixin {
     @Inject(method = "begin*", at = @At("HEAD"))
     private void begin(ElementRenderLocation location, WaypointRenderContext context, CallbackInfo ci) {
         maplink$playerIterator = config.worldmap.showPlayerWaypoints.isActive() ?
-                XaeroClientMapHandler.idToWorldMapPlayer.values().iterator() : Collections.emptyIterator();
+                XaeroWorldMapSupport.idToWorldMapPlayer.values().iterator() : Collections.emptyIterator();
         maplink$markerIterator = config.worldmap.showMarkerWaypoints.isActive() ?
-                XaeroClientMapHandler.idToWorldMapMarker.values().iterator() : Collections.emptyIterator();
+                XaeroWorldMapSupport.idToWorldMapMarker.values().iterator() : Collections.emptyIterator();
     }
 
     @Inject(method = "hasNext*", at = @At("RETURN"), cancellable = true)

@@ -23,29 +23,27 @@ package de.the_build_craft.maplink.common.waypoints;
 
 import de.the_build_craft.maplink.common.clientMapHandlers.ClientMapHandler;
 import xaero.common.minimap.waypoints.Waypoint;
-#if MC_VER != MC_1_17_1
 import xaero.hud.minimap.waypoint.WaypointColor;
 import xaero.hud.minimap.waypoint.WaypointPurpose;
-#endif
+
+import static de.the_build_craft.maplink.common.CommonModConfig.config;
+import static de.the_build_craft.maplink.common.CommonModConfig.getPlayerWaypointColor;
 
 /**
  * A wrapper to improve creating temp waypoints
  *
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 15.02.2026
  */
-public abstract class TempWaypoint extends Waypoint {
+public class TempWaypoint extends Waypoint {
     public final String id;
     private WaypointState waypointState;
 
-    public TempWaypoint(int x, int y, int z, String name, int color, String id, WaypointState waypointState) {
-        super(x, y, z, name, id,
-                #if MC_VER == MC_1_17_1
-                color, 0, true);
-                #else
-                WaypointColor.fromIndex(color), WaypointPurpose.NORMAL, true);
-                #endif
-        this.id = id;
+    public TempWaypoint(Position p, WaypointState waypointState) {
+        super((int) Math.floor(p.pos.x), (int) Math.floor(p.pos.y), (int) Math.floor(p.pos.z), p.name, p.id,
+                waypointState.isPlayer ? WaypointColor.fromIndex(getPlayerWaypointColor(p.name)) : WaypointColor.fromIndex(config.general.markerWaypointColor.ordinal()),
+                WaypointPurpose.NORMAL, true);
+        this.id = p.id;
         this.waypointState = waypointState;
     }
 

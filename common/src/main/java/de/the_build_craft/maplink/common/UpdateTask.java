@@ -22,7 +22,8 @@
 package de.the_build_craft.maplink.common;
 
 import de.the_build_craft.maplink.common.clientMapHandlers.ClientMapHandler;
-import de.the_build_craft.maplink.common.clientMapHandlers.XaerosMapCompat;
+import de.the_build_craft.maplink.common.clientMapHandlers.XaeroClientMapHandler;
+import de.the_build_craft.maplink.common.clientMapHandlers.XaeroWorldMapSupport;
 import de.the_build_craft.maplink.common.connections.*;
 import de.the_build_craft.maplink.common.wrappers.Text;
 import de.the_build_craft.maplink.common.wrappers.Utils;
@@ -43,7 +44,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
  * @author eatmyvenom
  * @author TheMrEngMan
  * @author Leander Knüttel
- * @version 02.01.2026
+ * @version 15.02.2026
  */
 public class UpdateTask {
     private boolean connectionErrorWasShown = false;
@@ -190,9 +191,8 @@ public class UpdateTask {
             ClientMapHandler.getInstance().removeAllAreaMarkers(true);
         }
 
-        if (AbstractModInitializer.xaeroMapInstalled) {
-            XaerosMapCompat.cacheXaeroSettings();
-        }
+        if (AbstractModInitializer.xaeroMiniMapInstalled && XaeroClientMapHandler.xaeroMiniMapSupport != null) XaeroClientMapHandler.xaeroMiniMapSupport.cacheXaeroSettings();
+        if (AbstractModInitializer.xaeroWorldMapInstalled && XaeroClientMapHandler.xaeroWorldMapSupport != null) XaeroClientMapHandler.xaeroWorldMapSupport.cacheXaeroSettings();
 
         AbstractModInitializer.connected = true;
     }

@@ -18,17 +18,16 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package de.the_build_craft.maplink.neoforge;
+package de.the_build_craft.maplink.common.clientMapHandlers.playerTracker;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.mojang.authlib.GameProfile;
-import de.the_build_craft.maplink.common.clientMapHandlers.XaerosMapCompat;
+import de.the_build_craft.maplink.common.AbstractModInitializer;
+import de.the_build_craft.maplink.common.clientMapHandlers.XaeroClientMapHandler;
 import de.the_build_craft.maplink.common.waypoints.MutablePlayerPosition;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
-import xaero.hud.minimap.player.tracker.system.IRenderedPlayerTracker;
-import xaero.map.radar.tracker.system.IPlayerTrackerSystem;
 
 import java.text.DecimalFormat;
 import java.util.Iterator;
@@ -37,25 +36,23 @@ import java.util.UUID;
 
 /**
  * @author Leander Knüttel
- * @version 02.01.2026
+ * @version 15.02.2026
  */
-public class RemotePlayerTrackerSystem implements IRenderedPlayerTracker<MutablePlayerPosition>, IPlayerTrackerSystem<MutablePlayerPosition> {
-    private final RemotePlayerTrackerReader reader;
+public class RemotePlayerTrackerSystem<P extends RemotePlayerTrackerReader> {
+    private final P reader;
     private final Map<UUID, MutablePlayerPosition> map;
     private static final DecimalFormat precision0 = new DecimalFormat("0");
     private static final DecimalFormat precision1 = new DecimalFormat("0.0");
 
-    public RemotePlayerTrackerSystem(RemotePlayerTrackerReader reader, Map<UUID, MutablePlayerPosition> map) {
+    public RemotePlayerTrackerSystem(P reader, Map<UUID, MutablePlayerPosition> map) {
         this.reader = reader;
         this.map = map;
     }
 
-    @Override
-    public RemotePlayerTrackerReader getReader() {
+    public P getReader() {
         return reader;
     }
 
-    @Override
     public Iterator<MutablePlayerPosition> getTrackedPlayerIterator() {
         return map.values().iterator();
     }
@@ -74,7 +71,9 @@ public class RemotePlayerTrackerSystem implements IRenderedPlayerTracker<Mutable
         #endif
         double distance = cameraPos.distanceTo(pos);
 
-        String distanceText = (XaerosMapCompat.xaeroAutoConvertToKmThreshold != -1 && distance >= XaerosMapCompat.xaeroAutoConvertToKmThreshold)
+        int xaeroAutoConvertToKmThreshold = AbstractModInitializer.xaeroMiniMapInstalled ? XaeroClientMapHandler.xaeroMiniMapSupport.getXaeroAutoConvertToKmThreshold() : XaeroClientMapHandler.xaeroWorldMapSupport.getXaeroAutoConvertToKmThreshold();
+
+        String distanceText = (xaeroAutoConvertToKmThreshold != -1 && distance >= xaeroAutoConvertToKmThreshold)
                 ? precision1.format(distance / 1000) + "km"
                 : precision0.format(distance) + "m";
         return distanceText + " | " + original.call(instance);

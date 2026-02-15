@@ -19,7 +19,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * file changed by: Leander Knüttel
- * date: 02.01.2026
+ * date: 15.02.2026
  */
 
 plugins {
@@ -69,11 +69,33 @@ dependencies {
         exclude(group: "net.fabricmc")
     }
 
-    modImplementation("maven.modrinth:xaeros-world-map:${rootProject.xaeros_world_map_fabric_version}")
-    modImplementation("maven.modrinth:xaeros-minimap:${rootProject.xaeros_minimap_fabric_version}")
-    if (rootProject.hasProperty("xaero_lib_version")){
-        modImplementation("xaero.lib:xaerolib-fabric-${rootProject.xaero_lib_version}")
+    if (rootProject.enable_xaeros_minimap == "true") {
+        if (rootProject.hasProperty("xaeros_minimap_fabric_version") && rootProject.xaeros_minimap_fabric_version != "") {
+            modImplementation "xaero.minimap:xaerominimap-fabric-${rootProject.minecraft_version}:${rootProject.xaeros_minimap_fabric_version}"
+        } else {
+            modImplementation "xaero.minimap:xaerominimap-fabric-${rootProject.minecraft_version}:${rootProject.default_xaeros_minimap_version}"
+        }
+    } else {
+        if (rootProject.hasProperty("xaeros_minimap_fabric_version") && rootProject.xaeros_minimap_fabric_version != "") {
+            modCompileOnly "xaero.minimap:xaerominimap-fabric-${rootProject.minecraft_version}:${rootProject.xaeros_minimap_fabric_version}"
+        } else {
+            modCompileOnly "xaero.minimap:xaerominimap-fabric-${rootProject.minecraft_version}:${rootProject.default_xaeros_minimap_version}"
+        }
     }
+    if (rootProject.enable_xaeros_worldmap == "true") {
+        if (rootProject.hasProperty("xaeros_worldmap_fabric_version") && rootProject.xaeros_worldmap_fabric_version != "") {
+            modImplementation "xaero.map:xaeroworldmap-fabric-${rootProject.minecraft_version}:${rootProject.xaeros_worldmap_fabric_version}"
+        } else {
+            modImplementation "xaero.map:xaeroworldmap-fabric-${rootProject.minecraft_version}:${rootProject.default_xaeros_worldmap_version}"
+        }
+    } else {
+        if (rootProject.hasProperty("xaeros_worldmap_fabric_version") && rootProject.xaeros_worldmap_fabric_version != "") {
+            modCompileOnly "xaero.map:xaeroworldmap-fabric-${rootProject.minecraft_version}:${rootProject.xaeros_worldmap_fabric_version}"
+        } else {
+            modCompileOnly "xaero.map:xaeroworldmap-fabric-${rootProject.minecraft_version}:${rootProject.default_xaeros_worldmap_version}"
+        }
+    }
+    modCompileOnly "xaero.lib:xaerolib-fabric-${rootProject.minecraft_version}:${rootProject.xaero_lib_version}"
 }
 
 processResources {

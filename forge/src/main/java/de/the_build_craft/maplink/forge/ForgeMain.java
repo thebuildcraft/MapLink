@@ -34,7 +34,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 19.09.2025
+ * @version 15.02.2026
  */
 @Mod(AbstractModInitializer.MOD_ID)
 public class ForgeMain extends AbstractModInitializer
@@ -44,7 +44,6 @@ public class ForgeMain extends AbstractModInitializer
 	{
 		loaderType = LoaderType.Forge;
         new ModConfigForge();
-		new XaerosMapCompatForge();
 
 		// Register the mod initializer (Actual event registration is done in the different proxies)
 		FMLJavaModLoadingContext.get().getModEventBus().addListener((FMLClientSetupEvent e) -> this.onInitializeClient());

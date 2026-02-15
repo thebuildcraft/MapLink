@@ -34,7 +34,7 @@ import net.neoforged.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 15.02.2026
  */
 @Mod(AbstractModInitializer.MOD_ID)
 public class NeoforgeMain extends AbstractModInitializer
@@ -43,7 +43,6 @@ public class NeoforgeMain extends AbstractModInitializer
 	{
 		loaderType = LoaderType.NeoForge;
         new ModConfigNeoForge();
-		new XaerosMapCompatNeoForge();
 
 		// Register the mod initializer (Actual event registration is done in the different proxies)
 		eventBus.addListener((FMLClientSetupEvent e) -> this.onInitializeClient());
@@ -52,7 +51,6 @@ public class NeoforgeMain extends AbstractModInitializer
 
 	@Override
 	public void onInitializeClient(){
-		new XaerosMapCompatNeoForge();
 		super.onInitializeClient();
 
 		//NeoForge Client init here

@@ -32,7 +32,7 @@ import net.fabricmc.api.DedicatedServerModInitializer;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 15.02.2026
  */
 public class FabricMain extends AbstractModInitializer implements ClientModInitializer, DedicatedServerModInitializer
 {
@@ -40,7 +40,6 @@ public class FabricMain extends AbstractModInitializer implements ClientModIniti
 	public void onInitializeClient(){
 		loaderType = LoaderType.Fabric;
         new ModConfigFabric();
-		new XaerosMapCompatFabric();
 		super.onInitializeClient();
 
 		//Fabric Client init here

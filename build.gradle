@@ -19,7 +19,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * file changed by: Leander Knüttel
- * date: 02.01.2026
+ * date: 15.02.2026
  */
 
 plugins {
@@ -179,8 +179,6 @@ subprojects { p ->
 
                 fabric_incompatibility_list  : fabric_incompatibility_list,
                 fabric_recommend_list        : fabric_recommend_list,
-
-                spigot_api_compatibility     : spigot_api_compatibility,
         ]
         
         // replace any properties in the sub-projects with the values defined here

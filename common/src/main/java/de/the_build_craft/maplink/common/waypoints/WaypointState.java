@@ -23,11 +23,10 @@ package de.the_build_craft.maplink.common.waypoints;
 import de.the_build_craft.maplink.common.clientMapHandlers.ClientMapHandler;
 import de.the_build_craft.maplink.common.clientMapHandlers.XaeroClientMapHandler;
 import net.minecraft.client.renderer.texture.DynamicTexture;
-import xaero.map.icon.XaeroIcon;
 
 /**
  * @author Leander Knüttel
- * @version 25.08.2025
+ * @version 15.02.2026
  */
 public class WaypointState {
     public boolean renderOnHud = true;
@@ -46,7 +45,7 @@ public class WaypointState {
 
     private final String iconLink;
     private DynamicTexture dynamicTexture;
-    private XaeroIcon xaeroIcon;
+    private Object xaeroIcon;
 
     public WaypointState(String name, String iconLink, boolean isPlayer, boolean isTemp) {
         this.iconLink = iconLink;
@@ -62,9 +61,9 @@ public class WaypointState {
         return dynamicTexture;
     }
 
-    public XaeroIcon getXaeroIcon() {
+    public Object getXaeroIcon() {
         if (xaeroIcon != null) return xaeroIcon;
-        xaeroIcon = XaeroClientMapHandler.getXaeroIcon(iconLink);
+        xaeroIcon = XaeroClientMapHandler.xaeroWorldMapSupport.getXaeroIcon(iconLink);
         return xaeroIcon;
     }
 

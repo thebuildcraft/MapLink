@@ -1,9 +1,8 @@
 /*
  *    This file is part of the Map Link mod
  *    licensed under the GNU GPL v3 License.
- *    (some parts of this file are originally from "RemotePlayers" by ewpratten)
  *
- *    Copyright (C) 2024 - 2025  Leander Knüttel and contributors
+ *    Copyright (C) 2026  Leander Knüttel and contributors
  *
  *    This program is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -19,21 +18,20 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package de.the_build_craft.maplink.common.waypoints;
+package de.the_build_craft.maplink.common.clientMapHandlers.playerTracker;
 
-import static de.the_build_craft.maplink.common.CommonModConfig.*;
+import de.the_build_craft.maplink.common.waypoints.MutablePlayerPosition;
+import xaero.map.radar.tracker.system.IPlayerTrackerSystem;
+
+import java.util.Map;
+import java.util.UUID;
 
 /**
- * A wrapper to improve creating temp waypoints for players
- *
- * @author ewpratten
- * @author eatmyvenom
  * @author Leander Knüttel
- * @version 29.08.2025
+ * @version 15.02.2026
  */
-public class PlayerWaypoint extends TempWaypoint {
-    public PlayerWaypoint(PlayerPosition p, WaypointState waypointState) {
-        super((int) Math.floor(p.pos.x), (int) Math.floor(p.pos.y), (int) Math.floor(p.pos.z),
-                p.name, getPlayerWaypointColor(p.name), p.id, waypointState);
+public class WorldMapPlayerTrackerSystem extends RemotePlayerTrackerSystem<WorldMapPlayerTrackerReader> implements IPlayerTrackerSystem<MutablePlayerPosition> {
+    public WorldMapPlayerTrackerSystem(WorldMapPlayerTrackerReader reader, Map<UUID, MutablePlayerPosition> map) {
+        super(reader, map);
     }
 }

@@ -18,42 +18,36 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package de.the_build_craft.maplink.neoforge;
+package de.the_build_craft.maplink.common.clientMapHandlers.playerTracker;
 
 import de.the_build_craft.maplink.common.waypoints.MutablePlayerPosition;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
-import xaero.hud.minimap.player.tracker.system.ITrackedPlayerReader;
 
 import java.util.UUID;
 
 /**
  * @author Leander Knüttel
- * @version 05.09.2025
+ * @version 15.02.2026
  */
-public class RemotePlayerTrackerReader implements ITrackedPlayerReader<MutablePlayerPosition>, xaero.map.radar.tracker.system.ITrackedPlayerReader<MutablePlayerPosition> {
-    @Override
+public class RemotePlayerTrackerReader {
     public UUID getId(MutablePlayerPosition playerPosition) {
         return playerPosition.uuid;
     }
 
-    @Override
     public double getX(MutablePlayerPosition playerPosition) {
         return playerPosition.getLerpedX();
     }
 
-    @Override
     public double getY(MutablePlayerPosition playerPosition) {
         return playerPosition.getLerpedY();
     }
 
-    @Override
     public double getZ(MutablePlayerPosition playerPosition) {
         return playerPosition.getLerpedZ();
     }
 
-    @Override
     public ResourceKey<Level> getDimension(MutablePlayerPosition playerPosition) {
         return Minecraft.getInstance().level.dimension();
     }

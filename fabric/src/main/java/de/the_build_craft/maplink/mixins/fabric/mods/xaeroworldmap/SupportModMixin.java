@@ -21,9 +21,9 @@
 package de.the_build_craft.maplink.mixins.fabric.mods.xaeroworldmap;
 
 import de.the_build_craft.maplink.common.AbstractModInitializer;
-import de.the_build_craft.maplink.fabric.RemotePlayerTrackerSystem;
-import de.the_build_craft.maplink.common.clientMapHandlers.XaeroClientMapHandler;
-import de.the_build_craft.maplink.fabric.RemotePlayerTrackerReader;
+import de.the_build_craft.maplink.common.clientMapHandlers.*;
+import de.the_build_craft.maplink.common.clientMapHandlers.playerTracker.WorldMapPlayerTrackerReader;
+import de.the_build_craft.maplink.common.clientMapHandlers.playerTracker.WorldMapPlayerTrackerSystem;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
@@ -34,7 +34,7 @@ import xaero.map.mods.SupportMods;
 
 /**
  * @author Leander Knüttel
- * @version 07.09.2025
+ * @version 15.02.2026
  */
 @Pseudo
 @Mixin(SupportMods.class)
@@ -46,8 +46,11 @@ public class SupportModMixin {
     private static void load(CallbackInfo ci) {
     #endif
         try {
-            WorldMap.playerTrackerSystemManager.register(AbstractModInitializer.MOD_ID, new RemotePlayerTrackerSystem(
-                    new RemotePlayerTrackerReader(), XaeroClientMapHandler.worldmapPlayerTrackerPositions));
-        } catch (Exception ignored) {}
+            XaeroClientMapHandler.xaeroWorldMapSupport = new XaeroWorldMapSupport();
+            WorldMap.playerTrackerSystemManager.register(AbstractModInitializer.MOD_ID, new WorldMapPlayerTrackerSystem(
+                    new WorldMapPlayerTrackerReader(), XaeroClientMapHandler.worldmapPlayerTrackerPositions));
+        } catch (Exception e) {
+            AbstractModInitializer.LOGGER.error("Error initializing XaeroWorldMap Support!", e);
+        }
     }
 }

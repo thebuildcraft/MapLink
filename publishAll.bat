@@ -32,8 +32,6 @@ for %%f in (versionProperties\*) do (
     del /F /Q forge\build
     del neoforge\build\libs\*.jar
     del /F /Q neoforge\build
-    del spigot\build\libs\*.jar
-    del /F /Q spigot\build
     echo ==================== Building !version! ====================
     call .\gradlew.bat build -PmcVer="!version!" --no-daemon
     echo ==================== Publishing !version! ==================

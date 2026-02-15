@@ -20,27 +20,21 @@
 
 package de.the_build_craft.maplink.common.clientMapHandlers;
 
-#if MC_VER >= MC_1_21_5
-import com.mojang.blaze3d.textures.GpuTexture;
-#endif
 import de.the_build_craft.maplink.common.AbstractModInitializer;
 import de.the_build_craft.maplink.common.MainThreadTaskQueue;
-import de.the_build_craft.maplink.common.waypoints.*;
-import de.the_build_craft.maplink.mixins.common.mods.xaeroworldmap.WorldMapWaypointAccessor;
+import de.the_build_craft.maplink.common.waypoints.AreaMarker;
+import de.the_build_craft.maplink.common.waypoints.Int3;
+import de.the_build_craft.maplink.common.waypoints.MathUtils;
+import de.the_build_craft.maplink.common.waypoints.MutablePlayerPosition;
+import de.the_build_craft.maplink.common.waypoints.PlayerPosition;
+import de.the_build_craft.maplink.common.waypoints.Position;
+import de.the_build_craft.maplink.common.waypoints.WaypointState;
 import net.minecraft.client.multiplayer.PlayerInfo;
-import net.minecraft.client.renderer.texture.DynamicTexture;
-#if MC_VER != MC_1_17_1
-import xaero.hud.minimap.waypoint.WaypointColor;
-#endif
 import it.unimi.dsi.fastutil.longs.*;
-import xaero.common.minimap.waypoints.Waypoint;
-import xaero.map.icon.XaeroIcon;
-import xaero.map.icon.XaeroIconAtlas;
 
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -50,7 +44,7 @@ import static de.the_build_craft.maplink.common.FastUpdateTask.playerPositions;
 
 /**
  * @author Leander Knüttel
- * @version 02.01.2026
+ * @version 15.02.2026
  */
 public class XaeroClientMapHandler extends ClientMapHandler {
     public static final Long2ObjectMap<Set<AreaMarker>> chunkHighlightMap = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
@@ -59,23 +53,16 @@ public class XaeroClientMapHandler extends ClientMapHandler {
     public static boolean currentlyRasterising;
     public static MapHighlightClearer mapHighlightClearer;
 
-    private static final Map<String, XaeroIcon> iconLinkToXaeroIcon = new HashMap<>();
-
-    public static final Map<String, TempWaypoint> idToHudPlayer = new ConcurrentHashMap<>();
-    public static final Map<String, TempWaypoint> idToMiniMapPlayer = new ConcurrentHashMap<>();
-    public static final Map<String, xaero.map.mods.gui.Waypoint> idToWorldMapPlayer = new ConcurrentHashMap<>();
-
-    public static final Map<String, TempWaypoint> idToHudMarker = new ConcurrentHashMap<>();
-    public static final Map<String, TempWaypoint> idToMiniMapMarker = new ConcurrentHashMap<>();
-    public static final Map<String, xaero.map.mods.gui.Waypoint> idToWorldMapMarker = new ConcurrentHashMap<>();
-
     public static final Map<UUID, MutablePlayerPosition> hudAndMinimapPlayerTrackerPositions = new ConcurrentHashMap<>();
     public static final Map<UUID, MutablePlayerPosition> worldmapPlayerTrackerPositions = new ConcurrentHashMap<>();
 
-    private final Set<UUID> currentHudAndMinimapPlayerTrackerUUIDs = new HashSet<>();
-    private final Set<UUID> currentWorldmapPlayerTrackerUUIDs = new HashSet<>();
+    private static final Set<UUID> currentHudAndMinimapPlayerTrackerUUIDs = new HashSet<>();
+    private static final Set<UUID> currentWorldmapPlayerTrackerUUIDs = new HashSet<>();
 
-    private final Map<String, MainThreadTaskQueue.QueuedTask<Void>> queuedTaskMap = new ConcurrentHashMap<>();
+    static final Map<String, MainThreadTaskQueue.QueuedTask<Void>> queuedTaskMap = new ConcurrentHashMap<>();
+
+    public static IXaeroMiniMapSupport xaeroMiniMapSupport;
+    public static IXaeroWorldMapSupport xaeroWorldMapSupport;
 
     @Override
     public void reset() {
@@ -116,12 +103,12 @@ public class XaeroClientMapHandler extends ClientMapHandler {
                 WaypointState waypointState = getWaypointState(playerPosition.id);
                 playerPosition.gameProfile = playerInfo.getProfile();
 
-                if (waypointState.renderOnHud || waypointState.renderOnMiniMap) {
+                if ((waypointState.renderOnHud || waypointState.renderOnMiniMap) && AbstractModInitializer.xaeroMiniMapInstalled) {
                     hudAndMinimapPlayerTrackerPositions.computeIfAbsent(id, uuid -> new MutablePlayerPosition(playerPosition, waypointState))
                             .updateFrom(playerPosition.pos);
                     currentHudAndMinimapPlayerTrackerUUIDs.add(id);
                 }
-                if (waypointState.renderOnWorldMap) {
+                if (waypointState.renderOnWorldMap && AbstractModInitializer.xaeroWorldMapInstalled) {
                     worldmapPlayerTrackerPositions.computeIfAbsent(id, uuid -> new MutablePlayerPosition(playerPosition, waypointState))
                             .updateFrom(playerPosition.pos);
                     currentWorldmapPlayerTrackerUUIDs.add(id);
@@ -138,78 +125,18 @@ public class XaeroClientMapHandler extends ClientMapHandler {
 
     @Override
     void addOrUpdatePlayerWaypoint(PlayerPosition playerPosition, WaypointState waypointState) {
-        if (waypointState.renderOnHud) {
-            addOrUpdateMiniMapWaypoint(playerPosition, idToHudPlayer, (player) -> new PlayerWaypoint(player, waypointState));
+        if (waypointState.renderOnHud && AbstractModInitializer.xaeroMiniMapInstalled) {
+            xaeroMiniMapSupport.addOrUpdateMiniMapWaypoint(playerPosition, waypointState, false);
         }
-        if (waypointState.renderOnMiniMap) {
-            addOrUpdateMiniMapWaypoint(playerPosition, idToMiniMapPlayer, (player) -> new PlayerWaypoint(player, waypointState));
+        if (waypointState.renderOnMiniMap && AbstractModInitializer.xaeroMiniMapInstalled) {
+            xaeroMiniMapSupport.addOrUpdateMiniMapWaypoint(playerPosition, waypointState, true);
         }
-        if (waypointState.renderOnWorldMap) {
-            addOrUpdateWorldMapWaypoint(playerPosition, idToWorldMapPlayer, (player) -> new PlayerWaypoint(player, waypointState));
-        }
-    }
-
-    private <P extends Position> void addOrUpdateMiniMapWaypoint(P position, Map<String, TempWaypoint> idToWaypoint, Function<P, TempWaypoint> waypointInit) {
-        if (!AbstractModInitializer.connected) return;
-        MainThreadTaskQueue.QueuedTask<Void> queuedTask = queuedTaskMap.get(position.id);
-        if (queuedTask != null) {
-            if (queuedTask.future.isDone()) {
-                queuedTaskMap.remove(position.id);
-            } else {
-                queuedTask.future.thenRun(() -> {
-                    Waypoint w = idToWaypoint.get(position.id);
-                    if (w != null) {
-                        Int3 pos = position.pos.floorToInt3();
-                        w.setX(pos.x);
-                        w.setY(pos.y);
-                        w.setZ(pos.z);
-                    }
-                });
-                return;
-            }
-        }
-        Waypoint w = idToWaypoint.get(position.id);
-        if (w != null) {
-            Int3 pos = position.pos.floorToInt3();
-            w.setX(pos.x);
-            w.setY(pos.y);
-            w.setZ(pos.z);
-        } else {
-            queuedTaskMap.put(position.id, MainThreadTaskQueue.queueTask(() -> {idToWaypoint.put(position.id, waypointInit.apply(position));}));
+        if (waypointState.renderOnWorldMap && AbstractModInitializer.xaeroWorldMapInstalled) {
+            xaeroWorldMapSupport.addOrUpdateWorldMapWaypoint(playerPosition, waypointState);
         }
     }
 
-    private <P extends Position> void addOrUpdateWorldMapWaypoint(P position, Map<String, xaero.map.mods.gui.Waypoint> idToWaypoint, Function<P, TempWaypoint> waypointInit) {
-        if (!AbstractModInitializer.connected) return;
-        MainThreadTaskQueue.QueuedTask<Void> queuedTask = queuedTaskMap.get(position.id);
-        if (queuedTask != null) {
-            if (queuedTask.future.isDone()) {
-                queuedTaskMap.remove(position.id);
-            } else {
-                queuedTask.future.thenRun(() -> {
-                    WorldMapWaypointAccessor w = (WorldMapWaypointAccessor) idToWaypoint.get(position.id);
-                    if (w != null) {
-                        Int3 pos = position.pos.floorToInt3();
-                        w.setX(pos.x);
-                        w.setY(pos.y);
-                        w.setZ(pos.z);
-                    }
-                });
-                return;
-            }
-        }
-        WorldMapWaypointAccessor w = (WorldMapWaypointAccessor) idToWaypoint.get(position.id);
-        if (w != null) {
-            Int3 pos = position.pos.floorToInt3();
-            w.setX(pos.x);
-            w.setY(pos.y);
-            w.setZ(pos.z);
-        } else {
-            queuedTaskMap.put(position.id, MainThreadTaskQueue.queueTask(() -> {idToWaypoint.put(position.id, new CustomWorldMapWaypoint(waypointInit.apply(position)));}));
-        }
-    }
-
-    private <W> void removeOldWaypointsFromMap(Map<String, W> map, Predicate<WaypointState> removeIf, Set<String> idHasToBeIn) {
+    static <W> void removeOldWaypointsFromMap(Map<String, W> map, Predicate<WaypointState> removeIf, Set<String> idHasToBeIn) {
         Iterator<Map.Entry<String, W>> iterator = map.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<String, W> entry = iterator.next();
@@ -225,69 +152,51 @@ public class XaeroClientMapHandler extends ClientMapHandler {
 
     @Override
     void removeOldPlayerWaypoints() {
-        removeOldWaypointsFromMap(idToHudPlayer, w -> !w.renderOnHud, currentPlayerIds);
-        removeOldWaypointsFromMap(idToMiniMapPlayer, w -> !w.renderOnMiniMap, currentPlayerIds);
-        removeOldWaypointsFromMap(idToWorldMapPlayer, w -> !w.renderOnWorldMap, currentPlayerIds);
+        if (AbstractModInitializer.xaeroMiniMapInstalled) xaeroMiniMapSupport.removeOldPlayerWaypoints();
+        if (AbstractModInitializer.xaeroWorldMapInstalled) xaeroWorldMapSupport.removeOldPlayerWaypoints();
     }
 
     @Override
     void removeAllPlayerWaypoints() {
-        idToHudPlayer.clear();
-        idToMiniMapPlayer.clear();
-        idToWorldMapPlayer.clear();
-    }
-
-    private void updateMiniMapWaypointColors(Map<String, TempWaypoint> map, Function<TempWaypoint, Integer> waypointToColor) {
-        for (TempWaypoint waypoint : map.values()) {
-            waypoint.setWaypointColor(WaypointColor.fromIndex(waypointToColor.apply(waypoint)));
-        }
-    }
-
-    private void updateWorldMapWaypointColors(Map<String, xaero.map.mods.gui.Waypoint> map, Function<xaero.map.mods.gui.Waypoint, Integer> waypointToColor) {
-        for (xaero.map.mods.gui.Waypoint waypoint : map.values()) {
-            ((WorldMapWaypointAccessor) waypoint).setColor(WaypointColor.fromIndex(waypointToColor.apply(waypoint)).getHex());
-        }
+        if (AbstractModInitializer.xaeroMiniMapInstalled && xaeroMiniMapSupport != null) xaeroMiniMapSupport.removeAllPlayerWaypoints();
+        if (AbstractModInitializer.xaeroWorldMapInstalled && xaeroWorldMapSupport != null) xaeroWorldMapSupport.removeAllPlayerWaypoints();
     }
 
     @Override
     void updatePlayerWaypointColors() {
-        updateMiniMapWaypointColors(idToHudPlayer, w -> getPlayerWaypointColor(w.getName()));
-        updateMiniMapWaypointColors(idToMiniMapPlayer, w -> getPlayerWaypointColor(w.getName()));
-        updateWorldMapWaypointColors(idToWorldMapPlayer, w -> getPlayerWaypointColor(w.getName()));
+        if (AbstractModInitializer.xaeroMiniMapInstalled) xaeroMiniMapSupport.updatePlayerWaypointColors();
+        if (AbstractModInitializer.xaeroWorldMapInstalled) xaeroWorldMapSupport.updatePlayerWaypointColors();
     }
 
     @Override
     void addOrUpdateMarkerWaypoint(Position markerPosition, WaypointState waypointState) {
-        if (waypointState.renderOnHud) {
-            addOrUpdateMiniMapWaypoint(markerPosition, idToHudMarker, (p) -> new FixedWaypoint(p, waypointState));
+        if (waypointState.renderOnHud && AbstractModInitializer.xaeroMiniMapInstalled) {
+            xaeroMiniMapSupport.addOrUpdateMiniMapWaypoint(markerPosition, waypointState, false);
         }
-        if (waypointState.renderOnMiniMap) {
-            addOrUpdateMiniMapWaypoint(markerPosition, idToMiniMapMarker, (p) -> new FixedWaypoint(p, waypointState));
+        if (waypointState.renderOnMiniMap && AbstractModInitializer.xaeroMiniMapInstalled) {
+            xaeroMiniMapSupport.addOrUpdateMiniMapWaypoint(markerPosition, waypointState, true);
         }
-        if (waypointState.renderOnWorldMap) {
-            addOrUpdateWorldMapWaypoint(markerPosition, idToWorldMapMarker, (p) -> new FixedWaypoint(p, waypointState));
+        if (waypointState.renderOnWorldMap && AbstractModInitializer.xaeroWorldMapInstalled) {
+            xaeroWorldMapSupport.addOrUpdateWorldMapWaypoint(markerPosition, waypointState);
         }
     }
 
     @Override
     void removeOldMarkerWaypoints() {
-        removeOldWaypointsFromMap(idToHudMarker, w -> !w.renderOnHud, currentMarkerIds);
-        removeOldWaypointsFromMap(idToMiniMapMarker, w -> !w.renderOnMiniMap, currentMarkerIds);
-        removeOldWaypointsFromMap(idToWorldMapMarker, w -> !w.renderOnWorldMap, currentMarkerIds);
+        if (AbstractModInitializer.xaeroMiniMapInstalled) xaeroMiniMapSupport.removeOldMarkerWaypoints();
+        if (AbstractModInitializer.xaeroWorldMapInstalled) xaeroWorldMapSupport.removeOldMarkerWaypoints();
     }
 
     @Override
     public void removeAllMarkerWaypoints() {
-        idToHudMarker.clear();
-        idToMiniMapMarker.clear();
-        idToWorldMapMarker.clear();
+        if (AbstractModInitializer.xaeroMiniMapInstalled && xaeroMiniMapSupport != null) xaeroMiniMapSupport.removeAllMarkerWaypoints();
+        if (AbstractModInitializer.xaeroWorldMapInstalled && xaeroWorldMapSupport != null) xaeroWorldMapSupport.removeAllMarkerWaypoints();
     }
 
     @Override
     void updateMarkerWaypointColors() {
-        updateMiniMapWaypointColors(idToHudMarker, w -> config.general.markerWaypointColor.ordinal());
-        updateMiniMapWaypointColors(idToMiniMapMarker, w -> config.general.markerWaypointColor.ordinal());
-        updateWorldMapWaypointColors(idToWorldMapMarker, w -> config.general.markerWaypointColor.ordinal());
+        if (AbstractModInitializer.xaeroMiniMapInstalled) xaeroMiniMapSupport.updateMarkerWaypointColors();
+        if (AbstractModInitializer.xaeroWorldMapInstalled) xaeroWorldMapSupport.updateMarkerWaypointColors();
     }
 
     private boolean hasAreaMarkers = true;
@@ -487,22 +396,5 @@ public class XaeroClientMapHandler extends ClientMapHandler {
             if (zMin == e.zMin) return Float.compare(xHit, e.xHit);
             return Integer.compare(zMin, e.zMin);
         }
-    }
-
-    public static XaeroIcon getXaeroIcon(String link) {
-        if (iconLinkToXaeroIcon.containsKey(link)) return iconLinkToXaeroIcon.get(link);
-        DynamicTexture dynamicTexture = getDynamicTexture(link);
-        if (dynamicTexture == null) return null;
-        #if MC_VER >= MC_1_21_5
-        GpuTexture texture = dynamicTexture.getTexture();
-        XaeroIcon icon = XaeroIconAtlas.Builder.begin().setPreparedTexture(texture)
-                .setIconWidth(texture.getWidth(0)).setWidth(texture.getWidth(0)).build().createIcon();
-        #else
-        int textureId = dynamicTexture.getId();
-        XaeroIcon icon = XaeroIconAtlas.Builder.begin().setPreparedTexture(textureId)
-                .setIconWidth(dynamicTexture.getPixels().getWidth()).setWidth(dynamicTexture.getPixels().getWidth()).build().createIcon();
-        #endif
-        iconLinkToXaeroIcon.put(link, icon);
-        return icon;
     }
 }
