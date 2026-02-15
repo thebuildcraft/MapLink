@@ -35,7 +35,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 
 /**
  * @author Leander Knüttel
- * @version 09.11.2025
+ * @version 15.02.2026
  */
 public class LiveAtlasConnection extends MapConnection {
     public static final Pattern dynmapRegexPattern = Pattern.compile("dynmap: *\\{\\R*((?!\\s+//\\s*).*\\R*)*?[^}\"']*}");
@@ -54,15 +54,16 @@ public class LiveAtlasConnection extends MapConnection {
     public LiveAtlasConnection(ModConfig.ServerEntry serverEntry, UpdateTask updateTask) throws IOException {
         try {
             setupConnections(serverEntry, true);
-        } catch (Exception ignored) {
+        } catch (Exception a) {
             try {
                 setupConnections(serverEntry, false);
-            } catch (Exception e) {
+            } catch (Exception b) {
+                b.addSuppressed(a);
                 if (!updateTask.linkBrokenErrorWasShown) {
                     updateTask.linkBrokenErrorWasShown = true;
                     Utils.sendErrorToClientChat("[" + AbstractModInitializer.MOD_NAME + "]: Error: Your LiveAtlas link is broken!");
                 }
-                throw e;
+                throw b;
             }
         }
     }
