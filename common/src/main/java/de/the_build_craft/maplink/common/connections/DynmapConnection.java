@@ -43,7 +43,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
  * @author ewpratten
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 16.09.2025
+ * @version 15.02.2026
  */
 public class DynmapConnection extends MapConnection {
     private String markerStringTemplate = "";
@@ -140,10 +140,6 @@ public class DynmapConnection extends MapConnection {
     }
 
     public void generateLinkWithConfig(String baseURL, String mapConfig) throws IOException {
-        Matcher matcher = Pattern.compile(".*?//\\w*(\\.\\w+)+(:\\w+)?").matcher(baseURL);
-        if (!matcher.find()) throw new RuntimeException("wrong url pattern");
-        baseURL = matcher.group();
-
         int i = mapConfig.indexOf("configuration: ");
         int j = mapConfig.indexOf(",", i);
 

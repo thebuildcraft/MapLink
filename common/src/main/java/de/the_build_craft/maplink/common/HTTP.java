@@ -27,10 +27,13 @@ import com.mojang.blaze3d.platform.NativeImage;
 import javax.net.ssl.*;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
@@ -47,7 +50,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.config;
  * @author Leander Knüttel
  * @author eatmyvenom
  * @author yqs112358
- * @version 07.01.2026
+ * @version 15.02.2026
  */
 public class HTTP {
     private static final int TIMEOUT_MS = 10_000;
@@ -88,11 +91,11 @@ public class HTTP {
         return GSON.fromJson(makeTextHttpRequest(endpoint), apiResponseType);
     }
 
-    public static HttpURLConnection openHTTPConnection(URL url, String contentType) throws IOException {
+    public static HttpURLConnection openHTTPConnection(URL url, String acceptType) throws IOException {
         // Open an HTTP request
         HttpURLConnection request = (HttpURLConnection) url.openConnection();
         request.setRequestMethod("GET");
-        request.setRequestProperty("Accept", contentType);
+        request.setRequestProperty("Accept", acceptType);
         request.setRequestProperty("User-Agent", AbstractModInitializer.MOD_NAME);
         request.setInstanceFollowRedirects(true);
         request.setConnectTimeout(TIMEOUT_MS);
@@ -140,6 +143,15 @@ public class HTTP {
 
         // Return the content
         return NativeImage.read(request.getInputStream());
+    }
+
+    public static String checkForRedirects(String url) throws IOException {
+        HttpURLConnection request = openHTTPConnection(URI.create(url).toURL(), "*/*");
+        request.connect();
+        InputStream is = request.getInputStream();
+        String redirectedUrl = request.getURL().toString();
+        is.close();
+        return redirectedUrl;
     }
 
     /**

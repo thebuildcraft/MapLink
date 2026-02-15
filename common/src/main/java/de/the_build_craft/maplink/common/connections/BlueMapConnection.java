@@ -42,7 +42,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 02.01.2026
+ * @version 15.02.2026
  */
 public class BlueMapConnection extends MapConnection {
     List<Integer> lastWorldIndices = new ArrayList<>(Collections.singletonList(0));
@@ -78,7 +78,6 @@ public class BlueMapConnection extends MapConnection {
         playerHeadIconUrlTemplates.clear();
 
         String baseURL = getBaseURL(serverEntry, useHttps);
-        AbstractModInitializer.LOGGER.info("baseURL " + baseURL);
         // Get config and build the urls
         for (String w : HTTP.makeJSONHTTPRequest(
                 URI.create(baseURL + "/settings.json?").toURL(), BlueMapConfiguration.class).maps){
