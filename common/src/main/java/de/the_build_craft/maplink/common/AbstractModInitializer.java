@@ -51,7 +51,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 15.02.2026
+ * @version 16.02.2026
  */
 public abstract class AbstractModInitializer
 {
@@ -72,6 +72,7 @@ public abstract class AbstractModInitializer
 	// Connections
 	private static MapConnection connection = null;
 	public static boolean connected = false;
+    public static boolean forceNextRefresh = false;
 
 	// AFK detection
 	public static final Map<String, Boolean> AfkMap = new ConcurrentHashMap<>();
@@ -235,6 +236,15 @@ public abstract class AbstractModInitializer
 				}));
 
 		dispatcher.register(ignoreMarkerMessageCommand);
+
+        LiteralArgumentBuilder<CommandSourceStack> refreshMarkersCommand = baseCommand.then(literal("refresh_markers")
+                .executes(context -> {
+                    forceNextRefresh = true;
+                    Utils.sendToClientChat("Markers and Area Markers will refresh now.");
+                    return 1;
+                }));
+
+        dispatcher.register(refreshMarkersCommand);
 
 		//register client commands here
 	}

@@ -23,7 +23,6 @@ package de.the_build_craft.maplink.common;
 
 import de.the_build_craft.maplink.common.clientMapHandlers.ClientMapHandler;
 import de.the_build_craft.maplink.common.clientMapHandlers.XaeroClientMapHandler;
-import de.the_build_craft.maplink.common.clientMapHandlers.XaeroWorldMapSupport;
 import de.the_build_craft.maplink.common.connections.*;
 import de.the_build_craft.maplink.common.wrappers.Text;
 import de.the_build_craft.maplink.common.wrappers.Utils;
@@ -44,7 +43,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
  * @author eatmyvenom
  * @author TheMrEngMan
  * @author Leander Knüttel
- * @version 15.02.2026
+ * @version 16.02.2026
  */
 public class UpdateTask {
     private boolean connectionErrorWasShown = false;
@@ -177,7 +176,7 @@ public class UpdateTask {
 
         if (config.general.enableMarkerWaypoints || config.general.enableAreaMarkerOverlay){
             try {
-                AbstractModInitializer.getConnection().getWaypointPositions(false);
+                AbstractModInitializer.getConnection().getWaypointPositions(AbstractModInitializer.forceNextRefresh);
             } catch (Exception e) {
                 if (!cantGetMarkerPositionsErrorWasShown) {
                     cantGetMarkerPositionsErrorWasShown = true;
@@ -186,6 +185,7 @@ public class UpdateTask {
                 }
                 LOGGER.error("Failed to get marker positions from the web map.", e);
             }
+            AbstractModInitializer.forceNextRefresh = false;
         } else if (ClientMapHandler.getInstance() != null) {
             ClientMapHandler.getInstance().removeAllMarkerWaypoints();
             ClientMapHandler.getInstance().removeAllAreaMarkers(true);

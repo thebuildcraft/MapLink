@@ -35,7 +35,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 
 /**
  * @author Leander Knüttel
- * @version 15.02.2026
+ * @version 16.02.2026
  */
 public class LiveAtlasConnection extends MapConnection {
     public static final Pattern dynmapRegexPattern = Pattern.compile("dynmap: *\\{\\R*((?!\\s+//\\s*).*\\R*)*?[^}\"']*}");
@@ -159,7 +159,7 @@ public class LiveAtlasConnection extends MapConnection {
             serverEntry.setMarkerLayers(new ArrayList<>(getMarkerLayers()));
         }
 
-        mapConnections.get(mapIndex).getWaypointPositions(mapIndex != lastMapIndex);
+        mapConnections.get(mapIndex).getWaypointPositions(forceRefresh || mapIndex != lastMapIndex);
         lastMapIndex = mapIndex;
     }
 
