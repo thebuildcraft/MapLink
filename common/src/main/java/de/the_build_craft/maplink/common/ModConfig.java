@@ -21,6 +21,7 @@
 package de.the_build_craft.maplink.common;
 
 import de.the_build_craft.maplink.common.wrappers.Text;
+import de.the_build_craft.maplink.common.wrappers.Utils;
 import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
@@ -30,15 +31,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static de.the_build_craft.maplink.common.CommonModConfig.config;
 
 /**
  * @author Leander Knüttel
- * @version 02.01.2026
+ * @version 20.02.2026
  */
 @Config(name = "maplink")
 #if MC_VER < MC_1_20_6
@@ -528,6 +527,9 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         @ConfigEntry.Gui.Tooltip()
         public List<String> icons;
 
+        @ConfigEntry.Gui.Excluded()
+        public Map<String, String[]> dimensionMapping;
+
         public ServerEntry() {
             this("",
                     "",
@@ -543,7 +545,8 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
                     MarkerVisibilityMode.Auto,
                     new ArrayList<>(),
                     SimpleMarkerVisibilityMode.BlackList,
-                    new ArrayList<>());
+                    new ArrayList<>(),
+                    new HashMap<>());
         }
 
         public ServerEntry(String ip,
@@ -560,7 +563,8 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
                            MarkerVisibilityMode iconMarkerVisibilityMode,
                            List<String> iconMarkerLayers,
                            SimpleMarkerVisibilityMode individualIconMode,
-                           List<String> icons) {
+                           List<String> icons,
+                           Map<String, String[]> dimensionMapping) {
             this.ip = ip;
             this.link = link;
             this.maptype = maptype;
@@ -576,6 +580,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
             this.iconMarkerLayers = iconMarkerLayers;
             this.individualIconMode = individualIconMode;
             this.icons = icons;
+            this.dimensionMapping = dimensionMapping;
         }
 
         public void setMarkerLayers(List<String> layers) {
@@ -697,6 +702,16 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
                     config.general.blocksPerChunkThreshold, config.general.areaFillAlphaMul, config.general.areaFillAlphaMin, config.general.areaFillAlphaMax,
                     config.general.areaLineAlphaMul, config.general.areaLineAlphaMin, config.general.areaLineAlphaMax,
                     config.general.maxChunkArea, individualAreaMarkerMode, areaMarkers);
+        }
+
+        public void addDimensionMapping(String clientDimension, String[] webMapDimensions) {
+            String[] prevMapping = dimensionMapping.get(clientDimension);
+            if (Arrays.equals(prevMapping, webMapDimensions)) return;
+            if (config.general.debugMode && config.general.chatLogInDebugMode) {
+                Utils.sendErrorToClientChat("mapping: " + clientDimension + " -> " + Arrays.toString(webMapDimensions));
+            }
+            dimensionMapping.put(clientDimension, webMapDimensions);
+            CommonModConfig.saveConfig();
         }
     }
 

@@ -47,9 +47,10 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 15.02.2026
+ * @version 20.02.2026
  */
 public abstract class MapConnection {
+    public final ModConfig.ServerEntry serverEntry;
     public URL queryURL;
     public final Minecraft mc;
     public String currentDimension = "";
@@ -58,9 +59,11 @@ public abstract class MapConnection {
     public boolean partOfLiveAtlas;
     private boolean firstPlayerUpdate = true;
     private static final Pattern BASE_URL_PATTERN = Pattern.compile("https?://[^/?#]+(/(?!index\\.html)[^/?#]+)*");
+    protected boolean autoUpdateDimensionMappings = true;
 
-    public MapConnection() {
+    public MapConnection(ModConfig.ServerEntry serverEntry) {
         this.mc = Minecraft.getInstance();
+        this.serverEntry = serverEntry;
     }
 
     public void setCurrentDimension(String currentDimension) {
@@ -90,6 +93,10 @@ public abstract class MapConnection {
     public abstract HashMap<String, PlayerPosition> getPlayerPositions() throws IOException;
 
     public HashMap<String, PlayerPosition> HandlePlayerPositions(PlayerPosition[] playerPositions) {
+        return HandlePlayerPositions(playerPositions, "");
+    }
+
+    public HashMap<String, PlayerPosition> HandlePlayerPositions(PlayerPosition[] playerPositions, String worldOverwrite) {
         HashMap<String, PlayerPosition> newPlayerPositions = new HashMap<>();
         if (mc.player == null) {
             return newPlayerPositions;
@@ -97,7 +104,7 @@ public abstract class MapConnection {
         String clientName = mc.player.getName().getString();
         foundPlayer = false;
         if (!AbstractModInitializer.overwriteCurrentDimension) {
-            currentDimension = "";
+            currentDimension = worldOverwrite;
             for (PlayerPosition p : playerPositions){
                 if (Objects.equals(p.name, clientName)) {
                     currentDimension = p.world;
@@ -107,6 +114,23 @@ public abstract class MapConnection {
             }
         }//                     if sb is invisible on Dynmap
         if (currentDimension.equals("-some-other-bogus-world-")) currentDimension = "";
+
+        if (autoUpdateDimensionMappings && !AbstractModInitializer.overwriteCurrentDimension) {
+            #if MC_VER >= MC_1_21_11
+            String clientDimension = mc.level.dimension().identifier().toString();
+            #else
+            String clientDimension = mc.level.dimension().location().toString();
+            #endif
+            if (currentDimension.isEmpty()) {
+                String[] mappedDimension = serverEntry.dimensionMapping.get(clientDimension);
+                if (mappedDimension != null && mappedDimension.length > 0) {
+                    currentDimension = mappedDimension[0];
+                    foundPlayer = true;
+                }
+            } else {
+                serverEntry.addDimensionMapping(clientDimension, new String[]{currentDimension});
+            }
+        }
 
         if (config.general.debugMode && config.general.chatLogInDebugMode) {
             Utils.sendToClientChat("---");

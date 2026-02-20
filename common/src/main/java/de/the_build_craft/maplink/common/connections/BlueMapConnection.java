@@ -36,16 +36,17 @@ import de.the_build_craft.maplink.common.waypoints.*;
 import de.the_build_craft.maplink.common.wrappers.Utils;
 
 import java.lang.reflect.Type;
+import java.util.stream.Collectors;
 
 import static de.the_build_craft.maplink.common.CommonModConfig.*;
 
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 15.02.2026
+ * @version 20.02.2026
  */
 public class BlueMapConnection extends MapConnection {
-    List<Integer> lastWorldIndices = new ArrayList<>(Collections.singletonList(0));
+    List<Integer> lastWorldIndices = new ArrayList<>();
     List<URL> playerUrls = new ArrayList<>();
     List<URL> markerUrls = new ArrayList<>();
     List<String> worlds = new ArrayList<>();
@@ -53,6 +54,8 @@ public class BlueMapConnection extends MapConnection {
     private String markerIconLinkTemplate = "";
 
     public BlueMapConnection(ModConfig.ServerEntry serverEntry, UpdateTask updateTask) throws IOException {
+        super(serverEntry);
+        autoUpdateDimensionMappings = false;
         try {
             generateLinks(serverEntry, true);
         }
@@ -138,7 +141,6 @@ public class BlueMapConnection extends MapConnection {
     public void getWaypointPositions(boolean forceRefresh) throws IOException {
         Type apiResponseType = new TypeToken<Map<String, BlueMapMarkerSet>>() {}.getType();
 
-        ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
         if (serverEntry.needsMarkerLayerUpdate()) {
             serverEntry.setMarkerLayers(new ArrayList<>(getMarkerLayers()));
         }
@@ -219,6 +221,21 @@ public class BlueMapConnection extends MapConnection {
                     update = getBlueMapPlayerUpdate(clientName, update, i);
                     if (correctWorld) lastWorldIndices.add(i);
                 }
+
+                #if MC_VER >= MC_1_21_11
+                String clientDimension = mc.level.dimension().identifier().toString();
+                #else
+                String clientDimension = mc.level.dimension().location().toString();
+                #endif
+                if (lastWorldIndices.isEmpty()) {
+                    String[] mappedDimensions = serverEntry.dimensionMapping.get(clientDimension);
+                    if (mappedDimensions != null && mappedDimensions.length > 0) {
+                        lastWorldIndices = new ArrayList<>(Arrays.stream(mappedDimensions).map(world -> worlds.indexOf(world)).collect(Collectors.toList()));
+                    }
+                } else {
+                    serverEntry.addDimensionMapping(clientDimension,
+                            lastWorldIndices.stream().map(i -> worlds.get(i)).toArray(String[]::new));
+                }
             }
         }
         correctWorld = !lastWorldIndices.isEmpty();
@@ -235,18 +252,19 @@ public class BlueMapConnection extends MapConnection {
             if (!correctWorld) continue;
             ClientMapHandler.registerPlayerPosition(playerPosition, playerHeadIconUrlTemplates.get(lastWorldIndices.get(0)).replace("{uuid}", player.uuid));
         }
-        return HandlePlayerPositions(positions);
+        return HandlePlayerPositions(positions, "thisWorld");
     }
 
     private BlueMapPlayerUpdate getBlueMapPlayerUpdate(String clientName, BlueMapPlayerUpdate update, int worldIndex) {
         try{
-            update = HTTP.makeJSONHTTPRequest(playerUrls.get(worldIndex), BlueMapPlayerUpdate.class);
-            for (BlueMapPlayerUpdate.Player p : update.players){
+            BlueMapPlayerUpdate newUpdate = HTTP.makeJSONHTTPRequest(playerUrls.get(worldIndex), BlueMapPlayerUpdate.class);
+            for (BlueMapPlayerUpdate.Player p : newUpdate.players){
                 if (Objects.equals(p.name, clientName)){
                     correctWorld = !p.foreign;
                     break;
                 }
             }
+            if (update == null || correctWorld) update = newUpdate;
         }
         catch (Exception ignored){
             if (config.general.debugMode){

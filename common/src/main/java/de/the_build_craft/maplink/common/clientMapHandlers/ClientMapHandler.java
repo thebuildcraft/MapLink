@@ -58,7 +58,7 @@ import static de.the_build_craft.maplink.common.FastUpdateTask.playerPositions;
 
 /**
  * @author Leander Knüttel
- * @version 02.01.2026
+ * @version 20.02.2026
  */
 public abstract class ClientMapHandler {
     public static final String waypointPrefix = "maplink_";
@@ -383,8 +383,10 @@ public abstract class ClientMapHandler {
         #else
         if (mc.cameraEntity == null) return;
         #endif
-        ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
-        if (config.general.enableMarkerWaypoints && serverEntry != null) {
+
+        if (config.general.enableMarkerWaypoints && AbstractModInitializer.getConnection() != null) {
+            ModConfig.ServerEntry serverEntry = AbstractModInitializer.getConnection().serverEntry;
+
             // Keep track of which waypoints were previously shown
             // to remove any that are not to be shown anymore
             currentMarkerIds.clear();

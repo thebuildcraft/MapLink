@@ -43,7 +43,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 15.02.2026
+ * @version 20.02.2026
  */
 public class Pl3xMapConnection extends MapConnection{
     private String markerLayerStringTemplate = "";
@@ -51,6 +51,7 @@ public class Pl3xMapConnection extends MapConnection{
     private String markerIconLinkTemplate = "";
     int version;
     public Pl3xMapConnection(ModConfig.ServerEntry serverEntry, UpdateTask updateTask) throws IOException {
+        super(serverEntry);
         try {
             generateLink(serverEntry, true);
         }
@@ -69,7 +70,8 @@ public class Pl3xMapConnection extends MapConnection{
         }
     }
 
-    public Pl3xMapConnection(String baseURL, String link, boolean partOfLifeAtlas) throws IOException {
+    public Pl3xMapConnection(ModConfig.ServerEntry serverEntry, String baseURL, String link, boolean partOfLifeAtlas) throws IOException {
+        super(serverEntry);
         this.partOfLiveAtlas = partOfLifeAtlas;
         Matcher matcher = Pattern.compile(".*?//\\w*(\\.\\w+)+(:\\w+)?").matcher(baseURL);
         if (!matcher.find()) throw new RuntimeException("wrong url pattern");
@@ -172,10 +174,14 @@ public class Pl3xMapConnection extends MapConnection{
     @Override
     public void getWaypointPositions(boolean forceRefresh) throws IOException {
         if (markerLayerStringTemplate.isEmpty() || currentDimension.isEmpty()) {
-            if (ClientMapHandler.getInstance() != null) ClientMapHandler.getInstance().removeAllMarkerWaypoints();
+            lastMarkerDimension = currentDimension;
+            if (ClientMapHandler.getInstance() != null) {
+                ClientMapHandler.getInstance().removeAllMarkerWaypoints();
+                ClientMapHandler.getInstance().removeAllAreaMarkers(true);
+            }
             return;
         }
-        ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
+
         if (serverEntry.needsMarkerLayerUpdate() && !partOfLiveAtlas) {
             serverEntry.setMarkerLayers(new ArrayList<>(getMarkerLayers()));
         }
@@ -184,6 +190,8 @@ public class Pl3xMapConnection extends MapConnection{
 
         if (markerStringTemplate.isEmpty() && version == 0) {
             ClientMapHandler.getInstance().removeAllMarkerWaypoints();
+            ClientMapHandler.getInstance().removeAllAreaMarkers(true);
+            lastMarkerDimension = currentDimension;
             return;
         }
         int newMarkerHash = serverEntry.getMarkerVisibilityHash();

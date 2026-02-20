@@ -43,13 +43,14 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 16.09.2025
+ * @version 20.02.2026
  */
 public class SquareMapConnection extends MapConnection {
     private String markerStringTemplate = "";
     private String markerIconLinkTemplate = "";
     private String worldSettingsLinkTemplate = "";
     public SquareMapConnection(ModConfig.ServerEntry serverEntry, UpdateTask updateTask) throws IOException {
+        super(serverEntry);
         try {
             generateLink(serverEntry, true);
         }
@@ -67,7 +68,8 @@ public class SquareMapConnection extends MapConnection {
         }
     }
 
-    public SquareMapConnection(String baseURL, String link, boolean partOfLifeAtlas) throws IOException {
+    public SquareMapConnection(ModConfig.ServerEntry serverEntry, String baseURL, String link, boolean partOfLifeAtlas) throws IOException {
+        super(serverEntry);
         this.partOfLiveAtlas = partOfLifeAtlas;
         Matcher matcher = Pattern.compile(".*?//\\w*(\\.\\w+)+(:\\w+)?").matcher(baseURL);
         if (!matcher.find()) throw new RuntimeException("wrong url pattern");
@@ -167,13 +169,14 @@ public class SquareMapConnection extends MapConnection {
     @Override
     public void getWaypointPositions(boolean forceRefresh) throws IOException {
         if (markerStringTemplate.isEmpty() || currentDimension.isEmpty()) {
+            lastMarkerDimension = currentDimension;
             if (ClientMapHandler.getInstance() != null) {
                 ClientMapHandler.getInstance().removeAllMarkerWaypoints();
                 ClientMapHandler.getInstance().removeAllAreaMarkers(true);
             }
             return;
         }
-        ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
+
         if (serverEntry.needsMarkerLayerUpdate() && !partOfLiveAtlas) {
             serverEntry.setMarkerLayers(new ArrayList<>(getMarkerLayers()));
         }

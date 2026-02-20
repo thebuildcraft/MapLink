@@ -32,8 +32,6 @@ import de.the_build_craft.maplink.common.wrappers.Utils;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static de.the_build_craft.maplink.common.CommonModConfig.*;
 
@@ -43,7 +41,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
  * @author ewpratten
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 15.02.2026
+ * @version 20.02.2026
  */
 public class DynmapConnection extends MapConnection {
     private String markerStringTemplate = "";
@@ -51,6 +49,7 @@ public class DynmapConnection extends MapConnection {
     public String[] worldNames = new String[0];
 
     public DynmapConnection(ModConfig.ServerEntry serverEntry, UpdateTask updateTask) throws IOException {
+        super(serverEntry);
         try {
             generateLink(serverEntry, true);
         }
@@ -69,7 +68,8 @@ public class DynmapConnection extends MapConnection {
         }
     }
 
-    public DynmapConnection(String baseURL, String config, boolean partOfLifeAtlas) throws IOException {
+    public DynmapConnection(ModConfig.ServerEntry serverEntry, String baseURL, String config, boolean partOfLifeAtlas) throws IOException {
+        super(serverEntry);
         generateLinkWithConfig(baseURL, config);
         this.partOfLiveAtlas = partOfLifeAtlas;
     }
@@ -258,7 +258,6 @@ public class DynmapConnection extends MapConnection {
 
     @Override
     public void getWaypointPositions(boolean forceRefresh) throws IOException {
-        ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
         if (serverEntry.needsMarkerLayerUpdate() && !partOfLiveAtlas) {
             serverEntry.setMarkerLayers(new ArrayList<>(getMarkerLayers()));
         }
@@ -278,6 +277,7 @@ public class DynmapConnection extends MapConnection {
         if (markerStringTemplate.isEmpty() || dimension.isEmpty()) {
             ClientMapHandler.getInstance().removeAllMarkerWaypoints();
             ClientMapHandler.getInstance().removeAllAreaMarkers(true);
+            lastMarkerDimension = dimension;
             return;
         }
         int newMarkerHash = serverEntry.getMarkerVisibilityHash();

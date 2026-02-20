@@ -35,7 +35,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 
 /**
  * @author Leander Knüttel
- * @version 16.02.2026
+ * @version 20.02.2026
  */
 public class LiveAtlasConnection extends MapConnection {
     public static final Pattern dynmapRegexPattern = Pattern.compile("dynmap: *\\{\\R*((?!\\s+//\\s*).*\\R*)*?[^}\"']*}");
@@ -52,6 +52,7 @@ public class LiveAtlasConnection extends MapConnection {
     }
 
     public LiveAtlasConnection(ModConfig.ServerEntry serverEntry, UpdateTask updateTask) throws IOException {
+        super(serverEntry);
         try {
             setupConnections(serverEntry, true);
         } catch (Exception a) {
@@ -75,7 +76,7 @@ public class LiveAtlasConnection extends MapConnection {
         while (matcher.find()) {
             String g = matcher.group();
             try {
-                mapConnections.add(new DynmapConnection(baseURL, g, true));
+                mapConnections.add(new DynmapConnection(serverEntry, baseURL, g, true));
             } catch (Exception e) {
                 AbstractModInitializer.LOGGER.error("error creating Dynmap connection for LiveAtlas", e);
             }
@@ -84,7 +85,7 @@ public class LiveAtlasConnection extends MapConnection {
         while (matcher.find()) {
             String g = matcher.group(1);
             try {
-                mapConnections.add(new Pl3xMapConnection(baseURL, g, true));
+                mapConnections.add(new Pl3xMapConnection(serverEntry, baseURL, g, true));
             } catch (Exception e) {
                 AbstractModInitializer.LOGGER.error("error creating Pl3xMap connection for LiveAtlas", e);
             }
@@ -93,7 +94,7 @@ public class LiveAtlasConnection extends MapConnection {
         while (matcher.find()) {
             String g = matcher.group(1);
             try {
-                mapConnections.add(new SquareMapConnection(baseURL, g, true));
+                mapConnections.add(new SquareMapConnection(serverEntry, baseURL, g, true));
             } catch (Exception e) {
                 AbstractModInitializer.LOGGER.error("error creating Squaremap connection for LiveAtlas", e);
             }
@@ -101,7 +102,7 @@ public class LiveAtlasConnection extends MapConnection {
         // use default /standalone/config.js
         if (mapConnections.isEmpty()) {
             try {
-                mapConnections.add(new DynmapConnection(baseURL,
+                mapConnections.add(new DynmapConnection(serverEntry, baseURL,
                         HTTP.makeTextHttpRequest(URI.create(baseURL + "/standalone/config.js").toURL()), true));
             } catch (Exception e) {
                 AbstractModInitializer.LOGGER.error("error creating Dynmap connection for LiveAtlas", e);
@@ -154,7 +155,6 @@ public class LiveAtlasConnection extends MapConnection {
             return;
         }
 
-        ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
         if (serverEntry.needsMarkerLayerUpdate()) {
             serverEntry.setMarkerLayers(new ArrayList<>(getMarkerLayers()));
         }
