@@ -42,7 +42,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.config;
 
 /**
  * @author Leander Knüttel
- * @version 02.01.2026
+ * @version 20.02.2026
  */
 @SuppressWarnings({"UnstableApiUsage", "rawtypes"})
 public class ModConfigGui {
@@ -402,7 +402,7 @@ public class ModConfigGui {
     }
 
     private static String getServerLink(String link) {
-        Matcher matcher = Pattern.compile(".*?//\\w*(\\.\\w+)+(:\\w+)?").matcher(link);
+        Matcher matcher = Pattern.compile("(https?://)?[^/?#]+(/(?!index\\.html)[^/?#]+)*").matcher(link);
         if (!matcher.find()) return "";
         return " : " + matcher.group();
     }
