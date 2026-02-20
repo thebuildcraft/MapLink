@@ -51,7 +51,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 
 /**
  * @author Leander Knüttel
- * @version 15.02.2026
+ * @version 20.02.2026
  */
 @Pseudo
 @Mixin(WaypointWorldRenderer.class)
@@ -106,8 +106,21 @@ public class WaypointWorldRendererMixin {
     }
 
     //partially from Earthcomputer/minimap-sync licensed under the MIT License
+    #if MC_VER >= MC_1_21_11
     @WrapOperation(method = "renderIcon", at = @At(value = "INVOKE", target = "Lxaero/common/misc/Misc;drawNormalText(Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/lang/String;FFIZLnet/minecraft/client/renderer/MultiBufferSource;)V"))
     private void dontDrawSymbolStringForCustomIcons(PoseStack matrices, String symbol, float x, float y, int color, boolean shadow, MultiBufferSource renderTypeBuffer, Operation<Void> original, Waypoint w) {
+    #else
+    @WrapOperation(method = "renderIcon", at = @At(value = "INVOKE", target = "Lxaero/common/misc/Misc;drawNormalText(Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/lang/String;FFIZLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V"))
+    private void dontDrawSymbolStringForCustomIcons(PoseStack matrices,
+                                                    String symbol,
+                                                    float x,
+                                                    float y,
+                                                    int color,
+                                                    boolean shadow,
+                                                    MultiBufferSource.BufferSource renderTypeBuffer,
+                                                    Operation<Void> original,
+                                                    Waypoint w) {
+    #endif
         if (w instanceof TempWaypoint) {
             WaypointState waypointState = ((TempWaypoint) w).getWaypointState();
             if (!waypointState.renderIconOnHud) {
