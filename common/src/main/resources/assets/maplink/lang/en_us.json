@@ -77,6 +77,8 @@
   "maplink.option.general.ignoredServers.@PrefixText": "Misc Options",
   "maplink.option.general.ignoreMarkerMessage": "Ignore Marker Message",
   "maplink.option.general.hideAllChatErrors": "Hide All Errors in Chat",
+  "maplink.option.general.invisibilityRecovery": "Invisibility Recovery",
+  "maplink.option.general.invisibilityRecovery.@Tooltip": "Turn this off if Maplink selects a wrong dimension on a server with a proxy.",
 
   "maplink.option.general.debugMode": "Debug Mode",
   "maplink.option.general.debugMode.@PrefixText": "Dev Options - please ignore",

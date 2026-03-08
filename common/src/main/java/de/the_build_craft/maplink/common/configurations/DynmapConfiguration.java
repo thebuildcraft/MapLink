@@ -24,12 +24,18 @@ package de.the_build_craft.maplink.common.configurations;
  * JSON object from dynmap API. Used to read the first world name.
  *
  * @author Leander Knüttel
- * @version 30.08.2025
+ * @version 08.03.2026
  */
 public class DynmapConfiguration {
     public float updaterate = 2000;
     public World[] worlds;
     public static class World{
         public String name;
+        public Map[] maps;
+        public static class Map {
+            public String compassview;
+            public String prefix;
+            public int scale;
+        }
     }
 }

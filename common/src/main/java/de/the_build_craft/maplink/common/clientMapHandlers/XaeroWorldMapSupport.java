@@ -25,6 +25,7 @@ import com.mojang.blaze3d.textures.GpuTexture;
 #endif
 import de.the_build_craft.maplink.common.AbstractModInitializer;
 import de.the_build_craft.maplink.common.MainThreadTaskQueue;
+import de.the_build_craft.maplink.common.level.TileConverter;
 import de.the_build_craft.maplink.common.waypoints.CustomWorldMapWaypoint;
 import de.the_build_craft.maplink.common.waypoints.Int3;
 import de.the_build_craft.maplink.common.waypoints.Position;
@@ -52,7 +53,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.getPlayerWaypoin
 
 /**
  * @author Leander Knüttel
- * @version 15.02.2026
+ * @version 08.03.2026
  */
 public class XaeroWorldMapSupport implements IXaeroWorldMapSupport {
     private static XaeroWorldMapSupport instance;
@@ -201,5 +202,25 @@ public class XaeroWorldMapSupport implements IXaeroWorldMapSupport {
     @Override
     public int getXaeroAutoConvertToKmThreshold() {
         return 10_000;
+    }
+
+    @Override
+    public void clearTiles() {
+        TileConverter.clear();
+    }
+
+    @Override
+    public void init(int centerChunkX, int centerChunkZ, int maxChunksX, int maxChunksZ) {
+        TileConverter.init(centerChunkX, centerChunkZ, maxChunksX, maxChunksZ);
+    }
+
+    @Override
+    public void writeBlock(int x, int z, int light, int height, int pixelRgb) {
+        TileConverter.writeBlock(x, z, light, height, pixelRgb);
+    }
+
+    @Override
+    public void setReadyForRender() {
+        TileConverter.readyForRender = true;
     }
 }

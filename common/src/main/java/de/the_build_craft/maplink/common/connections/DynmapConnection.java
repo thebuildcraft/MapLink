@@ -21,9 +21,13 @@
 
 package de.the_build_craft.maplink.common.connections;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import de.the_build_craft.maplink.common.*;
 import de.the_build_craft.maplink.common.clientMapHandlers.ClientMapHandler;
+import de.the_build_craft.maplink.common.clientMapHandlers.XaeroClientMapHandler;
 import de.the_build_craft.maplink.common.configurations.DynmapConfiguration;
+import de.the_build_craft.maplink.common.level.BlockCache;
+import de.the_build_craft.maplink.common.level.ChunkCache;
 import de.the_build_craft.maplink.common.mapUpdates.DynmapMarkerUpdate;
 import de.the_build_craft.maplink.common.mapUpdates.DynmapPlayerUpdate;
 import de.the_build_craft.maplink.common.waypoints.*;
@@ -32,6 +36,8 @@ import de.the_build_craft.maplink.common.wrappers.Utils;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static de.the_build_craft.maplink.common.CommonModConfig.*;
 
@@ -41,12 +47,14 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
  * @author ewpratten
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 20.02.2026
+ * @version 08.03.2026
  */
 public class DynmapConnection extends MapConnection {
     private String markerStringTemplate = "";
+    private String tilesStringTemplate;
     public String firstWorldName = "";
     public String[] worldNames = new String[0];
+    public DynmapConfiguration.World[] worlds = new DynmapConfiguration.World[0];
 
     public DynmapConnection(ModConfig.ServerEntry serverEntry, UpdateTask updateTask) throws IOException {
         super(serverEntry);
@@ -194,6 +202,16 @@ public class DynmapConnection extends MapConnection {
         }
         AbstractModInitializer.LOGGER.info("markerStringTemplate: " + markerStringTemplate);
 
+        Matcher matcher = Pattern.compile("tiles: *['\"]([^'\"]*)['\"]").matcher(mapConfig);
+        if (matcher.find()) {
+            tilesStringTemplate = matcher.group(1);
+            if (!tilesStringTemplate.contains("//")) {
+                if (!tilesStringTemplate.startsWith("/")) tilesStringTemplate = "/" + tilesStringTemplate;
+                tilesStringTemplate = baseURL + tilesStringTemplate;
+            }
+            tilesStringTemplate += "{world}/{prefix}/{regionX}_{regionZ}/{z}_{chunkX}_{chunkZ}";
+        }
+
         // Test the url
         this.getPlayerPositions();
     }
@@ -201,7 +219,7 @@ public class DynmapConnection extends MapConnection {
     private void setWorldNames() throws IOException {
         DynmapConfiguration dynmapConfiguration = HTTP.makeJSONHTTPRequest(
                 URI.create(onlineMapConfigLink).toURL(), DynmapConfiguration.class);
-        DynmapConfiguration.World[] worlds = dynmapConfiguration.worlds;
+        worlds = dynmapConfiguration.worlds;
         worldNames = new String[worlds.length];
         for (int k = 0, worldsLength = worlds.length; k < worldsLength; k++) {
             worldNames[k] = worlds[k].name.replace(" ", "%20");
@@ -350,5 +368,84 @@ public class DynmapConnection extends MapConnection {
             points[i] = new Double3(circle.x + circle.xr * Math.sin(a), circle.y, circle.z + circle.zr * Math.cos(a));
         }
         return points;
+    }
+
+    private static void convertImage(NativeImage image, int chunkX, int chunkZ, int zOffset) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+
+        for (int currChunkX = 0; currChunkX < width / 16; currChunkX++) {
+            int cx = (chunkX + currChunkX) * 16;
+            for (int currChunkZ = 0; currChunkZ < height / 16; currChunkZ++) {
+                int cz = (-chunkZ + currChunkZ + zOffset) * 16;
+
+                for (int x = 0; x < 16; x++) {
+                    for (int z = 0; z < 16; z++) {
+                        //int pixel = image.getPixel(currChunkX * 16 + x, currChunkZ * 16 + z);
+                        //XaeroClientMapHandler.xaeroWorldMapSupport.writeBlock(cx + x, cz + z, 0, 100, pixel);
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<String[]> getPossibleTileMaps() {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public boolean downloadTiles(String map, int centerChunkX, int centerChunkZ, int maxChunksX, int maxChunksZ) {
+        String template = null;
+        for (DynmapConfiguration.World world : worlds) {
+            if (world.name.equals(currentDimension)) {
+                //for (DynmapConfiguration.World.Map map : world.maps) {
+                //    if (map.compassview.toUpperCase(Locale.ROOT).equals("S")) {
+                //        //"{world}/{prefix}/{regionX}_{regionZ}/{z}_{chunkX}_{chunkZ}"
+                //        //template = tilesStringTemplate
+                //        //        .replace("{world}", currentDimension)
+                //        //        .replace("{prefix}", map.prefix)
+                //        //        .replace("{z}", "z".repeat(0));
+                //        ////TODO
+                //        //scale 1 ->
+                //        //scale 4 -> zz
+                //        //scale 8 -> zzz
+                //        break;
+                //    }
+                //}
+                break;
+            }
+        }
+        if (template == null) return false;
+
+        int scale = 4;
+
+        int startChunkX = centerChunkX - (maxChunksX / 2);
+        startChunkX -= startChunkX % scale;
+        int startChunkZ = centerChunkZ - (maxChunksZ / 2);
+        startChunkZ -= startChunkZ % scale;
+        int chunksInTile = 128 / 16;
+        int deltaDiv = chunksInTile / scale;
+
+        try {
+            for (int chunkX = startChunkX; chunkX < startChunkX + maxChunksX; chunkX += chunksInTile) {
+                for (int chunkZ = startChunkZ; chunkZ < startChunkZ + maxChunksZ; chunkZ += chunksInTile) {
+                    String url = template
+                            .replace("{regionX}", "" + chunkX / 32)
+                            .replace("{regionZ}", "" + chunkZ / 32)
+                            .replace("{chunkX}", "" + chunkX / deltaDiv)
+                            .replace("{chunkZ}", "" + chunkZ / deltaDiv);
+                    try (NativeImage image = HTTP.makeImageHttpRequest(new URI(url).toURL())) {
+                        convertImage(image, chunkX, chunkZ, -deltaDiv);
+                    }
+                }
+            }
+
+            XaeroClientMapHandler.xaeroWorldMapSupport.setReadyForRender();
+            return true;
+        } catch (Exception e) {
+            AbstractModInitializer.LOGGER.error("Error converting Dynmap tiles!", e);
+        }
+        return false;
     }
 }

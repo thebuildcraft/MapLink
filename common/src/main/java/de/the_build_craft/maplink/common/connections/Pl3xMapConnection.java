@@ -43,7 +43,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 20.02.2026
+ * @version 08.03.2026
  */
 public class Pl3xMapConnection extends MapConnection{
     private String markerLayerStringTemplate = "";
@@ -344,5 +344,15 @@ public class Pl3xMapConnection extends MapConnection{
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public List<String[]> getPossibleTileMaps() {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public boolean downloadTiles(String map, int centerChunkX, int centerChunkZ, int maxChunksX, int maxChunksZ) {
+        return false;
     }
 }

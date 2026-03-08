@@ -28,12 +28,21 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import de.the_build_craft.maplink.common.clientMapHandlers.XaeroClientMapHandler;
+import de.the_build_craft.maplink.common.connections.BlueMapConnection;
 import de.the_build_craft.maplink.common.connections.MapConnection;
 import de.the_build_craft.maplink.common.waypoints.Double3;
+import de.the_build_craft.maplink.common.wrappers.Text;
 import de.the_build_craft.maplink.common.wrappers.Utils;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.coordinates.ColumnPosArgument;
+import net.minecraft.commands.arguments.coordinates.Coordinates;
+import net.minecraft.commands.arguments.coordinates.WorldCoordinates;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Style;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -51,13 +60,13 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 20.02.2026
+ * @version 08.03.2026
  */
 public abstract class AbstractModInitializer
 {
 	public static final String MOD_ID = "maplink";
 	public static final String MOD_NAME = "Map Link";
-	public static final String VERSION = "4.3.0";
+	public static final String VERSION = "4.4.0";
 	public static final Logger LOGGER = LogManager.getLogger("MapLink");
 	public static AbstractModInitializer INSTANCE;
 	public LoaderType loaderType;
@@ -215,6 +224,16 @@ public abstract class AbstractModInitializer
 
 		dispatcher.register(setCurrentDimensionOverwriteCommand);
 
+        LiteralArgumentBuilder<CommandSourceStack> setInvisibilityRecoveryCommand = baseCommand.then(literal("set_invisibility_recovery")
+                .then(argument("on", StringArgumentType.word())
+                        .executes(context -> {
+                            CommonModConfig.setInvisibilityRecovery(Boolean.parseBoolean(StringArgumentType.getString(context, "on")));
+                            Utils.sendToClientChat("Set invisibility recovery to: " + config.general.invisibilityRecovery);
+                            return 1;
+                        })));
+
+        dispatcher.register(setInvisibilityRecoveryCommand);
+
 		LiteralArgumentBuilder<CommandSourceStack> openOnlineMapConfig = baseCommand.then(literal("open_online_map_config")
 				.executes(context -> {
 					if (connection == null){
@@ -246,6 +265,77 @@ public abstract class AbstractModInitializer
 
         dispatcher.register(refreshMarkersCommand);
 
+        LiteralArgumentBuilder<CommandSourceStack> loadMapTiles = baseCommand.then(literal("download_tiles")
+                .then(argument("chunksX", IntegerArgumentType.integer(4, 2500))
+                .then(argument("chunksZ", IntegerArgumentType.integer(4, 2500))
+                .then(argument("center", ColumnPosArgument.columnPos())
+                    .executes(context -> {
+                        if (!(connection instanceof BlueMapConnection)) {
+                            Utils.sendErrorToClientChat("Currently only available for Bluemap. This will be expanded in future updates ☺");
+                            return 0;
+                        }
+                        int chunksX = IntegerArgumentType.getInteger(context, "chunksX") + 2;
+                        int chunksZ = IntegerArgumentType.getInteger(context, "chunksZ") + 2;
+                        BlockPos center = parseClientPos(context.getArgument("center", Coordinates.class));
+                        float GB = (float) (Math.ceil(chunksX * chunksZ * 16*16 * 4 * 1e-9f * 100) / 100f);
+                        Utils.sendToClientChat(Text.literal("This will require at least ")
+                                .append(Text.literal(GB + " GB").withStyle(Style.EMPTY.withColor(ChatFormatting.GOLD)))
+                                .append(Text.literal(" of memory!")));
+                        Utils.sendToClientChat("Select one of these maps to confirm:");
+                        for (String[] map : connection.getPossibleTileMaps()) {
+                            Utils.sendToClientChat(Text.literal("[" + map[1] + "] ").withStyle(Style.EMPTY.withClickEvent(
+                                    #if MC_VER < MC_1_21_5
+                                    new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + MOD_ID + " download_tiles " + chunksX + " " + chunksZ + " " + center.getX() + " " + center.getZ() + " " + map[0]))
+                                    #else
+                                    new ClickEvent.RunCommand("/" + MOD_ID + " download_tiles " + chunksX + " " + chunksZ + " " + center.getX() + " " + center.getZ() + " " + map[0]))
+                                    #endif
+                                    .withColor(ChatFormatting.GREEN)));
+                        }
+                        return 1;
+                    })
+                    .then(argument("map", StringArgumentType.word())
+                            .executes(context -> {
+                                if (!(connection instanceof BlueMapConnection)) {
+                                    Utils.sendErrorToClientChat("Currently only available for Bluemap. This will be expanded in future updates ☺");
+                                    return 0;
+                                }
+                                int chunksX = IntegerArgumentType.getInteger(context, "chunksX") + 2;
+                                int chunksZ = IntegerArgumentType.getInteger(context, "chunksZ") + 2;
+                                BlockPos center = parseClientPos(context.getArgument("center", Coordinates.class));
+                                String map = StringArgumentType.getString(context, "map");
+                                Thread thread = new Thread(() -> {
+                                    Utils.sendToClientChat("converting tiles...");
+                                    if (connection.downloadTiles(map, center.getX() >> 4, center.getZ() >> 4, chunksX, chunksZ)) {
+                                        Utils.sendToClientChat(Text.literal("Tiles converted. Don't forget to ")
+                                                .append(Text.literal("[stop]").withStyle(Style.EMPTY.withClickEvent(
+                                                        #if MC_VER < MC_1_21_5
+                                                        new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + MOD_ID + " stop_tile_rendering"))
+                                                        #else
+                                                        new ClickEvent.RunCommand("/" + MOD_ID + " stop_tile_rendering"))
+                                                        #endif
+                                                        .withColor(ChatFormatting.RED)))
+                                                .append(Text.literal(" the rendering once its finished to get your memory back!")));
+                                        Utils.sendToClientChat(Text.literal("(Some chunks might be skipped by the first pass... just wait a bit longer)").withStyle(Style.EMPTY.withColor(ChatFormatting.GRAY).withItalic(true)));
+                                    } else {
+                                        Utils.sendErrorToClientChat("Failed to convert Map-Tiles!");
+                                        XaeroClientMapHandler.xaeroWorldMapSupport.clearTiles();
+                                    }
+                                });
+                                thread.start();
+                                return 1;
+                            }))))));
+
+        dispatcher.register(loadMapTiles);
+
+        LiteralArgumentBuilder<CommandSourceStack> stopCommand = baseCommand.then(literal("stop_tile_rendering")
+                .executes(context -> {
+                    XaeroClientMapHandler.xaeroWorldMapSupport.clearTiles();
+                    Utils.sendToClientChat("Tile rendering stopped & cache cleared");
+                    return 1;
+                }));
+
+        dispatcher.register(stopCommand);
+
 		//register client commands here
 	}
 
@@ -259,6 +349,15 @@ public abstract class AbstractModInitializer
 	private static <T> RequiredArgumentBuilder<CommandSourceStack, T> argument(String name, ArgumentType<T> type) {
 		return RequiredArgumentBuilder.argument(name, type);
 	}
+    private static BlockPos parseClientPos(Coordinates coordinates) {
+        WorldCoordinates worldCoordinates = (WorldCoordinates) coordinates;
+        BlockPos playerPos = Minecraft.getInstance().player.blockPosition();
+        #if MC_VER > MC_1_21_6
+        return new BlockPos((int) worldCoordinates.x().get(playerPos.getX()), (int) worldCoordinates.y().get(playerPos.getY()), (int) worldCoordinates.z().get(playerPos.getZ()));
+        #else
+        return new BlockPos((int) worldCoordinates.x.get(playerPos.getX()), (int) worldCoordinates.y.get(playerPos.getY()), (int) worldCoordinates.z.get(playerPos.getZ()));
+        #endif
+    }
 
 	/**
 	 * Set how often to check for player position updates

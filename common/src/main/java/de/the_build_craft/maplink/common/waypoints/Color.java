@@ -27,7 +27,7 @@ import java.util.Objects;
 
 /**
  * @author Leander Knüttel
- * @version 06.09.2025
+ * @version 08.03.2026
  */
 public class Color {
     public final int r;
@@ -40,10 +40,10 @@ public class Color {
     }
 
     public Color(int r, int g, int b, float a) {
-        this.r = r;
-        this.g = g;
-        this.b = b;
-        this.a = a;
+        this.r = MathUtils.clamp(r, 0, 255);
+        this.g = MathUtils.clamp(g, 0, 255);
+        this.b = MathUtils.clamp(b, 0, 255);
+        this.a = MathUtils.clamp(a, 0, 1);
     }
 
     public Color(String hex, float a) {
@@ -56,10 +56,34 @@ public class Color {
     }
 
     public Color(int argb) {
-        a = ((argb >>> 24) & 255) / 255f;
-        r = (argb >>> 16) & 255;
-        g = (argb >>> 8) & 255;
-        b = argb & 255;
+        a = argbToA(argb) / 255f;
+        r = argbToR(argb);
+        g = argbToG(argb);
+        b = argbToB(argb);
+    }
+
+    public static int argbToA(int argb) {
+        return (argb >>> 24) & 255;
+    }
+
+    public static int argbToR(int argb) {
+        return (argb >>> 16) & 255;
+    }
+
+    public static int argbToG(int argb) {
+        return (argb >>> 8) & 255;
+    }
+
+    public static int argbToB(int argb) {
+        return argb & 255;
+    }
+
+    public static int ABGRtoARGB(int abgr) {
+        int a = argbToA(abgr);
+        int b = argbToR(abgr);
+        int g = argbToG(abgr);
+        int r = argbToB(abgr);
+        return a << 24 | r << 16 | g << 8 | b;
     }
 
     public int getAsRGBA() {

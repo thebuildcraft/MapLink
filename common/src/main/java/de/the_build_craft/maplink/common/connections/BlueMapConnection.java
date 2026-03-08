@@ -20,9 +20,12 @@
 
 package de.the_build_craft.maplink.common.connections;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import de.the_build_craft.maplink.common.*;
 import de.the_build_craft.maplink.common.clientMapHandlers.ClientMapHandler;
+import de.the_build_craft.maplink.common.clientMapHandlers.XaeroClientMapHandler;
 import de.the_build_craft.maplink.common.configurations.BlueMapConfiguration;
+import de.the_build_craft.maplink.common.configurations.BlueMapMapSettings;
 import de.the_build_craft.maplink.common.mapUpdates.BlueMapMarkerSet;
 import de.the_build_craft.maplink.common.mapUpdates.BlueMapPlayerUpdate;
 
@@ -43,7 +46,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 20.02.2026
+ * @version 08.03.2026
  */
 public class BlueMapConnection extends MapConnection {
     List<Integer> lastWorldIndices = new ArrayList<>();
@@ -52,6 +55,8 @@ public class BlueMapConnection extends MapConnection {
     List<String> worlds = new ArrayList<>();
     List<String> playerHeadIconUrlTemplates = new ArrayList<>();
     private String markerIconLinkTemplate = "";
+    Map<String, BlueMapMapSettings> maps = new HashMap<>();
+    private String tilesUrlTemplate;
 
     public BlueMapConnection(ModConfig.ServerEntry serverEntry, UpdateTask updateTask) throws IOException {
         super(serverEntry);
@@ -88,10 +93,12 @@ public class BlueMapConnection extends MapConnection {
             markerUrls.add(URI.create((baseURL + "/maps/" + w + "/live/markers.json?").replace(" ", "%20")).toURL());
             worlds.add(w);
             playerHeadIconUrlTemplates.add(baseURL + "/maps/" + w + "/assets/playerheads/{uuid}.png");
+            maps.put(w, HTTP.makeJSONHTTPRequest(URI.create(baseURL + "/maps/" + w + "/settings.json").toURL(), BlueMapMapSettings.class));
         }
 
         onlineMapConfigLink = baseURL + "/settings.json?";
         markerIconLinkTemplate = baseURL + "/{icon}";
+        tilesUrlTemplate = baseURL + "/maps/{world}/tiles/";
 
         // Test the urls
         this.getPlayerPositions();
@@ -229,7 +236,7 @@ public class BlueMapConnection extends MapConnection {
                 #endif
                 if (lastWorldIndices.isEmpty()) {
                     String[] mappedDimensions = serverEntry.dimensionMapping.get(clientDimension);
-                    if (mappedDimensions != null && mappedDimensions.length > 0) {
+                    if (config.general.invisibilityRecovery && mappedDimensions != null && mappedDimensions.length > 0) {
                         lastWorldIndices = new ArrayList<>(Arrays.stream(mappedDimensions).map(world -> worlds.indexOf(world)).collect(Collectors.toList()));
                     }
                 } else {
@@ -272,8 +279,107 @@ public class BlueMapConnection extends MapConnection {
             }
             playerUrls.remove(worldIndex);
             markerUrls.remove(worldIndex);
+            maps.remove(worlds.get(worldIndex));
             worlds.remove(worldIndex);
         }
         return update;
+    }
+
+    @Override
+    public List<String[]> getPossibleTileMaps() {
+        if (lastWorldIndices.isEmpty()) return worlds.stream().map(w -> new String[]{w, maps.get(w).name}).collect(Collectors.toList());
+        return lastWorldIndices.stream().map(i -> {
+            String world = worlds.get(i);
+            return new String[]{world, maps.get(world).name};
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public boolean downloadTiles(String map, int centerChunkX, int centerChunkZ, int maxChunksX, int maxChunksZ) {
+        BlueMapMapSettings settings = maps.get(map);
+        if (settings == null) return false;
+        int tileSizeX = settings.lowres.tileSize[0];
+        int tileSizeZ = settings.lowres.tileSize[1];
+        String basePath = tilesUrlTemplate.replace("{world}", map);
+
+        int startX = (centerChunkX - (maxChunksX / 2)) * 16;
+        int startZ = (centerChunkZ - (maxChunksZ / 2)) * 16;
+
+        XaeroClientMapHandler.xaeroWorldMapSupport.init(centerChunkX, centerChunkZ, maxChunksX, maxChunksZ);
+
+        boolean success = false;
+
+        for (int tileX = Math.floorDiv(startX, tileSizeX); tileX <= Math.floorDiv(startX + maxChunksX * 16, tileSizeX); tileX++) {
+            for (int tileZ = Math.floorDiv(startZ, tileSizeZ); tileZ <= Math.floorDiv(startZ + maxChunksZ * 16, tileSizeZ); tileZ++) {
+                try (NativeImage tile = HTTP.makeImageHttpRequest(URI.create(pathFromCoords(basePath, tileX, tileZ)).toURL())) {
+                    for (int x = 0; x < tileSizeX; x++) {
+                        for (int z = 0; z < tileSizeZ; z++) {
+                            #if MC_VER > MC_1_21_1
+                            int pixelRgb = tile.getPixel(x, z);
+                            int metaRgb = tile.getPixel(x, tileSizeZ + 1 + z);
+                            #else
+                            int pixelRgb = Color.ABGRtoARGB(tile.getPixelRGBA(x, z));
+                            int metaRgb = Color.ABGRtoARGB(tile.getPixelRGBA(x, tileSizeZ + 1 + z));
+                            #endif
+                            XaeroClientMapHandler.xaeroWorldMapSupport.writeBlock(
+                                    tileX * tileSizeX + x,
+                                    tileZ * tileSizeZ + z,
+                                    metaToLight(metaRgb),
+                                    metaToHeight(metaRgb),
+                                    pixelRgb);
+                        }
+                    }
+                    success = true;
+                } catch (Exception ignored) {}
+            }
+        }
+
+        if (success) XaeroClientMapHandler.xaeroWorldMapSupport.setReadyForRender();
+        return success;
+    }
+
+    //adapted from https://github.com/BlueMap-Minecraft/BlueMap licensed under the MIT License
+    private int metaToHeight(int metaRgb) {
+        int heightUnsigned = Color.argbToG(metaRgb) * 256 + Color.argbToB(metaRgb);
+        if (heightUnsigned >= 32768) {
+            return -(65535 - heightUnsigned);
+        } else {
+            return heightUnsigned;
+        }
+    }
+
+    private int metaToLight(int metaRgb) {
+        return Color.argbToR(metaRgb);
+    }
+
+    //adapted from https://github.com/BlueMap-Minecraft/BlueMap licensed under the MIT License
+    private String pathFromCoords(String basePath, int tileX, int tileZ) {
+        String path = basePath + "1/x";
+        path += splitNumberToPath(tileX);
+
+        path += "z";
+        path += splitNumberToPath(tileZ);
+
+        path = path.substring(0, path.length() - 1);
+
+        return path + ".png";
+    }
+
+    //adapted from https://github.com/BlueMap-Minecraft/BlueMap licensed under the MIT License
+    private String splitNumberToPath(int num) {
+        StringBuilder path = new StringBuilder();
+
+        if (num < 0) {
+            num = -num;
+            path.append("-");
+        }
+
+        String s = num + "";
+
+        for (int i = 0; i < s.length(); i++) {
+            path.append(s.charAt(i)).append("/");
+        }
+
+        return path.toString();
     }
 }

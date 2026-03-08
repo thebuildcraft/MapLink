@@ -24,11 +24,10 @@ package de.the_build_craft.maplink.common;
 import com.google.gson.Gson;
 import com.mojang.blaze3d.platform.NativeImage;
 
+import javax.imageio.ImageIO;
 import javax.net.ssl.*;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -51,7 +50,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.config;
  * @author Leander Knüttel
  * @author eatmyvenom
  * @author yqs112358
- * @version 15.02.2026
+ * @version 08.03.2026
  */
 public class HTTP {
     private static final int TIMEOUT_MS = 10_000;
@@ -148,11 +147,26 @@ public class HTTP {
     }
 
     public static NativeImage makeImageHttpRequest(URL url) throws IOException {
-        // Open an HTTP request
-        HttpURLConnection request = openHTTPConnection(url, "image/png");
+        try {
+            // Open an HTTP request
+            HttpURLConnection request = openHTTPConnection(url, "image/png");
 
-        // Return the content
-        return NativeImage.read(request.getInputStream());
+            // Return the content | convert jpeg to png because some servers don't care about the accept header...
+            if (request.getContentType().equals("image/jpeg")) {
+                BufferedImage image = ImageIO.read(request.getInputStream());
+                try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                    ImageIO.write(image, "PNG", baos);
+                    return NativeImage.read(new ByteArrayInputStream(baos.toByteArray()));
+                }
+            }
+            return NativeImage.read(request.getInputStream());
+        } catch (Exception e) {
+            if (!errorURLs.contains(url.toString())) {
+                errorURLs.add(url.toString());
+                AbstractModInitializer.LOGGER.error("Error sending image request to: {}", url.toString());
+            }
+            throw e;
+        }
     }
 
     public static String checkForRedirects(String url) throws IOException {

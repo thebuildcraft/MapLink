@@ -22,7 +22,7 @@ package de.the_build_craft.maplink.common.waypoints;
 
 /**
  * @author Leander Knüttel
- * @version 25.07.2025
+ * @version 08.03.2026
  */
 public class MathUtils {
     private MathUtils(){}
@@ -45,5 +45,17 @@ public class MathUtils {
 
     public static long shiftLeftIntsInLong(long l, int shift) {
         return combineIntsToLong(getFirstIntFromLong(l) << shift, getSecondIntFromLong(l) << shift);
+    }
+
+    //for below java 21
+    public static int clamp(int value, int min, int max) {
+        if (min > max) throw new IllegalArgumentException(min + " > " + max);
+        return Math.min(max, Math.max(value, min));
+    }
+
+    //for below java 21
+    public static float clamp(float value, float min, float max) {
+        if (min > max) throw new IllegalArgumentException(min + " > " + max);
+        return Math.min(max, Math.max(value, min));
     }
 }

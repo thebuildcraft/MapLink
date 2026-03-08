@@ -43,7 +43,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 20.02.2026
+ * @version 08.03.2026
  */
 public class SquareMapConnection extends MapConnection {
     private String markerStringTemplate = "";
@@ -220,5 +220,15 @@ public class SquareMapConnection extends MapConnection {
         }
         ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
         ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers);
+    }
+
+    @Override
+    public List<String[]> getPossibleTileMaps() {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public boolean downloadTiles(String map, int centerChunkX, int centerChunkZ, int maxChunksX, int maxChunksZ) {
+        return false;
     }
 }

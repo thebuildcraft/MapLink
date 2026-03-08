@@ -27,7 +27,7 @@ import java.util.Objects;
 
 /**
  * @author Leander Knüttel
- * @version 09.11.2025
+ * @version 08.03.2026
  */
 public abstract class CommonModConfig {
     public static ModConfig config;
@@ -45,6 +45,11 @@ public abstract class CommonModConfig {
 
     public static void setIgnoreMarkerMessage(boolean on) {
         config.general.ignoreMarkerMessage = on;
+        saveConfig();
+    }
+
+    public static void setInvisibilityRecovery(boolean on) {
+        config.general.invisibilityRecovery = on;
         saveConfig();
     }
 

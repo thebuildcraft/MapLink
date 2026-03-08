@@ -42,7 +42,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.config;
 
 /**
  * @author Leander Knüttel
- * @version 20.02.2026
+ * @version 08.03.2026
  */
 @SuppressWarnings({"UnstableApiUsage", "rawtypes"})
 public class ModConfigGui {
@@ -176,7 +176,8 @@ public class ModConfigGui {
         miscOptions.addAll(Arrays.asList(
                 entryBuilder.startStrList(Text.translatable("maplink.option.general.ignoredServers"), config.general.ignoredServers).setDefaultValue(new ArrayList<>()).setSaveConsumer(l -> config.general.ignoredServers = l).build(),
                 entryBuilder.startBooleanToggle(Text.translatable("maplink.option.general.ignoreMarkerMessage"), config.general.ignoreMarkerMessage).setDefaultValue(defaultConfig.general.ignoreMarkerMessage).setSaveConsumer(b -> config.general.ignoreMarkerMessage = b).build(),
-                entryBuilder.startBooleanToggle(Text.translatable("maplink.option.general.hideAllChatErrors"), config.general.hideAllChatErrors).setDefaultValue(defaultConfig.general.hideAllChatErrors).setSaveConsumer(b -> config.general.hideAllChatErrors = b).build()
+                entryBuilder.startBooleanToggle(Text.translatable("maplink.option.general.hideAllChatErrors"), config.general.hideAllChatErrors).setDefaultValue(defaultConfig.general.hideAllChatErrors).setSaveConsumer(b -> config.general.hideAllChatErrors = b).build(),
+                entryBuilder.startBooleanToggle(Text.translatable("maplink.option.general.invisibilityRecovery"), config.general.invisibilityRecovery).setDefaultValue(defaultConfig.general.invisibilityRecovery).setSaveConsumer(b -> config.general.invisibilityRecovery = b).build()
         ));
         autoTooltip(miscOptions);
         general.addEntry(miscOptions.build());

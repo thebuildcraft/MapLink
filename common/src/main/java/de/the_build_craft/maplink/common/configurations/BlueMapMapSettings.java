@@ -18,26 +18,16 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package de.the_build_craft.maplink.common.clientMapHandlers;
-
-import de.the_build_craft.maplink.common.waypoints.Position;
-import de.the_build_craft.maplink.common.waypoints.WaypointState;
+package de.the_build_craft.maplink.common.configurations;
 
 /**
  * @author Leander Knüttel
  * @version 08.03.2026
  */
-public interface IXaeroWorldMapSupport extends IXaeroMapSupport {
-    void addOrUpdateWorldMapWaypoint(Position position, WaypointState waypointState);
-    Object getXaeroIcon(String link);
-    #if MC_VER >= MC_1_21_11
-    void createGuiNearestRenderer();
-    Object getGuiNearestRenderer();
-    void drawGuiNearestRenderer();
-    #endif
-    boolean getXaeroWaypointBackground();
-    void clearTiles();
-    void init(int centerChunkX, int centerChunkZ, int maxChunksX, int maxChunksZ);
-    void writeBlock(int x, int z, int light, int height, int pixelRgb);
-    void setReadyForRender();
+public class BlueMapMapSettings {
+    public String name;
+    public LowRes lowres;
+    public static class LowRes {
+        public int[] tileSize;
+    }
 }

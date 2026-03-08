@@ -37,7 +37,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.config;
 
 /**
  * @author Leander Knüttel
- * @version 20.02.2026
+ * @version 08.03.2026
  */
 @Config(name = "maplink")
 #if MC_VER < MC_1_20_6
@@ -199,6 +199,9 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         public boolean ignoreMarkerMessage = false;
 
         public boolean hideAllChatErrors = false;
+
+        @ConfigEntry.Gui.Tooltip
+        public boolean invisibilityRecovery = true;
 
         //dev options
         @ConfigEntry.Gui.PrefixText

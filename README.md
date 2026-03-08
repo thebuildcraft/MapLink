@@ -13,7 +13,7 @@
 
 ---
 
-Map Link is a client mod that synchronizes player positions, marker positions and area overlays from Web-Maps like Bluemap, Dynmap, LiveAtlas, Pl3xMap or Squaremap with [Xaero's Minimap](https://modrinth.com/mod/xaeros-minimap) and [Worldmap](https://modrinth.com/mod/xaeros-world-map).
+Map Link is a client mod that can download and convert tiles and synchronizes player positions, marker positions and area overlays from Web-Maps like Bluemap, Dynmap, LiveAtlas, Pl3xMap or Squaremap with [Xaero's Minimap](https://modrinth.com/mod/xaeros-minimap) and [Worldmap](https://modrinth.com/mod/xaeros-world-map).
 It can also show how long a player has been AFK based on movement data.
 
 _Formerly known as "Remote Player Waypoints for Xaero's Map"_
@@ -22,6 +22,7 @@ _Formerly known as "Remote Player Waypoints for Xaero's Map"_
 
 ### Features
 - Synchronizes player positions in real-time as **player-head-icons** (Xaero's "Tracked Players") or **waypoints**
+- Download and convert map-tiles (Bluemap only; other maps in future updates)
 - Displays **web-map-markers** with **custom icons**
 - Displays **web-map-area-overlays** aka claims
 - AFK-time display in tab list
@@ -41,6 +42,12 @@ _Formerly known as "Remote Player Waypoints for Xaero's Map"_
 3. Select the correct [Web Map Type]
 4. Put in the exact server-ip you use to connect to the server
 5. Put in the link to the web map (just copy it from the browser)
+
+### How to download and convert map tiles
+1. `/maplink download_tiles <chunksX> <chunksZ> <centerX> <centerZ>` _(center is in block-coordinates)_
+2. select a map from the list by clicking the button in the chat
+3. wait for it to finish
+4. click stop or run `/maplink stop_tile_rendering`
 
 ### Compatibility
 - Xaero's Minimap and Xaero's Better PvP + Fair Play Versions

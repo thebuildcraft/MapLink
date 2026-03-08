@@ -18,26 +18,34 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package de.the_build_craft.maplink.common.clientMapHandlers;
+package de.the_build_craft.maplink.common.level;
 
-import de.the_build_craft.maplink.common.waypoints.Position;
-import de.the_build_craft.maplink.common.waypoints.WaypointState;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * @author Leander Knüttel
  * @version 08.03.2026
  */
-public interface IXaeroWorldMapSupport extends IXaeroMapSupport {
-    void addOrUpdateWorldMapWaypoint(Position position, WaypointState waypointState);
-    Object getXaeroIcon(String link);
-    #if MC_VER >= MC_1_21_11
-    void createGuiNearestRenderer();
-    Object getGuiNearestRenderer();
-    void drawGuiNearestRenderer();
-    #endif
-    boolean getXaeroWaypointBackground();
-    void clearTiles();
-    void init(int centerChunkX, int centerChunkZ, int maxChunksX, int maxChunksZ);
-    void writeBlock(int x, int z, int light, int height, int pixelRgb);
-    void setReadyForRender();
+public class FakeBlock {
+    public final BlockState bottom;
+    public final BlockState[] top;
+    public final ResourceKey<Biome> biome;
+    public final int additionalHeight;
+
+    public FakeBlock(BlockState bottom, BlockState[] top, ResourceKey<Biome> biome) {
+        this.bottom = bottom;
+        this.top = top;
+        this.biome = biome;
+
+        int tempHeight = 0;
+        for (int i = 0; i < top.length; i++) {
+            if (top[i] != null) {
+                tempHeight = top.length - i;
+                break;
+            }
+        }
+        additionalHeight = tempHeight;
+    }
 }

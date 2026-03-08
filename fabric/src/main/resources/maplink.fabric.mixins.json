@@ -11,6 +11,7 @@
         "common.mods.xaeroworldmap.WorldMapWaypointAccessor",
         "common.mods.xaeroworldmap.WaypointReaderMixin",
         "common.mods.xaeroworldmap.WaypointRenderProviderMixin",
+        "common.mods.xaeroworldmap.MapWriterMixin",
         "fabric.mods.xaerominimap.MinimapElementRendererHandlerMixin",
         "fabric.mods.xaerominimap.WaypointWorldRendererMixin",
         "fabric.mods.xaerominimap.WaypointsGuiRendererMixin",

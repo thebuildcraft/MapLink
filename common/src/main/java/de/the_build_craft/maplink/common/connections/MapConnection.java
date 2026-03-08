@@ -34,10 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,7 +44,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 /**
  * @author Leander Knüttel
  * @author eatmyvenom
- * @version 20.02.2026
+ * @version 08.03.2026
  */
 public abstract class MapConnection {
     public final ModConfig.ServerEntry serverEntry;
@@ -123,7 +120,7 @@ public abstract class MapConnection {
             #endif
             if (currentDimension.isEmpty()) {
                 String[] mappedDimension = serverEntry.dimensionMapping.get(clientDimension);
-                if (mappedDimension != null && mappedDimension.length > 0) {
+                if (config.general.invisibilityRecovery && mappedDimension != null && mappedDimension.length > 0) {
                     currentDimension = mappedDimension[0];
                     foundPlayer = true;
                 }
@@ -203,4 +200,6 @@ public abstract class MapConnection {
     }
 
     public abstract Set<String> getMarkerLayers();
+    public abstract List<String[]> getPossibleTileMaps();
+    public abstract boolean downloadTiles(String map, int centerChunkX, int centerChunkZ, int maxChunksX, int maxChunksZ);
 }
