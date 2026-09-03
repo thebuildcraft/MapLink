@@ -31,6 +31,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 #else
 import net.fabricmc.fabric.api.client.command.v1.ClientCommandManager;
 #endif
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientLoginConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -39,7 +40,7 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * This handles all events sent to the client
- * 
+ *
  * @author coolGi
  * @author Ran
  * @author Leander Knüttel
@@ -64,6 +65,8 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 
 		ClientPlayConnectionEvents.DISCONNECT.register((c, m) -> AbstractModInitializer.slowUpdateTask.Reset());
 		ClientLoginConnectionEvents.DISCONNECT.register((c, m) -> AbstractModInitializer.slowUpdateTask.Reset());
+
+		ClientLifecycleEvents.CLIENT_STOPPING.register(c -> AbstractModInitializer.shutdownClientScheduler());
 
 		//register Fabric Client Events here
 	}

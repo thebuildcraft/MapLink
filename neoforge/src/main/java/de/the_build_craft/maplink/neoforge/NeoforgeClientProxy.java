@@ -34,6 +34,7 @@ import net.neoforged.neoforge.event.TickEvent.ClientTickEvent;
 #endif
 import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.GameShuttingDownEvent;
 import org.apache.logging.log4j.Logger;
 
 /**
@@ -75,6 +76,11 @@ public class NeoforgeClientProxy implements AbstractModInitializer.IEventProxy
 	@SubscribeEvent
 	public void onClientLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
 		AbstractModInitializer.slowUpdateTask.Reset();
+	}
+
+	@SubscribeEvent
+	public void onGameShuttingDown(GameShuttingDownEvent event) {
+		AbstractModInitializer.shutdownClientScheduler();
 	}
 
 }

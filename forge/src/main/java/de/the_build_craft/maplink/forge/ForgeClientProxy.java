@@ -30,6 +30,7 @@ import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RegisterClientCommandsEvent;
 #endif
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.GameShuttingDownEvent;
 import net.minecraftforge.event.TickEvent.ClientTickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.apache.logging.log4j.Logger;
@@ -44,7 +45,7 @@ import org.apache.logging.log4j.Logger;
 public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 {
 	private static final Logger LOGGER = AbstractModInitializer.LOGGER;
-	
+
 	@Override
 	public void registerEvents()
 	{
@@ -55,6 +56,10 @@ public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 		// (Forge throws an error if this line is there, but no event is registered)
 		MinecraftForge.EVENT_BUS.register(this);
 		//#endif
+
+		#if MC_VER >= MC_1_21_6
+		GameShuttingDownEvent.BUS.addListener(event -> AbstractModInitializer.shutdownClientScheduler());
+		#endif
 
 		//OR register Forge Client Events here
 	}
@@ -84,4 +89,11 @@ public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 	#endif
 		AbstractModInitializer.slowUpdateTask.Reset();
 	}
+
+	#if MC_VER < MC_1_21_6
+	@SubscribeEvent
+	public void onGameShuttingDown(GameShuttingDownEvent event) {
+		AbstractModInitializer.shutdownClientScheduler();
+	}
+	#endif
 }
