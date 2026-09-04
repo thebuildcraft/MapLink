@@ -52,6 +52,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static de.the_build_craft.maplink.common.CommonModConfig.*;
 
@@ -96,7 +97,14 @@ public abstract class AbstractModInitializer
     public static boolean xaeroWorldMapInstalled = false;
 	public static boolean overwriteCurrentDimension = false;
 
-	private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+  private static final Object schedulerLock = new Object();
+  private static final AtomicInteger schedulerThreadId = new AtomicInteger();
+  private static final ScheduledExecutorService scheduler =
+          Executors.newScheduledThreadPool(2, runnable -> {
+              Thread thread = new Thread(runnable, "MapLink-Scheduler-" + schedulerThreadId.incrementAndGet());
+              thread.setDaemon(true);
+              return thread;
+          });
 
 	//==================//
 	// abstract methods //
@@ -373,25 +381,29 @@ public abstract class AbstractModInitializer
 	public static void setUpdateDelay(int ms) {
 		int maxUpdateDelay = Math.min(4000, Math.max(config.general.maxUpdateDelay, 1000));
 		ms = Math.min(maxUpdateDelay, Math.max(ms, 1000));
-		if (ms == timerDelay || scheduledSlowUpdateTask == null) return;
-		timerDelay = ms;
-		scheduledSlowUpdateTask.cancel(true);
-		scheduledSlowUpdateTask = scheduler.scheduleAtFixedRate(slowUpdateTask::run, 0, timerDelay, TimeUnit.MILLISECONDS);
+		synchronized (schedulerLock) {
+			if (ms == timerDelay || scheduledSlowUpdateTask == null || scheduler.isShutdown()) return;
+			timerDelay = ms;
+			scheduledSlowUpdateTask.cancel(true);
+			scheduledSlowUpdateTask = scheduler.scheduleAtFixedRate(slowUpdateTask::run, 0, timerDelay, TimeUnit.MILLISECONDS);
+		}
 		LOGGER.info("Remote update delay has been set to " + ms + " ms");
 		if (config.general.debugMode) Utils.sendToClientChat("Remote update delay has been set to " + ms + " ms");
 	}
 
-	public static void shutdownClientScheduler() {
-		if (scheduledFastUpdateTask != null) {
-			scheduledFastUpdateTask.cancel(true);
-			scheduledFastUpdateTask = null;
-		}
-		if (scheduledSlowUpdateTask != null) {
-			scheduledSlowUpdateTask.cancel(true);
-			scheduledSlowUpdateTask = null;
-		}
-		scheduler.shutdownNow();
-	}
+  public static void shutdownClientScheduler() {
+      synchronized (schedulerLock) {
+          if (scheduledFastUpdateTask != null) {
+              scheduledFastUpdateTask.cancel(true);
+              scheduledFastUpdateTask = null;
+          }
+          if (scheduledSlowUpdateTask != null) {
+              scheduledSlowUpdateTask.cancel(true);
+              scheduledSlowUpdateTask = null;
+          }
+          scheduler.shutdownNow();
+      }
+  }
 
 	/**
 	 * Sets the current dynmap connection
