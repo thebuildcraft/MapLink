@@ -44,7 +44,8 @@ import org.apache.logging.log4j.Logger;
  * @author coolGi
  * @author Ran
  * @author Leander Knüttel
- * @version 23.10.2025
+ * @author Maggesss
+ * @version 04.09.2026
  */
 @Environment(EnvType.CLIENT)
 public class FabricClientProxy implements AbstractModInitializer.IEventProxy

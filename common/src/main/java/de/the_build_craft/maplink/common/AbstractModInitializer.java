@@ -61,7 +61,8 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 11.08.2026
+ * @author Maggesss
+ * @version 04.09.2026
  */
 public abstract class AbstractModInitializer
 {

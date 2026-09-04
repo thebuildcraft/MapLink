@@ -40,7 +40,8 @@ import org.apache.logging.log4j.Logger;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 28.10.2025
+ * @author Maggesss
+ * @version 04.09.2026
  */
 public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 {
