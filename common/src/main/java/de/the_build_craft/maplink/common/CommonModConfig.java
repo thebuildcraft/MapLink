@@ -27,7 +27,7 @@ import java.util.Objects;
 
 /**
  * @author Leander Knüttel
- * @version 08.03.2026
+ * @version 03.10.2026
  */
 public abstract class CommonModConfig {
     public static ModConfig config;
@@ -65,12 +65,19 @@ public abstract class CommonModConfig {
     public static ModConfig.ServerEntry getCurrentServerEntry() {
         String serverIP = AbstractModInitializer.getCurrentServerIP();
         if (serverIP == null) return null;
+        // "ip#serverLevelId" entries (servers behind a proxy) take priority over plain "ip" entries
+        String serverKey = AbstractModInitializer.getCurrentServerKey();
+        ModConfig.ServerEntry ipEntry = null;
         for (ModConfig.ServerEntry server : config.general.serverEntries) {
-            if (Objects.equals(serverIP, server.ip.toLowerCase(Locale.ROOT))) {
+            String entryIP = server.ip.trim().toLowerCase(Locale.ROOT);
+            if (Objects.equals(serverKey, entryIP)) {
                 return server;
             }
+            if (ipEntry == null && Objects.equals(serverIP, entryIP)) {
+                ipEntry = server;
+            }
         }
-        return null;
+        return ipEntry;
     }
 
     public static int getWaypointLayerOrder() {

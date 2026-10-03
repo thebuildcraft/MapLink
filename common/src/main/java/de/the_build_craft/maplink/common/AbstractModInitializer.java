@@ -63,7 +63,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
  * @author James Seibel
  * @author Leander Knüttel
  * @author Maggesss
- * @version 20.09.2026
+ * @version 03.10.2026
  */
 public abstract class AbstractModInitializer {
 	public static final String MOD_ID = "maplink";
@@ -468,6 +468,41 @@ public abstract class AbstractModInitializer {
 		} else {
 			return null;
 		}
+	}
+
+	/**
+	 * The current server ip, followed by "#" and the server level id if the server sent one.
+	 * This allows different web maps for the servers behind one proxy (e.g. Velocity).
+	 */
+	@Nullable
+	public static String getCurrentServerKey() {
+		String serverIP = getCurrentServerIP();
+		if (serverIP == null) return null;
+		Integer serverLevelId = getXaeroServerLevelId();
+		return serverLevelId == null ? serverIP : serverIP + "#" + serverLevelId;
+	}
+
+	private static final String[] xaeroWorldDataHelpers = {
+			"xaero.map.mcworld.WorldMapClientWorldDataHelper",
+			"xaero.common.minimap.mcworld.MinimapClientWorldDataHelper"};
+
+	/**
+	 * The level id that the server sent to Xaero's World Map or Minimap
+	 * (e.g. by Xaero's mods on the server or plugins like XaeroMultiWorld),
+	 * or null if there is none.
+	 */
+	@Nullable
+	public static Integer getXaeroServerLevelId() {
+		for (String helper : xaeroWorldDataHelpers) {
+			try {
+				Object worldData = Class.forName(helper).getMethod("getCurrentWorldData").invoke(null);
+				if (worldData == null) continue;
+				Object serverLevelId = worldData.getClass().getField("serverLevelId").get(worldData);
+				if (serverLevelId instanceof Integer) return (Integer) serverLevelId;
+			} catch (ReflectiveOperationException | LinkageError ignored) {
+			}
+		}
+		return null;
 	}
 
 	//================//

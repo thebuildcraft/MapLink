@@ -43,7 +43,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
  * @author eatmyvenom
  * @author TheMrEngMan
  * @author Leander Knüttel
- * @version 08.03.2026
+ * @version 03.10.2026
  */
 public class UpdateTask {
     private boolean connectionErrorWasShown = false;
@@ -53,6 +53,7 @@ public class UpdateTask {
     public boolean linkBrokenErrorWasShown = false;
 
     private String currentServerIP = "";
+    private long serverIPChangeTime = 0;
 
     public static int nextUpdateDelay = 1000;
 
@@ -92,8 +93,16 @@ public class UpdateTask {
 
         if (!Objects.equals(currentServerIP, serverIP)){
             currentServerIP = serverIP;
+            serverIPChangeTime = System.currentTimeMillis();
             Reset();
             LOGGER.info("Server ip has changed!");
+        }
+
+        // behind a proxy (e.g. Velocity) the ip stays the same, but the server level id changes
+        MapConnection currentConnection = AbstractModInitializer.getConnection();
+        if (currentConnection != null && currentConnection.serverEntry != getCurrentServerEntry()) {
+            Reset();
+            LOGGER.info("Server entry has changed!");
         }
 
         if (AbstractModInitializer.getConnection() == null){
@@ -102,10 +111,12 @@ public class UpdateTask {
                 ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
 
                 if (Objects.equals(serverEntry, null)) {
-                    if (!(config.general.ignoredServers.contains(serverIP) || cantFindServerErrorWasShown || AbstractModInitializer.checkIfInSingleplayer())) {
+                    // give the server some time to send its level id
+                    boolean waitForServerLevelId = System.currentTimeMillis() - serverIPChangeTime < 5000;
+                    if (!(config.general.ignoredServers.contains(serverIP) || cantFindServerErrorWasShown || waitForServerLevelId || AbstractModInitializer.checkIfInSingleplayer())) {
                         String message = "[" + AbstractModInitializer.MOD_NAME + "]: " +
                                 "Could not find a web map link for this server. " +
-                                "Make sure to add it to the config. (this server ip was detected: " + serverIP + ") ";
+                                "Make sure to add it to the config. (this server ip was detected: " + AbstractModInitializer.getCurrentServerKey() + ") ";
                         if ((AbstractModInitializer.INSTANCE.loaderType == LoaderType.Fabric)
                                 || (AbstractModInitializer.INSTANCE.loaderType == LoaderType.Quilt)) {
                             Utils.sendToClientChat(Text.literal(message)
