@@ -478,6 +478,8 @@ public abstract class AbstractModInitializer {
 	public static String getCurrentServerKey() {
 		String serverIP = getCurrentServerIP();
 		if (serverIP == null) return null;
+		ServerMapInfo serverMapInfo = ServerMapInfo.get();
+		if (serverMapInfo != null) return serverIP + "@" + serverMapInfo.server;
 		Integer serverLevelId = getXaeroServerLevelId();
 		return serverLevelId == null ? serverIP : serverIP + "#" + serverLevelId;
 	}

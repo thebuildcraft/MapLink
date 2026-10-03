@@ -34,6 +34,12 @@ import net.fabricmc.fabric.api.client.command.v1.ClientCommandManager;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientLoginConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+#if MC_VER >= MC_1_21_1
+import de.the_build_craft.maplink.common.ServerMapInfo;
+import de.the_build_craft.maplink.common.ServerMapInfoPayload;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+#endif
 import net.minecraft.commands.CommandSourceStack;
 import org.apache.logging.log4j.Logger;
 
@@ -43,7 +49,7 @@ import org.apache.logging.log4j.Logger;
  * @author coolGi
  * @author Ran
  * @author Leander Knüttel
- * @version 23.10.2025
+ * @version 03.10.2026
  */
 @Environment(EnvType.CLIENT)
 public class FabricClientProxy implements AbstractModInitializer.IEventProxy
@@ -64,6 +70,15 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 
 		ClientPlayConnectionEvents.DISCONNECT.register((c, m) -> AbstractModInitializer.slowUpdateTask.Reset());
 		ClientLoginConnectionEvents.DISCONNECT.register((c, m) -> AbstractModInitializer.slowUpdateTask.Reset());
+		#if MC_VER >= MC_1_21_1
+		// web map info sent by the server, e.g. by the Map Link Velocity plugin
+		#if MC_VER >= MC_26_1_0
+		PayloadTypeRegistry.clientboundPlay().register(ServerMapInfoPayload.TYPE, ServerMapInfoPayload.CODEC);
+		#else
+		PayloadTypeRegistry.playS2C().register(ServerMapInfoPayload.TYPE, ServerMapInfoPayload.CODEC);
+		#endif
+		ClientPlayNetworking.registerGlobalReceiver(ServerMapInfoPayload.TYPE, (payload, context) -> ServerMapInfo.handle(payload.json()));
+		#endif
 
 		//register Fabric Client Events here
 	}

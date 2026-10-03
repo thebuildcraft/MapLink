@@ -23,6 +23,9 @@ package de.the_build_craft.maplink.neoforge;
 
 import de.the_build_craft.maplink.common.AbstractModInitializer;
 import de.the_build_craft.maplink.common.LoaderType;
+import de.the_build_craft.maplink.common.ServerMapInfo;
+import de.the_build_craft.maplink.common.ServerMapInfoPayload;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import de.the_build_craft.maplink.neoforge.wrappers.NeoForgeModChecker;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
@@ -34,7 +37,7 @@ import net.neoforged.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
  *
  * @author James Seibel
  * @author Leander Knüttel
- * @version 15.02.2026
+ * @version 03.10.2026
  */
 @Mod(AbstractModInitializer.MOD_ID)
 public class NeoforgeMain extends AbstractModInitializer
@@ -47,6 +50,9 @@ public class NeoforgeMain extends AbstractModInitializer
 		// Register the mod initializer (Actual event registration is done in the different proxies)
 		eventBus.addListener((FMLClientSetupEvent e) -> this.onInitializeClient());
 		eventBus.addListener((FMLDedicatedServerSetupEvent e) -> this.onInitializeServer());
+		// web map info sent by the server, e.g. by the Map Link Velocity plugin
+		eventBus.addListener((RegisterPayloadHandlersEvent e) -> e.registrar("1").optional()
+				.playToClient(ServerMapInfoPayload.TYPE, ServerMapInfoPayload.CODEC, (payload, context) -> ServerMapInfo.handle(payload.json())));
 	}
 
 	@Override

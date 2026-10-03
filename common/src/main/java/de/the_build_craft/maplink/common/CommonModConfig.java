@@ -65,6 +65,12 @@ public abstract class CommonModConfig {
     public static ModConfig.ServerEntry getCurrentServerEntry() {
         String serverIP = AbstractModInitializer.getCurrentServerIP();
         if (serverIP == null) return null;
+
+        ServerMapInfo serverMapInfo = ServerMapInfo.get();
+        if (serverMapInfo != null && serverMapInfo.type != null) {
+            return getServerProvidedEntry(serverIP + "@" + serverMapInfo.server, serverMapInfo);
+        }
+
         // "ip#serverLevelId" entries (servers behind a proxy) take priority over plain "ip" entries
         String serverKey = AbstractModInitializer.getCurrentServerKey();
         ModConfig.ServerEntry ipEntry = null;
@@ -78,6 +84,35 @@ public abstract class CommonModConfig {
             }
         }
         return ipEntry;
+    }
+
+    /**
+     * The entry for a web map that the server sent (see {@link ServerMapInfo}).
+     * It is created or updated in the config, so the user's other settings (e.g. marker filters) are kept per server.
+     */
+    private static synchronized ModConfig.ServerEntry getServerProvidedEntry(String serverKey, ServerMapInfo serverMapInfo) {
+        ModConfig.ServerEntry.MapType mapType = serverMapInfo.getMapType();
+        if (mapType == null) return null;
+
+        for (ModConfig.ServerEntry server : config.general.serverEntries) {
+            if (Objects.equals(serverKey, server.ip.trim().toLowerCase(Locale.ROOT))) {
+                if (server.maptype != mapType || !Objects.equals(server.link, serverMapInfo.link)) {
+                    server.maptype = mapType;
+                    server.link = serverMapInfo.link;
+                    saveConfig();
+                }
+                return server;
+            }
+        }
+
+        ModConfig.ServerEntry server = new ModConfig.ServerEntry();
+        server.ip = serverKey;
+        server.maptype = mapType;
+        server.link = serverMapInfo.link;
+        config.general.serverEntries.add(server);
+        saveConfig();
+        AbstractModInitializer.LOGGER.info("Added the web map sent by the server to the config: " + serverKey);
+        return server;
     }
 
     public static int getWaypointLayerOrder() {

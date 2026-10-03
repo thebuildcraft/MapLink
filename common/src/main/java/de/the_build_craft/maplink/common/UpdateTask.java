@@ -74,6 +74,7 @@ public class UpdateTask {
     private void runUpdate() {
         // Skip if not in game
         if (!AbstractModInitializer.checkIfInGame()) {
+            ServerMapInfo.clear();
             Reset();
             return;
         }
@@ -87,6 +88,7 @@ public class UpdateTask {
         // Get the IP of this server
         String serverIP = AbstractModInitializer.getCurrentServerIP();
         if (serverIP == null) {
+            ServerMapInfo.clear();
             Reset();
             return;
         }
@@ -111,9 +113,11 @@ public class UpdateTask {
                 ModConfig.ServerEntry serverEntry = getCurrentServerEntry();
 
                 if (Objects.equals(serverEntry, null)) {
-                    // give the server some time to send its level id
+                    // give the server some time to send its level id / web map info
                     boolean waitForServerLevelId = System.currentTimeMillis() - serverIPChangeTime < 5000;
-                    if (!(config.general.ignoredServers.contains(serverIP) || cantFindServerErrorWasShown || waitForServerLevelId || AbstractModInitializer.checkIfInSingleplayer())) {
+                    ServerMapInfo serverMapInfo = ServerMapInfo.get();
+                    boolean serverHasNoMap = serverMapInfo != null && serverMapInfo.type != null;
+                    if (!(config.general.ignoredServers.contains(serverIP) || cantFindServerErrorWasShown || waitForServerLevelId || serverHasNoMap || AbstractModInitializer.checkIfInSingleplayer())) {
                         String message = "[" + AbstractModInitializer.MOD_NAME + "]: " +
                                 "Could not find a web map link for this server. " +
                                 "Make sure to add it to the config. (this server ip was detected: " + AbstractModInitializer.getCurrentServerKey() + ") ";
