@@ -23,37 +23,63 @@ package de.the_build_craft.maplink.common.waypoints;
 
 import de.the_build_craft.maplink.common.clientMapHandlers.ClientMapHandler;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
  * A marker's name and position
  *
  * @author Leander Knüttel
- * @version 05.09.2025
+ * @version 03.10.2026
  */
 public class Position {
-    private static final Pattern nameRegexPattern = Pattern.compile("<.+?>|\\R|\\n");
+    private static final Pattern commentPattern = Pattern.compile("(?s)<!--.*?-->");
+    private static final Pattern lineBreakTagPattern = Pattern.compile("(?i)<br\\s*/?>|</?(?:div|p|li|tr|h[1-6])\\b(?:\"[^\"]*\"|'[^']*'|[^'\">])*>");
+    private static final Pattern tagPattern = Pattern.compile("<(?:\"[^\"]*\"|'[^']*'|[^'\">])*>");
+    private static final Pattern lineSplitPattern = Pattern.compile("\\s*\\R\\s*");
+    /** Xaero's TextSplitter only breaks lines on a "\n" that is surrounded by spaces */
+    public static final String LINE_SEPARATOR = " \n ";
     public final String name;
     public final Double3 pos;
     public final String id;
     public final MarkerLayer layer;
 
     public Position(String name, int x, int y, int z, String id, MarkerLayer layer) {
-        this.name = getDisplayName(name);
+        this(name, false, x, y, z, id, layer);
+    }
+
+    public Position(String name, double x, double y, double z, String id, MarkerLayer layer) {
+        this(name, false, x, y, z, id, layer);
+    }
+
+    protected Position(String name, boolean multiline, int x, int y, int z, String id, MarkerLayer layer) {
+        this.name = getDisplayName(name, multiline);
         this.pos = new Double3(x + 0.5f, y, z + 0.5f);
         this.id = ClientMapHandler.waypointPrefix +id;
         this.layer = layer;
     }
 
-    public Position(String name, double x, double y, double z, String id, MarkerLayer layer) {
-        this.name = getDisplayName(name);
+    protected Position(String name, boolean multiline, double x, double y, double z, String id, MarkerLayer layer) {
+        this.name = getDisplayName(name, multiline);
         this.pos = new Double3(x, y,z);
         this.id = ClientMapHandler.waypointPrefix + id;
         this.layer = layer;
     }
 
     static String getDisplayName(String name){
-        return org.apache.commons.lang3.StringEscapeUtils
-                .unescapeHtml4(nameRegexPattern.matcher(name).replaceAll("").trim());
+        return getDisplayName(name, false);
+    }
+
+    static String getDisplayName(String name, boolean multiline){
+        String text = commentPattern.matcher(name).replaceAll("");
+        text = lineBreakTagPattern.matcher(text).replaceAll("\n");
+        text = tagPattern.matcher(text).replaceAll("");
+        text = org.apache.commons.lang3.StringEscapeUtils.unescapeHtml4(text);
+        List<String> lines = new ArrayList<>();
+        for (String line : lineSplitPattern.split(text.trim())) {
+            if (!line.isEmpty()) lines.add(line);
+        }
+        return String.join(multiline ? LINE_SEPARATOR : " ", lines);
     }
 }

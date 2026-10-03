@@ -24,6 +24,7 @@ import de.the_build_craft.maplink.common.AbstractModInitializer;
 import de.the_build_craft.maplink.common.waypoints.AreaMarker;
 import de.the_build_craft.maplink.common.waypoints.Color;
 import de.the_build_craft.maplink.common.waypoints.MathUtils;
+import de.the_build_craft.maplink.common.waypoints.Position;
 import de.the_build_craft.maplink.common.wrappers.Text;
 import net.minecraft.client.Minecraft;
 #if MC_VER >= MC_1_19_4
@@ -47,7 +48,7 @@ import static de.the_build_craft.maplink.common.CommonModConfig.*;
 
 /**
  * @author Leander Knüttel
- * @version 06.08.2026
+ * @version 03.10.2026
  */
 public class AreaMarkerHighlighter extends ChunkHighlighter implements MapHighlightClearer {
     public AreaMarkerHighlighter() {
@@ -122,7 +123,7 @@ public class AreaMarkerHighlighter extends ChunkHighlighter implements MapHighli
         return colors;
     }
 
-    public Component getChunkHighlightTooltip(int chunkX, int chunkZ, Function<AreaMarker, String> toName) {
+    public Component getChunkHighlightTooltip(int chunkX, int chunkZ, Function<AreaMarker, String> toName, String separator) {
         List<Set<AreaMarker>> directions = getDirections(chunkX, chunkZ);
         if (directions == null) return null;
         Set<AreaMarker> areaMarkerSet = directions.get(0);
@@ -142,17 +143,17 @@ public class AreaMarkerHighlighter extends ChunkHighlighter implements MapHighli
         }
 
         if (names.isEmpty()) return null;
-        return Text.literal(String.join(" | ", names));
+        return Text.literal(String.join(separator, names));
     }
 
     @Override
     public Component getChunkHighlightSubtleTooltip(ResourceKey<Level> dimension, int chunkX, int chunkZ) {
-        return getChunkHighlightTooltip(chunkX, chunkZ, areaMarker -> areaMarker.layer.name);
+        return getChunkHighlightTooltip(chunkX, chunkZ, areaMarker -> areaMarker.layer.name, " | ");
     }
 
     @Override
     public Component getChunkHighlightBluntTooltip(ResourceKey<Level> dimension, int chunkX, int chunkZ) {
-        return getChunkHighlightTooltip(chunkX, chunkZ, areaMarker -> areaMarker.name);
+        return getChunkHighlightTooltip(chunkX, chunkZ, areaMarker -> areaMarker.name, Position.LINE_SEPARATOR);
     }
 
     @Override
