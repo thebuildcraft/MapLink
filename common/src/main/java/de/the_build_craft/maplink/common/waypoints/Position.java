@@ -25,6 +25,8 @@ import de.the_build_craft.maplink.common.clientMapHandlers.ClientMapHandler;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -34,7 +36,11 @@ import java.util.regex.Pattern;
  * @version 03.10.2026
  */
 public class Position {
+    /** Hidden style markup like {@code <!--ml:bold,gold-->}, invisible in the browser */
+    private static final Pattern styleCommentPattern = Pattern.compile("(?is)<!--\\s*ml:(.*?)-->");
     private static final Pattern commentPattern = Pattern.compile("(?s)<!--.*?-->");
+    /** Internal representation of the style markup inside {@link #name}, parsed by StyledText */
+    public static final Pattern STYLE_TOKEN_PATTERN = Pattern.compile("§\\{([^}]*)}");
     private static final Pattern lineBreakTagPattern = Pattern.compile("(?i)<br\\s*/?>|</?(?:div|p|li|tr|h[1-6])\\b(?:\"[^\"]*\"|'[^']*'|[^'\">])*>");
     private static final Pattern tagPattern = Pattern.compile("<(?:\"[^\"]*\"|'[^']*'|[^'\">])*>");
     private static final Pattern lineSplitPattern = Pattern.compile("\\s*\\R\\s*");
@@ -72,13 +78,28 @@ public class Position {
     }
 
     static String getDisplayName(String name, boolean multiline){
-        String text = commentPattern.matcher(name).replaceAll("");
+        Matcher styleMatcher = styleCommentPattern.matcher(name);
+        StringBuffer styled = new StringBuffer();
+        while (styleMatcher.find()) {
+            String tokens = multiline ? "§{" + styleMatcher.group(1).trim().toLowerCase(Locale.ROOT).replaceAll("[\\s;,]+", ",") + "}" : "";
+            styleMatcher.appendReplacement(styled, Matcher.quoteReplacement(tokens));
+        }
+        styleMatcher.appendTail(styled);
+        String text = commentPattern.matcher(styled.toString()).replaceAll("");
         text = lineBreakTagPattern.matcher(text).replaceAll("\n");
         text = tagPattern.matcher(text).replaceAll("");
         text = org.apache.commons.lang3.StringEscapeUtils.unescapeHtml4(text);
         List<String> lines = new ArrayList<>();
+        String pendingTokens = "";
         for (String line : lineSplitPattern.split(text.trim())) {
-            if (!line.isEmpty()) lines.add(line);
+            line = pendingTokens + line;
+            // style tokens without text (e.g. in front of a <div>) apply to the next line
+            if (STYLE_TOKEN_PATTERN.matcher(line).replaceAll("").trim().isEmpty()) {
+                pendingTokens = line;
+                continue;
+            }
+            pendingTokens = "";
+            lines.add(line);
         }
         return String.join(multiline ? LINE_SEPARATOR : " ", lines);
     }
