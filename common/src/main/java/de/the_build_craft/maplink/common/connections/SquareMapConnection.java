@@ -208,20 +208,68 @@ public class SquareMapConnection extends MapConnection {
 
         for (SquareMapMarkerUpdate markerLayer : markersLayers) {
             for (SquareMapMarkerUpdate.Marker marker : markerLayer.markers) {
-                if (Objects.equals(marker.type, "icon") && serverEntry.includeMarkerLayer(markerLayer.id) && serverEntry.includeMarker(marker.tooltip)) {
-                    Position position = new Position(marker.tooltip, marker.point.x, config.general.defaultY, marker.point.z, currentDimension + markerLayer.id + marker.tooltip + marker.point.x + marker.point.z, new MarkerLayer(markerLayer.id, markerLayer.name));
+                String markerName = resolveMarkerName(marker, markerLayer);
+                if (Objects.equals(marker.type, "icon") && serverEntry.includeMarkerLayer(markerLayer.id) && serverEntry.includeMarker(markerName)) {
+                    Position position = new Position(markerName, marker.point.x, config.general.defaultY, marker.point.z, currentDimension + markerLayer.id + markerName + marker.point.x + marker.point.z, new MarkerLayer(markerLayer.id, markerLayer.name));
                     positions.add(position);
                     ClientMapHandler.registerPosition(position, markerIconLinkTemplate.replace("{icon}", marker.icon));
                 }
-                else if (Objects.equals(marker.type, "polygon") && serverEntry.includeAreaMarkerLayer(markerLayer.id) && serverEntry.includeAreaMarker(marker.tooltip)) {
-                    areaMarkers.add(new AreaMarker(marker.tooltip, 0, 0, 0, Arrays.stream(marker.points).flatMap(Arrays::stream).toArray(Int3[][]::new),
-                            new Color(marker.color, 1f), new Color(marker.fillColor, marker.opacity), currentDimension + markerLayer.id + marker.tooltip + Arrays.deepHashCode(marker.points), new MarkerLayer(markerLayer.id, markerLayer.name)));
+                else if ((Objects.equals(marker.type, "polygon") || Objects.equals(marker.type, "polyline")) && serverEntry.includeAreaMarkerLayer(markerLayer.id) && serverEntry.includeAreaMarker(markerName)) {
+                    float fillOpacity = marker.fillOpacity != null ? marker.fillOpacity : marker.opacity;
+                    String fillColor = marker.fillColor != null ? marker.fillColor : marker.color;
+                    areaMarkers.add(new AreaMarker(markerName, 0, 0, 0, Arrays.stream(marker.points).flatMap(Arrays::stream).toArray(Int3[][]::new),
+                            new Color(marker.color, 1f), new Color(fillColor, fillOpacity), currentDimension + markerLayer.id + markerName + Arrays.deepHashCode(marker.points), new MarkerLayer(markerLayer.id, markerLayer.name)));
+                }
+                else if (Objects.equals(marker.type, "rectangle") && serverEntry.includeAreaMarkerLayer(markerLayer.id) && serverEntry.includeAreaMarker(markerName)) {
+                    float fillOpacity = marker.fillOpacity != null ? marker.fillOpacity : marker.opacity;
+                    String fillColor = marker.fillColor != null ? marker.fillColor : marker.color;
+                    Int3 p1 = null;
+                    Int3 p2 = null;
+                    if (marker.point1 != null && marker.point2 != null) {
+                        p1 = marker.point1;
+                        p2 = marker.point2;
+                    } else {
+                        Int3[][] rawPolygons = Arrays.stream(marker.points).flatMap(Arrays::stream).toArray(Int3[][]::new);
+                        if (rawPolygons.length == 1 && rawPolygons[0].length == 2) {
+                            p1 = rawPolygons[0][0];
+                            p2 = rawPolygons[0][1];
+                        }
+                    }
+                    if (p1 != null && p2 != null) {
+                        areaMarkers.add(new AreaMarker(markerName, 0, 0, 0, new Int3[][]{{p1, new Int3(p1.x, 0, p2.z), p2, new Int3(p2.x, 0, p1.z)}},
+                                new Color(marker.color, 1f), new Color(fillColor, fillOpacity), currentDimension + markerLayer.id + markerName + p1.x + p1.z + p2.x + p2.z, new MarkerLayer(markerLayer.id, markerLayer.name)));
+                    }
+                }
+                else if (Objects.equals(marker.type, "circle") && serverEntry.includeAreaMarkerLayer(markerLayer.id) && serverEntry.includeAreaMarker(markerName)) {
+                    if (marker.center != null) {
+                        float fillOpacity = marker.fillOpacity != null ? marker.fillOpacity : marker.opacity;
+                        String fillColor = marker.fillColor != null ? marker.fillColor : marker.color;
+                        areaMarkers.add(new AreaMarker(markerName, 0, 0, 0, new Int3[][]{convertCircleToPolygon(marker.center, marker.radius)},
+                                new Color(marker.color, 1f), new Color(fillColor, fillOpacity), currentDimension + markerLayer.id + markerName + marker.center.x + marker.center.z + marker.radius, new MarkerLayer(markerLayer.id, markerLayer.name)));
+                    }
                 }
             }
         }
         ClientMapHandler.getInstance().handleMarkerWaypoints(positions);
         ClientMapHandler.getInstance().handleAreaMarkers(areaMarkers);
     }
+
+    Int3[] convertCircleToPolygon(Int3 center, float radius) {
+        int N = 40;
+        Int3[] points = new Int3[N];
+        for (int i = 0; i < N; i++) {
+            double a = (Math.PI * 2 / N) * i;
+            points[i] = new Double3(center.x + radius * Math.sin(a), center.y, center.z + radius * Math.cos(a)).roundToInt3();
+        }
+        return points;
+    }
+
+    private static String resolveMarkerName(SquareMapMarkerUpdate.Marker marker, SquareMapMarkerUpdate layer) {
+        if (!marker.tooltip.isEmpty()) return marker.tooltip;
+        if (marker.popup != null) return marker.popup.replaceAll("<[^>]*>", "").trim();
+        return layer.name != null ? layer.name : "";
+    }
+
 
     @Override
     public List<String[]> getPossibleTileMaps() {
