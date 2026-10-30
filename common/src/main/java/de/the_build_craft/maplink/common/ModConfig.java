@@ -682,6 +682,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         }
 
         private boolean include(SimpleMarkerVisibilityMode visibilityMode, List<String> words, String name) {
+            if (name == null) return visibilityMode == SimpleMarkerVisibilityMode.BlackList;
             if (visibilityMode == SimpleMarkerVisibilityMode.BlackList) {
                 for (String word : words) {
                     if (name.contains(word)) return false;

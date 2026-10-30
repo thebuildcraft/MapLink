@@ -53,6 +53,7 @@ public class Position {
     }
 
     static String getDisplayName(String name){
+        if (name == null) return "";
         return org.apache.commons.lang3.StringEscapeUtils
                 .unescapeHtml4(nameRegexPattern.matcher(name).replaceAll("").trim());
     }
